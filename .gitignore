@@ -1,3 +1,4 @@
+# java
 target/
 .project
 .classpath
@@ -12,3 +13,6 @@ bin/
 [._]s[a-w][a-z]
 .netrwhist
 *~
+
+# make
+.cache/
