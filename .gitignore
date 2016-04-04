@@ -1,0 +1,14 @@
+target/
+.project
+.classpath
+.settings/
+dependency-reduced-pom.xml
+*.class
+*.jar
+bin/
+
+# swap
+[._]*.s[a-w][a-z]
+[._]s[a-w][a-z]
+.netrwhist
+*~
