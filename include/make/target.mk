@@ -32,7 +32,7 @@ $(TRIGGER_BUILD):
 	@$(call check_defined,DOCKER_IMAGE)
 
 	@$(call logme,"Build image $(DOCKER_IMAGE)")
-	docker build --file Dockerfile --tag $(DOCKER_IMAGE) $(DOCKER_BUILD_ARGS) --force-rm .
+	docker build --file Dockerfile --tag $(DOCKER_IMAGE) $(DOCKER_BUILD_ARGS) --no-cache=$(DOCKER_NO_CACHE) --force-rm .
 
 	@mkdir -p $(TRIGGER_DIR)
 	@touch $(TRIGGER_BUILD)

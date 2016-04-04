@@ -11,3 +11,6 @@ DOCKER_IMAGE_PREFIX ?= openstack/
 # can be used to define an HTTP proxy for APT, for example
 # DOCKER_BUILD_ARGS="--build-arg http_proxy=http://my.proxy:1080"
 DOCKER_BUILD_ARGS ?=
+
+# do not use cache if set to true
+DOCKER_NO_CACHE=false
