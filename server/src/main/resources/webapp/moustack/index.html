@@ -1,0 +1,180 @@
+<html>
+<head>
+<meta charset="UTF-8">
+<script type="text/javascript" src="jquery-2.2.0.min.js"></script>
+
+<script src="base64.min.js" type='text/javascript'></script>
+
+<script src='swagger-client.js' type='text/javascript'></script>
+
+<link rel="stylesheet" type="text/css" href="datatables-jqueryui/datatables.min.css"/>
+<script type="text/javascript" src="datatables-jqueryui/datatables.js"></script>
+
+<link rel="stylesheet" type="text/css" href="toastmessage/css/jquery.toastmessage.css"/>
+<script type="text/javascript" src="toastmessage/jquery.toastmessage.js"></script>
+
+<script type="text/javascript">
+/*
+pagination: http://www.datatables.net/forums/discussion/83/how-to-pagination-with-ajax
+*/
+
+window.client = new SwaggerClient({
+	url: "http://localhost:8080/rest/swagger.json",
+	success: function() {
+		reportsTable = createReportsDatatable();
+		agentsTable = createAgentsDatatable();
+		setInterval( function () {
+			agentsTable.ajax.reload();
+			reportsTable.ajax.reload();
+	}, 5000 );
+	}
+});
+
+function agentCommand(hostname, command) {
+	client.agent.command({hostname: hostname, command: command}, {responseContentType: 'application/json'},
+		function(success){
+			$().toastmessage('showSuccessToast', command + ': ' + success.obj.message);
+		},
+		function(error) {
+			$().toastmessage('showErrorToast', command + ': ' + error.obj.message);
+		}
+	);
+}
+
+// cache json responses to prevent datatables redraws
+var reportCache = "";
+var agentsCache = "";
+
+function createReportsDatatable() {
+	return $('#reports').DataTable( {
+		"ajax": function (data, callback, settings) {
+			client.report.getReports({responseContentType: 'application/json'}, function(datajson) {
+				// $('#debug').html(datajson.data);
+				if (datajson.data != reportCache) {
+					reportCache = datajson.data;
+					callback(datajson.obj);
+				}
+			});
+		},
+		"sAjaxDataProp": "",
+		"aaSorting" : [[1, "desc"]],
+		"processing": false,
+		"columns": [
+			{ "data": "id" },
+			{ "data": "date" },
+		    { "data": "hostname" },
+			{ "data": "reason" },
+			{ "data": "id" },
+		],
+		"columnDefs": [
+			{
+				"render": function ( data, type, row ) {
+				return '<a href="#" onClick = "showReportContent(\''+data+'\');">View</a>';
+				},
+				"targets": -1
+			}
+		]
+	});
+}
+
+function createAgentsDatatable() {
+	return $('#agents').DataTable( {
+		"ajax": function (data, callback, settings) {
+			client.agent.getAgents({responseContentType: 'application/json'}, function(datajson) {
+				// $('#debug').html(datajson.data);
+				if (datajson.data != agentsCache) {
+					agentsCache = datajson.data;
+					callback(datajson.obj);
+				}
+			});
+		},
+		"sAjaxDataProp": "",
+		"aaSorting" : [[1, "desc"]],
+		"processing": false,
+		"columns": [
+			{ "data": "hostname" },
+			{ "data": "lastStatusDate", "defaultContent": '' },
+			{ "data": "lastStatus", "defaultContent": '' },
+			{ "data": "lastReportDate", "defaultContent": '' },
+			{ "data": "lastReportResult", "defaultContent": '' },
+			{ "data": "connected" },
+			{ "data": "hostname" },
+		],
+        "columnDefs": [
+            {
+                "render": function ( data, type, row ) {
+                    return '<a href="#" onClick = "agentCommand(\''+data+'\', \'RUN\');">Run</a>' +
+			' / <a href="#" onClick = "agentCommand(\''+data+'\', \'SHUTDOWN\');">Shutdown</a>' +
+			' / <a href="#" onClick = "agentCommand(\''+data+'\', \'REPORT\');">Report</a>';
+                },
+                "targets": -1
+            }
+        ]
+	});
+}
+
+function showReportContent(id) {
+	client.report.getReport({reportId: id}, {responseContentType: 'application/json'}, function(datajson) {
+		tabsContainer = $('<ul></ul>');
+
+		tabsDiv = $('<div></div>');
+		tabsDiv.append(tabsContainer);
+
+		dialogDiv = $('<div></div>');
+		dialogDiv.append(tabsDiv);
+
+		var i = 0;
+		content = $.parseJSON(datajson.obj.content);
+		$.each(content, function(key, value) {
+			i++;
+			tabsContainer.append('<li><a href="#tab-' + i + '">' + key + '</a></li>');
+			tabsDiv.append('<div id="tab-' + i + '"><pre>' + Base64.decode(value) + '</pre></div>');
+		});
+
+		tabsDiv.tabs();
+		dialogDiv.dialog({
+			title: "Report " + id + " for " + datajson.obj.hostname,
+			modal: true,
+			width: window.innerWidth - 100,
+			height: window.innerHeight - 50,
+			overflow:'scroll',
+			close: function () { dialogDiv.remove() },
+		});
+	});
+}
+</script>
+</head>
+
+<body>
+	<h1>Agents</h1>
+	<table id="agents" class="display" width="100%" cellspacing="0">
+		<thead>
+			<tr>
+				<th>Hostname</th>
+				<th>Last Status Date</th>
+				<th>Last Status</th>
+				<th>Last Report Date</th>
+				<th>Last Report</th>
+				<th>Connected</th>
+				<th>Actions</th>
+			</tr>
+		</thead>
+	</table>
+
+	<h1>Reports</h1>
+	<table id="reports" class="display" width="100%" cellspacing="0">
+		<thead>
+			<tr>
+				<th>Id</th>
+				<th>Date</th>
+				<th>Hostname</th>
+				<th>Reason</th>
+				<th>Actions</th>
+			</tr>
+		</thead>
+	</table>
+
+	<h3>Debug</h3>
+	<div id="debug"></div>
+</body>
+</html>

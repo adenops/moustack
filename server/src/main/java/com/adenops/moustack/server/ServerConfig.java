@@ -1,0 +1,131 @@
+/**
+ * Copyright (C) 2016 Adenops Consultants Informatique Inc.
+ *
+ * This file is part of the Moustack project, see http://www.moustack.org for
+ * more information.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.adenops.moustack.server;
+
+import com.adenops.moustack.lib.argsparser.annotation.Argument;
+import com.adenops.moustack.lib.argsparser.annotation.Argument.Type;
+
+public class ServerConfig {
+	private static final ServerConfig instance = new ServerConfig();
+
+	private int port;
+	private String user;
+	private String password;
+	private String repoUri;
+	private String dbHost;
+	private String dbName;
+	private String dbUser;
+	private String dbPassword;
+
+	private ServerConfig() {
+	}
+
+	public static ServerConfig getInstance() {
+		return instance;
+	}
+
+	@Argument(clazz = Integer.class, property = "server.port", placeholder = "PORT", shortarg = "-P", longarg = "--port", defaultvalue = "8080", description = "Server port")
+	public void setPort(int port) {
+		this.port = port;
+	}
+
+	@Argument(property = "server.user", placeholder = "USER", shortarg = "-u", longarg = "--user", defaultvalue = "moustack", description = "Server user")
+	public void setUser(String user) {
+		this.user = user;
+	}
+
+	@Argument(property = "server.password", placeholder = "PASSWORD", shortarg = "-p", longarg = "--password", defaultvalue = "password", description = "Server password")
+	public void setPassword(String password) {
+		this.password = password;
+	}
+
+	@Argument(property = "git.repo.uri", placeholder = "GIT_REPO_URI", shortarg = "-r", longarg = "--repo", mandatory = true, description = "Repo URI. Can be local (file:///) and will be served or remote (http://)")
+	public void setRepoUri(String repoUri) {
+		this.repoUri = repoUri;
+	}
+
+	@Argument(property = "database.host", defaultvalue = "localhost")
+	public void setDbHost(String dbHost) {
+		this.dbHost = dbHost;
+	}
+
+	@Argument(property = "database.name", defaultvalue = "moustack")
+	public void setDbName(String dbName) {
+		this.dbName = dbName;
+	}
+
+	@Argument(property = "database.user", defaultvalue = "root")
+	public void setDbUser(String dbUser) {
+		this.dbUser = dbUser;
+	}
+
+	@Argument(property = "database.password", defaultvalue = "")
+	public void setDbPassword(String dbPassword) {
+		this.dbPassword = dbPassword;
+	}
+
+	@Argument(type = Type.CONFIGURATION, shortarg = "-c", longarg = "--config", defaultvalue = "/etc/moustack-server", description = "Configuration file")
+	public void _config() {
+	}
+
+	@Argument(type = Type.HELP, shortarg = "-h", longarg = "--help", description = "Help")
+	public void _help() {
+	}
+
+	@Argument(type = Type.HELP_CONFIGURATION, longarg = "--help-config", description = "Show configuration file sample")
+	public void _helpConfig() {
+	}
+
+	@Argument(type = Type.VERSION, shortarg = "-v", longarg = "--version", description = "Version")
+	public void _version() {
+	}
+
+	public int getPort() {
+		return port;
+	}
+
+	public String getUser() {
+		return user;
+	}
+
+	public String getPassword() {
+		return password;
+	}
+
+	public String getRepoUri() {
+		return repoUri;
+	}
+
+	public String getDbHost() {
+		return dbHost;
+	}
+
+	public String getDbName() {
+		return dbName;
+	}
+
+	public String getDbUser() {
+		return dbUser;
+	}
+
+	public String getDbPassword() {
+		return dbPassword;
+	}
+}
