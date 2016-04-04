@@ -1,0 +1,49 @@
+#!/bin/sh
+
+# Copyright (C) 2016 Adenops Consultants Informatique Inc.
+#
+# This file is part of the Moustack project, see http://www.moustack.org for
+# more information.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+set -e
+
+. /usr/lib/runit/common
+
+wait_for syslog
+
+# we wait for the process to be up
+# TODO: it seems pid file is not created
+# while ! kill -0 $(cat /var/run/openvswitch/ovsdb-server.pid 2>/dev/null) 2>/dev/null; do sleep 1; done
+
+# wait for the socket to be there
+while [ ! -S /var/run/openvswitch/db.sock ]; do sleep 1; done
+
+# wait for openvswitch do be ready
+while ! /usr/bin/ovs-vsctl show >/dev/null 2>&1; do sleep 1; done
+
+# create the bridges
+bridges=$(ifquery --allow ovs --list)
+[ -n "$bridges" ] && ifup --allow ovs $bridges
+
+# we also create the integration bridge, this is not mandatory but prevents
+# a few errors (it is usually created by neutron-server)
+ovs-vsctl br-exists br-int || ovs-vsctl add-br br-int
+
+# wait for the bridges to be up
+for bridge in $bridges; do
+	while ! ovs-vsctl br-exists $bridge; do sleep 1; done
+done
+
+# TODO: temporary solution to let other containers know that we are ready
+nc -4kl 7777 > /dev/null

@@ -1,0 +1,41 @@
+start_daemon() {
+	local name="$1"
+	local user="$name"
+	local group="$name"
+	shift
+
+	for i in lock run log lib ; do
+		mkdir -p /var/$i/$name || true
+		chown -R $user:$group /var/$i/$name || true
+	done
+
+	cd /var/lib/$name || true
+	exec gosu $user:$group $@
+}
+
+service_mkdir() {
+	local user="$1"
+	local group="$user"
+	shift
+
+	mkdir -p $@
+	chown $user:$group $@
+}
+
+service_name() {
+	local dirname="$(dirname $(readlink -f $0))"
+	echo "${dirname##*/}"
+}
+
+wait_for() {
+	local name="$1"
+	local path="/usr/lib/runit/wait_for/$name"
+	if [ ! -f "$path" ]; then
+		echo "ERROR: $path not found"
+		return
+	elif [ ! -x "$path" ]; then
+		echo "ERROR: $path not executable"
+		return
+	fi
+	$path "$(service_name)"
+}
