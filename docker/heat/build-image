@@ -16,13 +16,32 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+# Exit on failure
 set -e
 
-. /usr/lib/runit/common
+# Switch working directory
+cd $(dirname $0)
 
-wait_for syslog
-wait_for mysql
-wait_for rabbitmq
-wait_for keystone
+# Avoid locale issues
+export LC_ALL=C
 
-start_daemon heat /usr/bin/heat-api --config-file=/etc/heat/heat.conf
+# dpkg shouldn't ask questions
+export DEBIAN_FRONTEND=noninteractive
+
+# Update packages list
+apt-get update
+
+# Install packages
+apt-get install -y --no-install-recommends \
+	heat-api \
+	heat-api-cfn \
+	heat-engine
+
+# Purge heat local database
+rm -f /var/lib/heat/heat.sqlite
+
+# Clean rootfs
+cd /
+apt-get clean
+rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
