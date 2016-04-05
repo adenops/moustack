@@ -16,3 +16,4 @@ bin/
 
 # make
 .cache/
+.local.mk
