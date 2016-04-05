@@ -1,25 +1,16 @@
-FROM phusion/baseimage:latest
+FROM ubuntu:14.04
 
-ENV DEBIAN_FRONTEND=noninteractive TERM=xterm
+# install and configure packages
+COPY build-image bashrc /tmp/
+RUN /tmp/build-image
 
-RUN curl -o /tmp/eatmydata.deb http://archive.ubuntu.com/ubuntu/pool/main/libe/libeatmydata/eatmydata_26-2_amd64.deb \
-        && dpkg -i /tmp/eatmydata.deb \
-        && rm -f /tmp/eatmydata.deb
+# add runit libraries
+COPY lib /usr/lib/
 
-RUN echo force-unsafe-io > /etc/dpkg/dpkg.cfg.d/disable-fsync \
-	&& sed -i 's/^deb-src /# deb-src /' /etc/apt/sources.list \
-        && eatmydata apt-get update \
-        && eatmydata apt-get dist-upgrade -y --no-install-recommends \
-        && eatmydata apt-get install -y --no-install-recommends patch vim strace tcpdump net-tools
+# add etc overlay
+COPY etc /etc/
 
-RUN curl -o /usr/local/bin/gosu -SL "https://github.com/tianon/gosu/releases/download/1.7/gosu-amd64" \
-	&& chmod +x /usr/local/bin/gosu
+# add entrypoints
+COPY entrypoint* /usr/sbin/
 
-COPY cleanup_tmp_folders.sh /etc/my_init.d/01_cleanup_tmp_folders.sh
-COPY syslog-forwarder.sh /etc/service/syslog-forwarder/run
-COPY custom-syslog.conf /etc/syslog-ng/conf.d/
-RUN touch /var/log/syslog-docker
-
-RUN mkdir -p /usr/lib/runit/wait_for
-COPY lib/runit/wait_for /usr/lib/runit/wait_for/
-COPY lib/runit/common /usr/lib/runit/
+ENTRYPOINT ["/usr/sbin/entrypoint"]
