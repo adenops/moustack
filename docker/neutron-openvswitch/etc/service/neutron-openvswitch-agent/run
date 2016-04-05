@@ -16,9 +16,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-set -e
 
-. /usr/lib/runit/common
+# source shell library
+. /usr/lib/runit/load
 
 wait_for syslog
 wait_for openvswitch
@@ -33,5 +33,5 @@ wait_for openvswitch
 wait_for rabbitmq
 wait_for neutron-server
 
-start_daemon neutron /usr/bin/neutron-openvswitch-agent --config-file=/etc/neutron/neutron.conf \
+service_start neutron /usr/bin/neutron-openvswitch-agent --config-file=/etc/neutron/neutron.conf \
 	--config-file=/etc/neutron/plugins/ml2/ml2_conf.ini --config-file=/etc/neutron/plugins/ml2/openvswitch_agent.ini
