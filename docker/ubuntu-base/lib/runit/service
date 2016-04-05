@@ -1,0 +1,67 @@
+#!/bin/sh
+
+# Copyright (C) 2016 Adenops Consultants Informatique Inc.
+#
+# This file is part of the Moustack project, see http://www.moustack.org for
+# more information.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+service_name() {
+	if [ -n "${SERVICE_NAME}" ]; then
+		echo ${SERVICE_NAME}
+	else
+		basename `dirname $(readlink -f $0)`
+	fi
+}
+
+service_wait() {
+	local name="$1"
+	local path="${RUNIT_LIB}/wait_for/${name}"
+
+	if [ ! -f "${path}" ]; then
+		fatal "${path} not found"
+	elif [ ! -x "${path}" ]; then
+		fatal "${path} not executable"
+	fi
+
+	${path} "`service_name`"
+}
+
+service_start() {
+	local name="$1"
+	local user="${name}"
+	local group="${name}"
+	shift
+
+	for dir in lock run log lib ; do
+		mkdir -p /var/${dir}/${name} || true
+		chown -R ${user}:${group} /var/${dir}/${name} || true
+	done
+
+	cd /var/lib/${name} || true
+	exec gosu ${user}:${group} $@
+}
+
+service_mkdir() {
+	local user="$1"
+	local group="${user}"
+	shift
+
+	mkdir -p $@
+	chown ${user}:${group} $@
+}
+
+# backward compatility aliases
+alias wait_for=service_wait
+alias start_daemon=service_start
