@@ -13,4 +13,4 @@ DOCKER_IMAGE_PREFIX ?= openstack/
 DOCKER_BUILD_ARGS ?=
 
 # do not use cache if set to true
-DOCKER_NO_CACHE=false
+DOCKER_NO_CACHE ?= false
