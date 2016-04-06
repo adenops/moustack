@@ -5,21 +5,7 @@ BASE_IMAGES := \
 
 # list all containers expect the base ones
 CONTAINER_IMAGES := \
-	docker/samba \
-	docker/logstash \
-	docker/openvswitch \
-	docker/keystone \
-	docker/glance \
-	docker/cinder \
-	docker/heat \
-	docker/dashboard \
-	docker/nova-controller \
-	docker/nova-compute \
-	docker/neutron-controller \
-	docker/neutron-lbaas \
-	docker/neutron-openvswitch
-
-#	$(shell find docker/ -mindepth 1 -maxdepth 1 -type d ! -name '*-base' | sort -n)
+	$(shell find docker/ -mindepth 1 -maxdepth 1 -type d ! -name '*-base' | sort -n)
 
 all: usage
 	@echo BASE_IMAGES=$(BASE_IMAGES)
