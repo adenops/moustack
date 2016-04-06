@@ -25,9 +25,16 @@ wait_for syslog
 mkdir -p /var/run/libvirt/
 rm -f /var/run/libvirtd.pid
 
-# TODO: check how to fix properly
-if [ -c /dev/kvm ]; then
-	chmod 777 /dev/kvm
+# fix /dev/kvm permissions
+kvm_host_group=kvm-host
+kvm_user=libvirt-qemu
+
+if ! grep -q "${kvm_host_group}:" /etc/group; then
+	groupadd --gid `ls -l /dev/kvm | awk '{ print $4; }'` ${kvm_host_group}
+fi
+
+if ! grep -q "${kvm_host_group}:.*${kvm_user}" /etc/group; then
+	adduser ${kvm_user} ${kvm_host_group}
 fi
 
 exec /usr/sbin/libvirtd

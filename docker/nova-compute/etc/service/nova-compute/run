@@ -26,9 +26,16 @@ wait_for rabbitmq
 wait_for neutron-server
 wait_for libvirt
 
-# TODO: check how to fix properly
-if [ -c /dev/kvm ]; then
-	chmod 777 /dev/kvm
+# fix /dev/kvm permissions
+kvm_host_group=kvm-host
+kvm_user=nova
+
+if ! grep -q "${kvm_host_group}:" /etc/group; then
+	groupadd --gid `ls -l /dev/kvm | awk '{ print $4; }'` ${kvm_host_group}
+fi
+
+if ! grep -q "${kvm_host_group}:.*${kvm_user}" /etc/group; then
+	adduser ${kvm_user} ${kvm_host_group}
 fi
 
 # ensure instances folder is created (nova may fail otherwise)
