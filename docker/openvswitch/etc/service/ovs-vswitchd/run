@@ -16,26 +16,23 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-set -e
 
-. /usr/lib/runit/common
-
-# in case this is restart, ensure ovs-setup also restarts
-killall nc 2>/dev/null || true
+# source shell library
+. /usr/lib/runit/load
 
 wait_for syslog
 
-mkdir -p /var/run/openvswitch/
+while ! sv status ovsdb-server >/dev/null 2>&1; do
+	notify "wait for OVS service to be up"
+	sleep 1
+done
 
-if [ ! -e /etc/openvswitch/conf.db ]; then
-	echo "creating Open vSwitch database"
-	ovsdb-tool create /etc/openvswitch/conf.db /usr/share/openvswitch/vswitch.ovsschema
-fi
-
-exec ovsdb-server /etc/openvswitch/conf.db -vconsole:info \
-	--remote=punix:/var/run/openvswitch/db.sock \
-	--private-key=db:Open_vSwitch,SSL,private_key \
-	--certificate=db:Open_vSwitch,SSL,certificate \
-	--bootstrap-ca-cert=db:Open_vSwitch,SSL,ca_cert \
+exec ovs-vswitchd \
+	unix:/var/run/openvswitch/db.sock \
+	-vconsole:info \
 	--no-chdir \
-	--pidfile=/var/run/openvswitch/ovsdb-server.pid
+	--pidfile=/var/run/openvswitch/ovs-vswitchd.pid
+
+# XXX: --mlockall currently omitted, will see later...
+# to be able to use it, use the following docker parameters:
+#  --cap-add=IPC_LOCK --ulimit memlock=-1:-1

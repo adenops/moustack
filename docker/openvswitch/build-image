@@ -16,16 +16,28 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+# Exit on failure
 set -e
 
-. /usr/lib/runit/common
+# Switch working directory
+cd $(dirname $0)
 
-wait_for syslog
+# Avoid locale issues
+export LC_ALL=C
 
-while ! sv status ovsdb-server >/dev/null 2>&1; do sleep 1 ; done
+# dpkg shouldn't ask questions
+export DEBIAN_FRONTEND=noninteractive
 
-exec ovs-vswitchd unix:/var/run/openvswitch/db.sock -vconsole:info --no-chdir --pidfile=/var/run/openvswitch/ovs-vswitchd.pid
+# Update packages list
+apt-get update
 
-# XXX: --mlockall currently omitted, will see later...
-# to be able to use it, use the following docker parameters:
-#  --cap-add=IPC_LOCK --ulimit memlock=-1:-1
+# Install and patch usefull python modules
+eatmydata apt-get install -y --no-install-recommends \
+	openvswitch-switch \
+	ethtool
+
+# Clean rootfs
+cd /
+apt-get clean
+rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
