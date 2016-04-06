@@ -19,113 +19,23 @@
 
 package com.adenops.moustack.agent.module;
 
-import java.util.List;
-
 import com.adenops.moustack.agent.DeploymentException;
-import com.adenops.moustack.agent.Stage;
-import com.adenops.moustack.agent.client.Clients;
 import com.adenops.moustack.agent.config.StackConfig;
-import com.adenops.moustack.agent.model.docker.Container;
-import com.adenops.moustack.agent.util.DeploymentUtil;
-import com.adenops.moustack.agent.util.SystemCtlUtil;
-import com.adenops.moustack.agent.util.YumUtil;
 
-/**
- *
- * @author jb
- *
- *         role: role from which the module instance is declared. The same module could be used from multiple roles at
- *         the same time...
- *
- */
-public class BaseModule {
-	protected final Stage stage;
+public abstract class BaseModule {
 	protected final String name;
-	protected final String role;
-	protected final List<String> packages;
-	protected final List<String> files;
-	protected final List<String> services;
-	protected final List<Container> containers;
 
-	public BaseModule(String name, Stage stage, String role, List<String> files, List<String> packages,
-			List<String> services, List<Container> containers) {
+	public BaseModule(String name) {
 		this.name = name;
-		this.stage = stage;
-		this.role = role;
-		this.files = files;
-		this.packages = packages;
-		this.services = services;
-		this.containers = containers;
 	}
 
-	public boolean deploy(StackConfig stack) throws DeploymentException {
-		boolean changed = deployHost(stack);
-		changed |= deployContainers(stack);
-		return changed;
-	}
+	public abstract boolean deploy(StackConfig stack) throws DeploymentException;
 
-	protected boolean deployHost(StackConfig stack) throws DeploymentException {
-		boolean changed = deployHostConfig(stack);
-		changed |= SystemCtlUtil.startServices(changed, services);
-		return changed;
-	}
+	protected abstract boolean deployConfig(StackConfig stack) throws DeploymentException;
 
-	protected boolean deployHostConfig(StackConfig stack) throws DeploymentException {
-		boolean changed = YumUtil.install(packages.toArray(new String[packages.size()]));
-		changed |= DeploymentUtil.deployRoleFiles(stack, name, role, files);
-		return changed;
-	}
-
-	protected boolean deployContainers(StackConfig stack) throws DeploymentException {
-		boolean changed = deployContainersConfig(stack);
-		if (changed)
-			Clients.getDockerClient().startOrRestartContainers(containers);
-		return changed;
-	}
-
-	protected boolean deployContainersConfig(StackConfig stack) throws DeploymentException {
-		boolean changed = false;
-		for (Container container : containers) {
-
-			changed |= DeploymentUtil.deployContainerFiles(stack, name, role, container.getFiles());
-			changed |= Clients.getDockerClient().containerCheckUpdate(container);
-		}
-		return changed;
-	}
-
-	protected Container getContainer(String name) throws DeploymentException {
-		for (Container container : containers) {
-			if (container.getName().equalsIgnoreCase(name))
-				return container;
-		}
-		throw new DeploymentException("container " + name + " not found");
-	}
-
-	public List<String> getPackages() {
-		return packages;
-	}
-
-	public List<String> getFiles() {
-		return files;
-	}
-
-	public List<String> getServices() {
-		return services;
-	}
-
-	public Stage getStage() {
-		return stage;
-	}
+	public abstract String getType();
 
 	public String getName() {
 		return name;
-	}
-
-	public String getRole() {
-		return role;
-	}
-
-	public List<Container> getContainers() {
-		return containers;
 	}
 }

@@ -20,12 +20,11 @@
 package com.adenops.moustack.agent;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.FilenameFilter;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Date;
@@ -40,24 +39,25 @@ import com.adenops.moustack.agent.client.Clients;
 import com.adenops.moustack.agent.client.MoustackClient;
 import com.adenops.moustack.agent.config.AgentConfig;
 import com.adenops.moustack.agent.config.StackConfig;
-import com.adenops.moustack.agent.config.StackProperty;
 import com.adenops.moustack.agent.log4j2.MemoryAppender;
-import com.adenops.moustack.agent.model.docker.Container;
 import com.adenops.moustack.agent.model.docker.Volume;
 import com.adenops.moustack.agent.model.exec.ExecResult;
 import com.adenops.moustack.agent.module.BaseModule;
+import com.adenops.moustack.agent.module.ContainerModule;
+import com.adenops.moustack.agent.module.SystemModule;
 import com.adenops.moustack.agent.util.GitUtil;
 import com.adenops.moustack.agent.util.PathUtil;
 import com.adenops.moustack.agent.util.ProcessUtil;
 import com.adenops.moustack.agent.util.PropertiesUtil;
 import com.adenops.moustack.agent.util.YamlUtil;
 import com.adenops.moustack.agent.util.YumUtil;
-import com.esotericsoftware.yamlbeans.YamlException;
-import com.esotericsoftware.yamlbeans.YamlReader;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.dockerjava.api.model.Capability;
 
+// TODO: review files/volumes declarations & deployment logic
+// TODO: factorise "files: section from container/system modules if possible
+// TODO: detect OS: debian/redhat, abstract packaging
 public class Deployer {
 	public static final Logger log = LoggerFactory.getLogger(Deployer.class);
 
@@ -65,14 +65,11 @@ public class Deployer {
 	private static final boolean REPORT_YUM_PACKAGES = false;
 
 	// this is a global list of files to ensure there are no overrides
-	private final List<String> declaredFiles = new ArrayList<>();
-	// similar list, to ensure same container name is not used two times
-	private final List<String> declaredContainers = new ArrayList<>();
+	private final List<String> systemFiles = new ArrayList<>();
 
 	private final StackConfig stack;
-	private final String[] roles;
-	private final ArrayList<BaseModule> modules;
-	private final Map<String, Container> containers;
+	private final Map<String, BaseModule> modules;
+	private final List<BaseModule> deploymentPlan;
 
 	public Deployer() throws DeploymentException {
 		// prepare the stack config for this run
@@ -88,23 +85,42 @@ public class Deployer {
 		// synchronize git repo locally
 		GitUtil.synchronizeConfiguration(stack);
 
-		// load host properties
+		// load node properties hierarchy
 		stack.setProperties(PropertiesUtil.loadHostProperties(AgentConfig.getInstance()));
 
-		// list of roles, we always prepend common
-		roles = new String[] { "common", stack.get(StackProperty.ROLE) };
+		// load the global modules list
+		modules = loadModules();
+		log.info("loaded {} modules definitions", modules.size());
 
-		// load containers definitions
-		containers = new HashMap<>();
-		containers.putAll(loadContainers());
-
-		// load modules definitions
-		modules = new ArrayList<>();
-		for (String role : roles)
-			modules.addAll(loadModules(role));
+		// load deployment plan
+		deploymentPlan = loadDeploymentPlan();
 
 		// initialize clients
 		Clients.init(stack);
+	}
+
+	private List<BaseModule> loadDeploymentPlan() throws DeploymentException {
+		List<BaseModule> plan = new ArrayList<BaseModule>();
+
+		for (String role : stack.getRoles()) {
+			log.debug("loading deployment plan for role [{}]", role);
+
+			Map<Object, Object> planConfig = YamlUtil.loadYaml(PathUtil.getRoleModulesConfigPath(
+					AgentConfig.getInstance(), role));
+
+			List<String> planModules = YamlUtil.getList(planConfig.get("modules"));
+
+			for (String moduleName : planModules) {
+				log.debug("adding module [{}] to the role [{}] deployment plan", moduleName, role);
+				BaseModule module = modules.get(moduleName);
+				if (module == null)
+					throw new DeploymentException("module " + module + " not defined but declared by the role " + role);
+				plan.add(module);
+			}
+
+			log.info("deployment plan for role [{}] declares {} modules", role, modules.size());
+		}
+		return plan;
 	}
 
 	private void validateFile(String fileFrom, String fileTo) throws DeploymentException {
@@ -117,232 +133,197 @@ public class Deployer {
 			return;
 
 		// ensure the destination file has not already been declared
-		if (declaredFiles.contains(fileTo))
+		if (systemFiles.contains(fileTo))
 			throw new DeploymentException("target file " + fileTo + " (from " + fileFrom + ") is already declared");
 
 		// record the destination file
-		declaredFiles.add(fileTo);
+		systemFiles.add(fileTo);
 	}
 
-	private void validateContainer(Container container) throws DeploymentException {
-		if (declaredContainers.contains(container.getName()))
-			throw new DeploymentException("container with name " + container.getName() + " is already declared");
+	private BaseModule loadSystemModule(String name, boolean registered, Map<Object, Object> moduleConfig)
+			throws DeploymentException {
+		List<String> moduleFiles = YamlUtil.getList(moduleConfig.get("files"));
+		List<String> modulePackages = YamlUtil.getList(moduleConfig.get("packages"));
+		List<String> moduleServices = YamlUtil.getList(moduleConfig.get("services"));
 
-		declaredContainers.add(container.getName());
-	}
-
-	private List<BaseModule> loadModules(String role) throws DeploymentException {
-		List<BaseModule> sequence = new ArrayList<>();
-
-		YamlReader reader = null;
-		String path = PathUtil.getRoleModulesConfigPath(AgentConfig.getInstance(), role);
-		try {
-			reader = new YamlReader(new FileReader(path));
-		} catch (FileNotFoundException e) {
-			throw new DeploymentException("cannot load yaml file " + path, e);
+		// files validation
+		for (String file : moduleFiles) {
+			String from = PathUtil.getModuleSourceFilePath(AgentConfig.getInstance(), name, file);
+			String to = PathUtil.getSystemTargetFilePath(AgentConfig.getInstance(), file);
+			validateFile(from, to);
 		}
 
-		while (true) {
-			@SuppressWarnings("rawtypes")
-			Map moduleConfig = null;
+		SystemModule module = null;
+		if (registered) {
+
+			if (!(SystemModule.class.isAssignableFrom(ModuleRegistry.getRegistered(name))))
+				throw new DeploymentException("module " + name + " registration error");
+			@SuppressWarnings("unchecked")
+			Class<SystemModule> registeredClass = (Class<SystemModule>) ModuleRegistry.getRegistered(name);
+
 			try {
-				moduleConfig = (Map) reader.read();
-			} catch (YamlException e) {
-				throw new DeploymentException("error while parsing module definitiion from " + path);
+				module = registeredClass.getConstructor(String.class, List.class, List.class, List.class, List.class)
+						.newInstance(name, moduleFiles, modulePackages, moduleServices);
+			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+					| InvocationTargetException | NoSuchMethodException | SecurityException e) {
+				throw new DeploymentException("cannot register module " + name, e);
 			}
-			if (moduleConfig == null)
-				break;
-
-			String name = (String) moduleConfig.get("module");
-			boolean registered = Boolean.valueOf((String) moduleConfig.get("registered"));
-
-			Stage stage;
-			if (moduleConfig.get("stage") == null)
-				stage = Stage.MAIN;
-			else {
-				try {
-					stage = Stage.valueOf(moduleConfig.get("stage").toString().toUpperCase());
-				} catch (IllegalArgumentException e) {
-					throw new DeploymentException("module " + name + " declares an invalid stage: "
-							+ moduleConfig.get("stage"), e);
-				}
-			}
-
-			List<String> moduleFiles = YamlUtil.getList(moduleConfig.get("files"));
-			List<String> modulePackages = YamlUtil.getList(moduleConfig.get("packages"));
-			List<String> moduleServices = YamlUtil.getList(moduleConfig.get("services"));
-			List<String> moduleContainersNames = YamlUtil.getList(moduleConfig.get("containers"));
-
-			List<Container> moduleContainers = new ArrayList<>();
-			for (String containerName : moduleContainersNames) {
-				Container container = containers.get(containerName);
-				if (container == null)
-					throw new DeploymentException("module " + name + " declares an unknown container: " + containerName);
-				moduleContainers.add(container);
-			}
-
-			// files validation
-			for (String file : moduleFiles) {
-				String from = PathUtil.getRoleSourceFilePath(AgentConfig.getInstance(), role, file);
-				String to = PathUtil.getRoleTargetFilePath(AgentConfig.getInstance(), role, file);
-				validateFile(from, to);
-			}
-
-			// containers validation
-			for (Container container : moduleContainers)
-				validateContainer(container);
-
-			BaseModule module = null;
-			if (registered) {
-				Class<? extends BaseModule> registeredClass = ModuleRegistry.getRegistered(name);
-				try {
-					module = registeredClass.getConstructor(String.class, Stage.class, String.class, List.class,
-							List.class, List.class, List.class).newInstance(name, stage, role, moduleFiles,
-							modulePackages, moduleServices, moduleContainers);
-				} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
-						| InvocationTargetException | NoSuchMethodException | SecurityException e) {
-					throw new DeploymentException("cannot register module " + name, e);
-				}
-			} else {
-				module = new BaseModule(name, stage, role, moduleFiles, modulePackages, moduleServices,
-						moduleContainers);
-			}
-			sequence.add(module);
-
-			StringBuffer logSB = new StringBuffer("added ");
-			logSB.append(registered ? "registered" : "anonymous");
-			logSB.append(" module ");
-			logSB.append(name);
-			if (!stage.equals(Stage.MAIN)) {
-				logSB.append(" [stage: ");
-				logSB.append(stage.getKey());
-				logSB.append("]");
-			}
-			log.debug(logSB.toString());
+		} else {
+			module = new SystemModule(name, moduleFiles, modulePackages, moduleServices);
 		}
 
-		try {
-			reader.close();
-		} catch (IOException e) {
-		}
-		return sequence;
+		logModule(name, "system", registered);
+		return module;
 	}
 
-	private Map<String, Container> loadContainers() throws DeploymentException {
-		Map<String, Container> containers = new HashMap<>();
+	private BaseModule loadContainerModule(String name, boolean registered, Map<Object, Object> moduleConfig)
+			throws DeploymentException {
+		// TODO: better handling of default values
+		String image = (String) moduleConfig.get("image");
+		boolean privileged = Boolean.valueOf((String) moduleConfig.get("privileged"));
+		boolean syslog = Boolean.valueOf((String) moduleConfig.getOrDefault("syslog", "true"));
+		List<String> environments = YamlUtil.getList(moduleConfig.get("environments"));
+		List<String> devices = YamlUtil.getList(moduleConfig.get("devices"));
 
-		YamlReader reader = null;
-		String path = PathUtil.getContainersConfigPath(AgentConfig.getInstance());
-		try {
-			reader = new YamlReader(new FileReader(path));
-		} catch (FileNotFoundException e) {
-			throw new DeploymentException("cannot load yaml file " + path, e);
+		List<Volume> volumes = new ArrayList<Volume>();
+		List<String> files = new ArrayList<String>();
+		List<Capability> capabilities = new ArrayList<Capability>();
+
+		// we iterate through files entries and add each entry as:
+		// * file entry for the deployment
+		// * volume entry for availability in the containers
+		for (String file : YamlUtil.getList(moduleConfig.get("files"))) {
+			String from = PathUtil.getModuleSourceFilePath(AgentConfig.getInstance(), name, file);
+			String to = Paths.get("/", file).toString();
+			validateFile(from, null);
+			files.add(file);
+			volumes.add(new Volume(PathUtil.getContainerTargetFilePath(stack, name, file), to, true));
 		}
 
-		while (true) {
-			@SuppressWarnings("rawtypes")
-			Map moduleConfig = null;
+		// add environments to files for deployment
+		files.addAll(environments);
+
+		// TODO: use enum for ro/rw?
+		for (String entry : YamlUtil.getList(moduleConfig.get("volumes"))) {
+			String[] split = entry.split(":");
+			if (split.length < 2 || split.length > 3)
+				throw new DeploymentException("invalid volume definition: " + entry);
+			String permission = split.length == 3 ? split[2] : "rw";
+			if (!permission.equals("rw") && !permission.equals("ro"))
+				throw new DeploymentException("invalid volume permission: " + entry);
+			volumes.add(new Volume(split[0], split[1], permission.equals("ro")));
+		}
+
+		for (String entry : YamlUtil.getList(moduleConfig.get("capabilities"))) {
 			try {
-				moduleConfig = (Map) reader.read();
-			} catch (YamlException e) {
-				throw new DeploymentException("error while parsing container definition from " + path);
+				capabilities.add(Capability.valueOf(entry));
+			} catch (IllegalArgumentException e) {
+				throw new DeploymentException("invalid capability: " + entry);
 			}
-			if (moduleConfig == null)
-				break;
-
-			// TODO: better handling of default values
-			String name = (String) moduleConfig.get("container");
-			String image = (String) moduleConfig.get("image");
-			boolean privileged = Boolean.valueOf((String) moduleConfig.get("privileged"));
-			boolean syslog = Boolean.valueOf((String) moduleConfig.getOrDefault("syslog", "true"));
-			List<String> environments = YamlUtil.getList(moduleConfig.get("environments"));
-			List<String> devices = YamlUtil.getList(moduleConfig.get("devices"));
-
-			List<Volume> volumes = new ArrayList<Volume>();
-			List<String> files = new ArrayList<String>();
-			List<Capability> capabilities = new ArrayList<Capability>();
-
-			// we iterate through files entries and add each entry as:
-			// * file entry for the deployment
-			// * volume entry for availability in the containers
-			for (String entry : YamlUtil.getList(moduleConfig.get("files"))) {
-				String[] split = entry.split(":", 2);
-				if (split.length != 2)
-					throw new DeploymentException("invalid file definition: " + entry);
-
-				files.add(split[0]);
-				volumes.add(new Volume(PathUtil.getContainerTargetFilePath(stack, split[0]), split[1], true));
-			}
-
-			// add environments to files for deployment
-			files.addAll(environments);
-
-			// TODO: use enum for ro/rw?
-			for (String entry : YamlUtil.getList(moduleConfig.get("volumes"))) {
-				String[] split = entry.split(":");
-				if (split.length < 2 || split.length > 3)
-					throw new DeploymentException("invalid volume definition: " + entry);
-				String permission = split.length == 3 ? split[2] : "rw";
-				if (!permission.equals("rw") && !permission.equals("ro"))
-					throw new DeploymentException("invalid volume permission: " + entry);
-				volumes.add(new Volume(split[0], split[1], permission.equals("ro")));
-			}
-
-			for (String entry : YamlUtil.getList(moduleConfig.get("capabilities"))) {
-				try {
-					capabilities.add(Capability.valueOf(entry));
-				} catch (IllegalArgumentException e) {
-					throw new DeploymentException("invalid capability: " + entry);
-				}
-			}
-
-			for (String file : files) {
-				String from = PathUtil.getContainerSourceFilePath(AgentConfig.getInstance(), file);
-				validateFile(from, null);
-			}
-
-			containers.put(name, new Container(name, image, files, environments, volumes, capabilities, privileged,
-					devices, syslog));
-			log.debug("added container " + name);
 		}
 
-		try {
-			reader.close();
-		} catch (IOException e) {
-			// not important
+		for (String file : files) {
+			String from = PathUtil.getModuleSourceFilePath(AgentConfig.getInstance(), name, file);
+			validateFile(from, null);
 		}
-		return containers;
+
+		ContainerModule module = null;
+		if (registered) {
+
+			if (!(ContainerModule.class.isAssignableFrom(ModuleRegistry.getRegistered(name))))
+				throw new DeploymentException("module " + name + " registration error");
+			@SuppressWarnings("unchecked")
+			Class<ContainerModule> registeredClass = (Class<ContainerModule>) ModuleRegistry.getRegistered(name);
+
+			try {
+				module = registeredClass.getConstructor(String.class, String.class, List.class, List.class, List.class,
+						List.class, boolean.class, List.class, boolean.class).newInstance(name, image, files,
+						environments, volumes, capabilities, privileged, devices, syslog);
+			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+					| InvocationTargetException | NoSuchMethodException | SecurityException e) {
+				throw new DeploymentException("cannot register module " + name, e);
+			}
+		} else {
+			module = new ContainerModule(name, image, files, environments, volumes, capabilities, privileged, devices,
+					syslog);
+		}
+
+		logModule(name, "container", registered);
+		return module;
 	}
 
-	private boolean runStage(Stage stage) throws DeploymentException {
-		boolean changed = false;
-		for (BaseModule module : modules) {
-			if (module.getStage().equals(stage)) {
-				log.info("deploying module " + module.getName());
-				changed |= module.deploy(stack);
-			}
+	private BaseModule loadModule(String module) throws DeploymentException {
+		Map<Object, Object> moduleConfig = YamlUtil.loadYaml(PathUtil.getModuleConfigPath(AgentConfig.getInstance(),
+				module));
+
+		String type = (String) moduleConfig.get("type");
+		String name = (String) moduleConfig.get("name");
+		boolean registered = Boolean.valueOf((String) moduleConfig.get("registered"));
+
+		log.trace("module {} type is {}", name, type);
+
+		switch (type) {
+		case "system":
+			return loadSystemModule(name, registered, moduleConfig);
+		case "container":
+			return loadContainerModule(name, registered, moduleConfig);
+		default:
+			throw new DeploymentException("invalid module type: " + type);
 		}
-		return changed;
+	}
+
+	private Map<String, BaseModule> loadModules() throws DeploymentException {
+		Map<String, BaseModule> modules = new HashMap<>();
+
+		// locate the modules
+		File file = new File(PathUtil.getModulesPath(AgentConfig.getInstance()));
+		String[] directories = file.list(new FilenameFilter() {
+			@Override
+			public boolean accept(File current, String name) {
+				return new File(current, name).isDirectory();
+			}
+		});
+
+		// iterate on directories and load modules definitions
+		for (String modulePath : directories) {
+			log.trace("found module in {}", modulePath);
+			BaseModule module = loadModule(modulePath);
+			modules.put(module.getName(), module);
+		}
+
+		return modules;
+	}
+
+	private void logModule(String name, String type, boolean registered) {
+		if (!log.isDebugEnabled())
+			return;
+		StringBuffer sb = new StringBuffer("loaded ");
+		if (registered)
+			sb.append("registered ");
+		else
+			sb.append("anonymous ");
+		sb.append(type);
+		sb.append(" module [");
+		sb.append(name);
+		sb.append("]");
+		log.debug(sb.toString());
 	}
 
 	public boolean start() throws DeploymentException {
 		long start = System.currentTimeMillis();
 		boolean changed = false;
 
-		log.info("starting deployment of " + AgentConfig.getInstance().getId() + " (roles: " + String.join(",", roles)
-				+ ")");
+		log.info("starting deployment of " + AgentConfig.getInstance().getId() + " (roles: "
+				+ String.join(",", stack.getRoles()) + ")");
 
-		log.info("entering stage: [pre]");
 		// install eatmydata if we are going to use it
 		if (YumUtil.EATMYDATA)
 			YumUtil.install("eatmydata");
-		changed |= runStage(Stage.PRE);
 
-		log.info("entering stage: [main]");
-		changed |= runStage(Stage.MAIN);
-
-		log.info("entering stage: [post]");
-		changed |= runStage(Stage.POST);
+		for (BaseModule module : deploymentPlan) {
+			log.info("deploying {} module [{}]", module.getType(), module.getName());
+			changed |= module.deploy(stack);
+		}
 
 		long duration = System.currentTimeMillis() - start;
 		log.info("deployment finished (" + duration / 1000 + "s)");
@@ -375,12 +356,12 @@ public class Deployer {
 	public String getSystemReport(boolean includeLogs) throws DeploymentException {
 		StringBuffer sb = new StringBuffer();
 
-		Map<String, String> report = new HashMap();
+		Map<String, String> report = new HashMap<>();
 
 		// general information
 		appendLine(sb, "date: ", new Date().toString());
 		appendLine(sb, "host: ", AgentConfig.getInstance().getId());
-		appendLine(sb, "roles: ", String.join(",", roles));
+		appendLine(sb, "roles: ", String.join(",", stack.getRoles()));
 		appendLine(sb, "git repo: ", stack.getGitRepo());
 		appendLine(sb, "git branch: ", stack.getGitBranch());
 		appendLine(sb, "git head: ", stack.getGitHead());
@@ -397,9 +378,9 @@ public class Deployer {
 
 		// containers
 		sb = new StringBuffer();
-		for (BaseModule module : modules) {
-			for (Container container : module.getContainers()) {
-				sb.append(Clients.getDockerClient().getContainerInfo(container));
+		for (BaseModule module : deploymentPlan) {
+			if (module instanceof ContainerModule) {
+				sb.append(Clients.getDockerClient().getContainerInfo((ContainerModule) module));
 				appendLine(sb);
 			}
 		}

@@ -102,14 +102,14 @@ public class DeploymentUtil {
 		return true;
 	}
 
-	public static boolean deployRoleFiles(StackConfig stack, String module, String role, List<String> files)
+	public static boolean deploySystemFiles(StackConfig stack, String module, List<String> files)
 			throws DeploymentException {
 		boolean changed = false;
 		log.debug("deploying module " + module + " host files");
 
 		for (String file : files) {
-			String from = PathUtil.getRoleSourceFilePath(AgentConfig.getInstance(), role, file);
-			String to = PathUtil.getRoleTargetFilePath(AgentConfig.getInstance(), role, file);
+			String from = PathUtil.getModuleSourceFilePath(AgentConfig.getInstance(), module, file);
+			String to = PathUtil.getSystemTargetFilePath(AgentConfig.getInstance(), file);
 
 			changed |= deployFile(stack, from, to);
 		}
@@ -117,14 +117,14 @@ public class DeploymentUtil {
 		return changed;
 	}
 
-	public static boolean deployContainerFiles(StackConfig stack, String module, String role, List<String> files)
+	public static boolean deployContainerFiles(StackConfig stack, String module, List<String> files)
 			throws DeploymentException {
 		boolean changed = false;
 		log.debug("deploying module " + module + " containers files");
 
 		for (String file : files) {
-			String from = PathUtil.getContainerSourceFilePath(AgentConfig.getInstance(), file);
-			String to = PathUtil.getContainerTargetFilePath(stack, file);
+			String from = PathUtil.getModuleSourceFilePath(AgentConfig.getInstance(), module, file);
+			String to = PathUtil.getContainerTargetFilePath(stack, module, file);
 
 			changed |= deployFile(stack, from, to);
 		}

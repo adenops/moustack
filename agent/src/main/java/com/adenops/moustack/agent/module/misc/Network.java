@@ -17,7 +17,7 @@
  * limitations under the License.
  */
 
-package com.adenops.moustack.agent.module;
+package com.adenops.moustack.agent.module.misc;
 
 import java.util.List;
 
@@ -25,25 +25,23 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.adenops.moustack.agent.DeploymentException;
-import com.adenops.moustack.agent.Stage;
 import com.adenops.moustack.agent.config.StackConfig;
 import com.adenops.moustack.agent.config.StackProperty;
-import com.adenops.moustack.agent.model.docker.Container;
+import com.adenops.moustack.agent.module.SystemModule;
 import com.adenops.moustack.agent.util.DeploymentUtil;
 import com.adenops.moustack.agent.util.ProcessUtil;
 import com.adenops.moustack.agent.util.SystemCtlUtil;
 import com.adenops.moustack.agent.util.YumUtil;
 
-public class Network extends BaseModule {
+public class Network extends SystemModule {
 	private static final Logger log = LoggerFactory.getLogger(Network.class);
 
-	public Network(String name, Stage stage, String role, List<String> files, List<String> packages,
-			List<String> services, List<Container> containers) {
-		super(name, stage, role, files, packages, services, containers);
+	public Network(String name, List<String> files, List<String> packages, List<String> services) {
+		super(name, files, packages, services);
 	}
 
 	@Override
-	public boolean deployHost(StackConfig stack) throws DeploymentException {
+	public boolean deploy(StackConfig stack) throws DeploymentException {
 		boolean changed = false;
 
 		changed |= YumUtil.install(packages.toArray(new String[packages.size()]));
@@ -53,7 +51,7 @@ public class Network extends BaseModule {
 		changed |= YumUtil.remove("NetworkManager", "firewalld", "openvswitch");
 		changed |= YumUtil.install("iptables-services");
 
-		changed |= DeploymentUtil.deployRoleFiles(stack, name, role, files);
+		changed |= DeploymentUtil.deploySystemFiles(stack, name, files);
 
 		changed |= SystemCtlUtil.stopService("NetworkManager");
 

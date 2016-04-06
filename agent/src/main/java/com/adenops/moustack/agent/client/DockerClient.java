@@ -39,8 +39,8 @@ import org.slf4j.LoggerFactory;
 
 import com.adenops.moustack.agent.DeploymentException;
 import com.adenops.moustack.agent.config.StackConfig;
-import com.adenops.moustack.agent.model.docker.Container;
 import com.adenops.moustack.agent.model.docker.Volume;
+import com.adenops.moustack.agent.module.ContainerModule;
 import com.adenops.moustack.agent.util.PathUtil;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.CreateContainerResponse;
@@ -108,12 +108,12 @@ public class DockerClient extends ManagedClient {
 		}
 	}
 
-	public void stopContainers(List<Container> containers) {
-		for (Container container : containers)
+	public void stopContainers(List<ContainerModule> containers) {
+		for (ContainerModule container : containers)
 			stopContainer(container);
 	}
 
-	public void stopContainer(Container container) {
+	public void stopContainer(ContainerModule container) {
 		try {
 			client.stopContainerCmd(container.getName()).exec();
 			log.debug("stopped container " + container.getName());
@@ -122,7 +122,7 @@ public class DockerClient extends ManagedClient {
 		removeContainer(container);
 	}
 
-	private void removeContainerRetry(Container container) {
+	private void removeContainerRetry(ContainerModule container) {
 		try {
 			// retry to remove container because of docker bug https://github.com/docker/docker/issues/14474
 			// this may also be related to cadvisor bug https://github.com/google/cadvisor/issues/771
@@ -140,7 +140,7 @@ public class DockerClient extends ManagedClient {
 		}
 	}
 
-	private void removeContainer(Container container) {
+	private void removeContainer(ContainerModule container) {
 		try {
 			removeContainerRetry(container);
 			log.debug("removed container " + container.getName());
@@ -181,7 +181,7 @@ public class DockerClient extends ManagedClient {
 		sb.append("\n");
 	}
 
-	public String getContainerInfo(Container container) {
+	public String getContainerInfo(ContainerModule container) {
 		InspectContainerResponse containerInspect = null;
 		try {
 			// inspect container and retrieve corresponding image id
@@ -209,7 +209,7 @@ public class DockerClient extends ManagedClient {
 	/*
 	 * TODO: handle change in container name (by checking image names).
 	 */
-	public boolean containerCheckUpdate(Container container) throws DeploymentException {
+	public boolean containerCheckUpdate(ContainerModule container) throws DeploymentException {
 		String containerImageId = null;
 		InspectContainerResponse containerInspect = null;
 		boolean needRestart = false;
@@ -363,21 +363,22 @@ public class DockerClient extends ManagedClient {
 		return true;
 	}
 
-	public void startOrRestartContainers(List<Container> containers) throws DeploymentException {
-		for (Container container : containers)
+	public void startOrRestartContainers(List<ContainerModule> containers) throws DeploymentException {
+		for (ContainerModule container : containers)
 			startOrRestartContainer(container);
 	}
 
-	public void startOrRestartContainer(Container container) throws DeploymentException {
+	public void startOrRestartContainer(ContainerModule container) throws DeploymentException {
 		log.info("updating container " + container.getName());
 		startOrRestartContainer(container, false, new String[] {});
 	}
 
-	public void startEphemeralContainer(Container container, String user, String... command) throws DeploymentException {
+	public void startEphemeralContainer(ContainerModule container, String user, String... command)
+			throws DeploymentException {
 		String name = container.getName() + "-" + RandomStringUtils.random(10, true, true);
 		String[] suCommand = new String[] { "su", "-s", "/bin/sh", "-c", String.join(" ", command), user };
 
-		Container temporaryContainer = new Container(name, container);
+		ContainerModule temporaryContainer = new ContainerModule(name, container);
 
 		log.debug("executing command " + String.join(" ", command));
 		startOrRestartContainer(temporaryContainer, true, suCommand);
@@ -392,7 +393,7 @@ public class DockerClient extends ManagedClient {
 	/*
 	 * TODO: handle change in container name (by checking image names).
 	 */
-	private void startOrRestartContainer(Container container, boolean ephemeral, String... command)
+	private void startOrRestartContainer(ContainerModule container, boolean ephemeral, String... command)
 			throws DeploymentException {
 		// prepare container creation command
 		CreateContainerCmd createContainerCmd = client.createContainerCmd(container.getImage())
@@ -434,7 +435,7 @@ public class DockerClient extends ManagedClient {
 		// no env-file, so we need to read generated env files on the host filesystem and generate the environment...
 		List<String> environment = new ArrayList<>();
 		for (String envFile : container.getEnvironments()) {
-			File file = new File(PathUtil.getContainerTargetFilePath(stack, envFile));
+			File file = new File(PathUtil.getContainerTargetFilePath(stack, container.getName(), envFile));
 			try {
 				environment.addAll(FileUtils.readLines(file));
 			} catch (IOException e) {

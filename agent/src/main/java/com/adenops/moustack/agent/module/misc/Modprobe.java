@@ -17,7 +17,7 @@
  * limitations under the License.
  */
 
-package com.adenops.moustack.agent.module;
+package com.adenops.moustack.agent.module.misc;
 
 import java.io.File;
 import java.io.IOException;
@@ -28,30 +28,28 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.adenops.moustack.agent.DeploymentException;
-import com.adenops.moustack.agent.Stage;
 import com.adenops.moustack.agent.config.AgentConfig;
 import com.adenops.moustack.agent.config.StackConfig;
-import com.adenops.moustack.agent.model.docker.Container;
+import com.adenops.moustack.agent.module.SystemModule;
 import com.adenops.moustack.agent.util.PathUtil;
 import com.adenops.moustack.agent.util.ProcessUtil;
 
-public class Modprobe extends BaseModule {
+public class Modprobe extends SystemModule {
 	private static final Logger log = LoggerFactory.getLogger(Modprobe.class);
 
-	public Modprobe(String name, Stage stage, String role, List<String> files, List<String> packages,
-			List<String> services, List<Container> containers) {
-		super(name, stage, role, files, packages, services, containers);
+	public Modprobe(String name, List<String> files, List<String> packages, List<String> services) {
+		super(name, files, packages, services);
 	}
 
 	@Override
-	public boolean deployHost(StackConfig stack) throws DeploymentException {
-		boolean changed = super.deployHost(stack);
+	public boolean deploy(StackConfig stack) throws DeploymentException {
+		boolean changed = super.deploy(stack);
 
 		if (!changed)
 			return false;
 
 		for (String file : files) {
-			String path = PathUtil.getRoleSourceFilePath(AgentConfig.getInstance(), role, file);
+			String path = PathUtil.getModuleSourceFilePath(AgentConfig.getInstance(), name, file);
 			try {
 				for (String entry : FileUtils.readLines(new File(path)))
 					ProcessUtil.execute("modprobe", entry);

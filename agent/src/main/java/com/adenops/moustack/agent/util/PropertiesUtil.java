@@ -55,10 +55,10 @@ public class PropertiesUtil {
 		// even if it's the most specific config we need to load it first to get the role so we store it in a different
 		// map, that we will merge later
 		Properties hostConfig = new Properties();
-		loadPropertiesFile(hostConfig, PathUtil.getHostPropertiesPath(agentConfig));
+		loadPropertiesFile(hostConfig, PathUtil.getNodePropertiesPath(agentConfig));
 
-		// load common properties, used for any role
-		loadPropertiesFile(variables, PathUtil.getRolePropertiesPath(agentConfig, "common"));
+		// load profile properties
+		loadPropertiesFile(variables, PathUtil.getProfilePropertiesPath(agentConfig));
 
 		// load role specific properties
 		String role = (String) hostConfig.get(StackProperty.ROLE.getName());

@@ -19,8 +19,16 @@
 
 package com.adenops.moustack.agent.util;
 
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+
+import com.adenops.moustack.agent.DeploymentException;
+import com.esotericsoftware.yamlbeans.YamlException;
+import com.esotericsoftware.yamlbeans.YamlReader;
 
 public class YamlUtil {
 	@SuppressWarnings("unchecked")
@@ -29,5 +37,29 @@ public class YamlUtil {
 			return new ArrayList<>();
 		}
 		return (List<String>) obj;
+	}
+
+	public static Map<Object, Object> loadYaml(String path) throws DeploymentException {
+		YamlReader reader = null;
+		try {
+			reader = new YamlReader(new FileReader(path));
+			Map<Object, Object> map = (Map<Object, Object>) reader.read();
+			if (map == null)
+				throw new DeploymentException("invalid yaml data from " + path);
+
+			return map;
+		} catch (FileNotFoundException e) {
+			throw new DeploymentException("cannot load yaml file " + path, e);
+		} catch (YamlException e) {
+			throw new DeploymentException("error while parsing module definition from " + path, e);
+		} finally {
+			if (reader != null) {
+				try {
+					reader.close();
+				} catch (IOException e) {
+					// ignored
+				}
+			}
+		}
 	}
 }

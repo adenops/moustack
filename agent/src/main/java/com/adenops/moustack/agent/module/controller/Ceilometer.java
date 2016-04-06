@@ -25,23 +25,23 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.adenops.moustack.agent.DeploymentException;
-import com.adenops.moustack.agent.Stage;
 import com.adenops.moustack.agent.client.Clients;
 import com.adenops.moustack.agent.config.StackConfig;
 import com.adenops.moustack.agent.config.StackProperty;
-import com.adenops.moustack.agent.model.docker.Container;
-import com.adenops.moustack.agent.module.BaseModule;
+import com.adenops.moustack.agent.model.docker.Volume;
+import com.adenops.moustack.agent.module.ContainerModule;
+import com.github.dockerjava.api.model.Capability;
 
-public class Ceilometer extends BaseModule {
+public class Ceilometer extends ContainerModule {
 	private static final Logger log = LoggerFactory.getLogger(Ceilometer.class);
 
-	public Ceilometer(String name, Stage stage, String role, List<String> files, List<String> packages,
-			List<String> services, List<Container> containers) {
-		super(name, stage, role, files, packages, services, containers);
+	public Ceilometer(String name, String image, List<String> files, List<String> environments, List<Volume> volumes,
+			List<Capability> capabilities, boolean privileged, List<String> devices, boolean syslog) {
+		super(name, image, files, environments, volumes, capabilities, privileged, devices, syslog);
 	}
 
 	@Override
-	public boolean deployContainers(StackConfig stack) throws DeploymentException {
+	public boolean deploy(StackConfig stack) throws DeploymentException {
 		boolean changed = false;
 		changed |= Clients.getKeystoneClient().createService(stack, "ceilometer", "OpenStack Telemetry service",
 				"metering", "http://%s:8777", "http://%s:8777", "http://%s:8777");
@@ -57,10 +57,10 @@ public class Ceilometer extends BaseModule {
 		Clients.getMongoClient().createDatabaseUser(stack.get(StackProperty.DB_CEILOMETER_DATABASE),
 				stack.get(StackProperty.DB_CEILOMETER_USER), stack.get(StackProperty.DB_CEILOMETER_PASSWORD));
 
-		changed |= deployContainersConfig(stack);
+		changed |= deployConfig(stack);
 
 		if (changed)
-			Clients.getDockerClient().startOrRestartContainers(containers);
+			Clients.getDockerClient().startOrRestartContainer(this);
 
 		return changed;
 	}

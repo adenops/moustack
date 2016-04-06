@@ -17,42 +17,31 @@
  * limitations under the License.
  */
 
-package com.adenops.moustack.agent.module;
+package com.adenops.moustack.agent.module.misc;
 
-import java.io.File;
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.adenops.moustack.agent.DeploymentException;
-import com.adenops.moustack.agent.Stage;
 import com.adenops.moustack.agent.config.StackConfig;
-import com.adenops.moustack.agent.model.docker.Container;
+import com.adenops.moustack.agent.config.StackProperty;
+import com.adenops.moustack.agent.module.SystemModule;
 import com.adenops.moustack.agent.util.ProcessUtil;
 
-public class YumRepos extends BaseModule {
-	private static final Logger log = LoggerFactory.getLogger(YumRepos.class);
+public class SELinux extends SystemModule {
+	private static final Logger log = LoggerFactory.getLogger(SELinux.class);
 
-	public YumRepos(String name, Stage stage, String role, List<String> files, List<String> packages,
-			List<String> services, List<Container> containers) {
-		super(name, stage, role, files, packages, services, containers);
+	public SELinux(String name, List<String> files, List<String> packages, List<String> services) {
+		super(name, files, packages, services);
 	}
 
 	@Override
-	public boolean deployHost(StackConfig stack) throws DeploymentException {
-		boolean changed = super.deployHost(stack);
-		if (changed) {
-			// import gpg keys
-			for (File file : new File("/etc/pki/rpm-gpg").listFiles())
-				ProcessUtil.execute("rpm", "--import", file.getAbsolutePath());
-
-			// clean yum metadata
-			ProcessUtil.execute("yum", "clean", "metadata", "--debuglevel=0", "--errorlevel=0");
-
-			// update cache
-			ProcessUtil.execute("yum", "makecache", "--debuglevel=0", "--errorlevel=0");
-		}
+	public boolean deploy(StackConfig stack) throws DeploymentException {
+		boolean changed = super.deploy(stack);
+		if (changed)
+			ProcessUtil.execute("setenforce", stack.get(StackProperty.SELINUX_POLICY));
 		return changed;
 	}
 }

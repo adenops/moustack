@@ -2,12 +2,12 @@
 set -eu
 
 PARALLEL=true
-CACHE=false
+CACHE=true
 
 BASE_TAG="local-registry:5000/openstack"
 DOCKER_BUILD_OPTS="--disable-content-trust=true --pull=true --tag=test --ulimit=nofile=1024:1024"
 $CACHE || DOCKER_BUILD_OPTS="$DOCKER_BUILD_OPTS --no-cache=true"
-DOCKER_BUILD_OPTS="$DOCKER_BUILD_OPTS --build-arg=http_proxy=http://172.17.0.1:18080"
+DOCKER_BUILD_OPTS="$DOCKER_BUILD_OPTS --build-arg=http_proxy=http://172.17.0.1:3142"
 PARALLEL_OPTS="--jobs 0 --no-notice --bar --halt 2 --verbose"
 
 build() {

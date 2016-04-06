@@ -187,10 +187,12 @@ public class Main {
 
 		try {
 			deployer = new Deployer();
+
 			boolean changed = deployer.start();
 			MoustackClient.getInstance().postReport(
 					changed ? AgentReport.ReasonEnum.UPDATE_SUCCESS : AgentReport.ReasonEnum.UPDATE_NOCHANGE,
 					deployer.getSystemReport(true));
+
 			return 0;
 		} catch (DeploymentException e) {
 			log.error("deployment failed, the following exception occurred:", e);

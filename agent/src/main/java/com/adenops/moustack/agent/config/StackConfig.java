@@ -25,7 +25,7 @@ import com.adenops.moustack.agent.DeploymentException;
 
 public class StackConfig {
 	private Properties properties;
-	private String role;
+	private String[] roles;
 	private String gitRepo;
 	private String gitBranch = "master";
 	private String gitHead;
@@ -33,12 +33,9 @@ public class StackConfig {
 	public StackConfig() {
 	}
 
-	public String getRole() {
-		return role.toString().toLowerCase();
-	}
-
-	public void setRole(String role) {
-		this.role = role;
+	public String[] getRoles() throws DeploymentException {
+		// XXX: temporary, until we support multi-roles
+		return new String[] { get(StackProperty.ROLE) };
 	}
 
 	public String get(StackProperty variable) throws DeploymentException {

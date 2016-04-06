@@ -17,23 +17,19 @@
  * limitations under the License.
  */
 
-package com.adenops.moustack.agent.model.docker;
+package com.adenops.moustack.agent.module;
 
 import java.util.Collections;
 import java.util.List;
 
+import com.adenops.moustack.agent.DeploymentException;
+import com.adenops.moustack.agent.client.Clients;
+import com.adenops.moustack.agent.config.StackConfig;
+import com.adenops.moustack.agent.model.docker.Volume;
+import com.adenops.moustack.agent.util.DeploymentUtil;
 import com.github.dockerjava.api.model.Capability;
 
-/**
- *
- * @author jb
- *
- *         This is not a mapping 1-1 for volumes/volfiles because what we need for the deployment is the list of files
- *         to copy, and the list volumes to pass to docker. I.e. we don't store the volume information in volFiles but
- *         we add to volume entries.
- */
-public class Container {
-	private final String name;
+public class ContainerModule extends BaseModule {
 	private final String image;
 	private final List<String> files;
 	private final List<String> environments;
@@ -43,9 +39,10 @@ public class Container {
 	private final List<String> devices;
 	private final boolean syslog;
 
-	public Container(String name, String image, List<String> files, List<String> environments, List<Volume> volumes,
-			List<Capability> capabilities, boolean privileged, List<String> devices, boolean syslog) {
-		this.name = name;
+	public ContainerModule(String name, String image, List<String> files, List<String> environments,
+			List<Volume> volumes, List<Capability> capabilities, boolean privileged, List<String> devices,
+			boolean syslog) {
+		super(name);
 		this.image = image;
 		this.files = files;
 		this.environments = environments;
@@ -59,9 +56,12 @@ public class Container {
 	/*
 	 * we use unmodifiable lists because we only use this constructor for
 	 * temporary containers
+	 *
+	 * TODO: this has been migrated from the old container logic, we need to re-evaluate if the module muste be used in this case.
+	 *
 	 */
-	public Container(String name, Container container) {
-		this.name = name;
+	public ContainerModule(String name, ContainerModule container) {
+		super(name);
 		this.image = container.image;
 		this.environments = Collections.unmodifiableList(container.environments);
 		this.files = Collections.unmodifiableList(container.files);
@@ -72,8 +72,20 @@ public class Container {
 		this.syslog = container.isSyslog();
 	}
 
-	public String getName() {
-		return name;
+	@Override
+	public boolean deploy(StackConfig stack) throws DeploymentException {
+		boolean changed = deployConfig(stack);
+		if (changed)
+			Clients.getDockerClient().startOrRestartContainer(this);
+		return changed;
+	}
+
+	@Override
+	protected boolean deployConfig(StackConfig stack) throws DeploymentException {
+		boolean changed = false;
+		changed |= DeploymentUtil.deployContainerFiles(stack, name, getFiles());
+		changed |= Clients.getDockerClient().containerCheckUpdate(this);
+		return changed;
 	}
 
 	public String getImage() {
@@ -106,5 +118,10 @@ public class Container {
 
 	public List<String> getFiles() {
 		return files;
+	}
+
+	@Override
+	public String getType() {
+		return "container";
 	}
 }

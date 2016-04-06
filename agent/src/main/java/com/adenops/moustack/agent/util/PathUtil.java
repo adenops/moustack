@@ -48,29 +48,48 @@ public class PathUtil {
 		return sb;
 	}
 
+	public static String getModulesPath(AgentConfig agentConfig) {
+		StringBuffer sb = new StringBuffer(getProfilePath(agentConfig));
+		sb.append(File.separator);
+		sb.append("modules");
+		return sb.toString();
+	}
+
+	public static String getModulePath(AgentConfig agentConfig, String module) {
+		StringBuffer sb = new StringBuffer(getModulesPath(agentConfig));
+		sb.append(File.separator);
+		sb.append(module);
+		return sb.toString();
+	}
+
+	public static String getModuleConfigPath(AgentConfig agentConfig, String module) {
+		StringBuffer sb = new StringBuffer(getModulePath(agentConfig, module));
+		sb.append(File.separator);
+		sb.append("module.yaml");
+		return sb.toString();
+	}
+
+	public static String getProfilePropertiesPath(AgentConfig agentConfig) {
+		StringBuffer sb = new StringBuffer(getProfilePath(agentConfig));
+		sb.append(File.separator);
+		sb.append("profile.properties");
+		return sb.toString();
+	}
+
 	public static String getRolePropertiesPath(AgentConfig agentConfig, String role) {
 		StringBuffer sb = new StringBuffer(getRolePath(agentConfig, role));
 		sb.append(File.separator);
-		sb.append("variables.properties");
+		sb.append("role.properties");
 		return sb.toString();
 	}
 
-	public static String getHostPropertiesPath(AgentConfig agentConfig) {
+	public static String getNodePropertiesPath(AgentConfig agentConfig) {
 		StringBuffer sb = new StringBuffer(getProfilePath(agentConfig));
 		sb.append(File.separator);
-		sb.append("hosts");
+		sb.append("nodes");
 		sb.append(File.separator);
 		sb.append(agentConfig.getId());
 		sb.append(".properties");
-		return sb.toString();
-	}
-
-	public static String getContainersConfigPath(AgentConfig agentConfig) {
-		StringBuffer sb = new StringBuffer(getProfilePath(agentConfig));
-		sb.append(File.separator);
-		sb.append("containers");
-		sb.append(File.separator);
-		sb.append("containers.yaml");
 		return sb.toString();
 	}
 
@@ -81,34 +100,24 @@ public class PathUtil {
 		return sb.toString();
 	}
 
-	public static String getRoleSourceFilePath(AgentConfig agentConfig, String role, String file) {
-		StringBuffer sb = new StringBuffer(getRolePath(agentConfig, role));
-		sb.append(File.separator);
-		sb.append("files");
+	public static String getModuleSourceFilePath(AgentConfig agentConfig, String module, String file) {
+		StringBuffer sb = new StringBuffer(getModulePath(agentConfig, module));
 		sb.append(File.separator);
 		sb.append(file);
 		return sb.toString();
 	}
 
-	public static String getContainerSourceFilePath(AgentConfig agentConfig, String file) {
-		StringBuffer sb = new StringBuffer(getProfilePath(agentConfig));
-		sb.append(File.separator);
-		sb.append("containers");
-		sb.append(File.separator);
-		sb.append("files");
-		sb.append(File.separator);
-		sb.append(file);
-		return sb.toString();
-	}
-
-	public static String getContainerTargetFilePath(StackConfig stack, String file) throws DeploymentException {
+	public static String getContainerTargetFilePath(StackConfig stack, String module, String file)
+			throws DeploymentException {
 		StringBuffer sb = new StringBuffer(stack.get(StackProperty.CONTAINERS_ROOT));
 		sb.append(File.separator);
+		sb.append(module);
+		sb.append(File.separator);
 		sb.append(file);
 		return sb.toString();
 	}
 
-	public static String getRoleTargetFilePath(AgentConfig agentConfig, String role, String file) {
+	public static String getSystemTargetFilePath(AgentConfig agentConfig, String file) {
 		StringBuffer sb = new StringBuffer(File.separator);
 		sb.append(file);
 		return sb.toString();
