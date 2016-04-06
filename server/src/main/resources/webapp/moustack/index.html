@@ -19,7 +19,7 @@ pagination: http://www.datatables.net/forums/discussion/83/how-to-pagination-wit
 */
 
 window.client = new SwaggerClient({
-	url: "http://localhost:8080/rest/swagger.json",
+	url: window.location.protocol + "//" + window.location.host + "/rest/swagger.json",
 	success: function() {
 		reportsTable = createReportsDatatable();
 		agentsTable = createAgentsDatatable();

@@ -9,7 +9,7 @@
 
 <script type="text/javascript">
 window.client = new SwaggerClient({
-	url: "http://localhost:8080/rest/swagger.json",
+	url: window.location.protocol + "//" + window.location.host + "/rest/swagger.json",
 	success: function() {
 		createDatatable();
 	}
