@@ -30,7 +30,7 @@ export LC_ALL=C
 export DEBIAN_FRONTEND=noninteractive
 
 # Configure openstack repository
-apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 5EDB1B62EC4926EA
+http_proxy= apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 5EDB1B62EC4926EA
 cat >/etc/apt/sources.list.d/openstack.list <<EOF
 deb http://ubuntu-cloud.archive.canonical.com/ubuntu trusty-updates/liberty main
 EOF
