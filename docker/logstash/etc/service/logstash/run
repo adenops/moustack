@@ -16,14 +16,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-set -e
 
-. /usr/lib/runit/common
+# source shell library
+. /usr/lib/runit/load
 
 service_mkdir logstash /openstack/logs
-#start_daemon td-agent td-agent
 
-start_daemon logstash java \
+service_start logstash java \
 	-Djffi.boot.library.path=/opt/logstash/vendor/jruby/lib/jni \
 	-Xbootclasspath/a:/opt/logstash/vendor/jruby/lib/jruby.jar \
 	-Djruby.home=/opt/logstash/vendor/jruby \
