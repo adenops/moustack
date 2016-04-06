@@ -38,6 +38,7 @@ eatmydata apt-get install -y --no-install-recommends \
 	neutron-dhcp-agent \
 	neutron-l3-agent \
 	neutron-metadata-agent \
+	neutron-lbaas-agent \
 	neutron-plugin-ml2 \
 	neutron-server \
 	openvswitch-switch
