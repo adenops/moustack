@@ -16,6 +16,7 @@ CONTAINER_IMAGES := \
 	docker/nova-controller \
 	docker/nova-compute \
 	docker/neutron-controller \
+	docker/neutron-lbaas \
 	docker/neutron-openvswitch
 
 #	$(shell find docker/ -mindepth 1 -maxdepth 1 -type d ! -name '*-base' | sort -n)
