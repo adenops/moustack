@@ -1,9 +1,8 @@
 FROM local-registry:5000/openstack/ubuntu-base:latest
 
-RUN eatmydata apt-get install -y --no-install-recommends samba
+# install and configure packages
+COPY build-image /tmp/
+RUN /tmp/build-image
 
-COPY smb.conf /etc/samba/
-RUN mkdir /cinder
-
-RUN mkdir -p /etc/service/samba
-COPY samba.sh /etc/service/samba/run
+# add etc overlay
+COPY etc /etc/
