@@ -16,22 +16,40 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+# Exit on failure
 set -e
 
-. /usr/lib/runit/common
+# Switch working directory
+cd $(dirname $0)
 
-# TODO: check how to fix properly
-if [ -c /dev/kvm ]; then
-	chmod 777 /dev/kvm
-fi
+# Avoid locale issues
+export LC_ALL=C
 
-# ensure instances folder is created (nova may fail otherwise)
-service_mkdir nova /var/lib/nova/instances
+# dpkg shouldn't ask questions
+export DEBIAN_FRONTEND=noninteractive
 
-wait_for syslog
-wait_for openvswitch
-wait_for rabbitmq
-wait_for neutron-server
-wait_for libvirt
+# Update packages list
+apt-get update
 
-start_daemon nova /usr/bin/nova-compute --config-file=/etc/nova/nova.conf
+# Install and patch usefull python modules
+eatmydata apt-get install -y --no-install-recommends \
+	cifs-utils \
+	dmidecode \
+	nfs-common \
+	nova-compute \
+	openvswitch-switch \
+	pm-utils \
+	qemu-kvm \
+	sysfsutils
+
+# Purge nova local database
+rm -f /var/lib/nova/nova.sqlite
+
+# Remove libvirtd default network
+rm -f /etc/libvirt/qemu/networks/autostart/default.xml
+
+# Clean rootfs
+cd /
+apt-get clean
+rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*

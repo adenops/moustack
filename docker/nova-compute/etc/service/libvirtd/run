@@ -16,13 +16,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-set -e
 
-. /usr/lib/runit/common
+# source shell library
+. /usr/lib/runit/load
 
 wait_for syslog
 
 mkdir -p /var/run/libvirt/
 rm -f /var/run/libvirtd.pid
+
+# TODO: check how to fix properly
+if [ -c /dev/kvm ]; then
+	chmod 777 /dev/kvm
+fi
 
 exec /usr/sbin/libvirtd
