@@ -33,7 +33,7 @@ export DEBIAN_FRONTEND=noninteractive
 apt-get update
 
 # Install and patch usefull python modules
-apt-get install -y --no-install-recommends \
+eatmydata apt-get install -y --no-install-recommends \
 	nova-api \
 	nova-cert \
 	nova-conductor \

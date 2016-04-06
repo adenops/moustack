@@ -33,7 +33,7 @@ export DEBIAN_FRONTEND=noninteractive
 apt-get update
 
 # Install packages
-apt-get install -y --no-install-recommends \
+eatmydata apt-get install -y --no-install-recommends \
 	heat-api \
 	heat-api-cfn \
 	heat-engine
