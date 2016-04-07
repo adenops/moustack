@@ -33,6 +33,7 @@ public class ServerConfig {
 	private String dbName;
 	private String dbUser;
 	private String dbPassword;
+	private boolean devMode;
 
 	private ServerConfig() {
 	}
@@ -81,6 +82,11 @@ public class ServerConfig {
 		this.dbPassword = dbPassword;
 	}
 
+	@Argument(type = Type.FLAG, shortarg = "-D", longarg = "--dev", description = "Start in dev mode")
+	public void setDevMode(boolean devMode) {
+		this.devMode = devMode;
+	}
+
 	@Argument(type = Type.CONFIGURATION, shortarg = "-c", longarg = "--config", defaultvalue = "/etc/moustack-server", description = "Configuration file")
 	public void _config() {
 	}
@@ -127,5 +133,9 @@ public class ServerConfig {
 
 	public String getDbPassword() {
 		return dbPassword;
+	}
+
+	public boolean getDevMode() {
+		return devMode;
 	}
 }

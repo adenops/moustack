@@ -35,6 +35,7 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.io.FileUtils;
 import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
 import org.eclipse.jetty.security.MappedLoginService;
@@ -49,10 +50,13 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.security.Constraint;
 import org.eclipse.jetty.util.security.Password;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.InitCommand;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.errors.RepositoryNotFoundException;
 import org.eclipse.jgit.http.server.GitServlet;
 import org.eclipse.jgit.http.server.GitSmartHttpTools;
 import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.transport.resolver.RepositoryResolver;
 import org.eclipse.jgit.transport.resolver.ServiceNotEnabledException;
 import org.glassfish.jersey.server.ServerProperties;
@@ -83,8 +87,44 @@ public class Main {
 	private static final File lockFile = new File("/var/tmp/moustack-server.lock");
 	private static FileLock lock;
 
-	private static ServletHolder setupGitServlet(String path) throws IOException {
-		Repository repository = Git.open(new File(path)).getRepository();
+	private static File createTempFolder() throws IOException {
+		// this sucks, but it seem there are no better ways in java to create a temporary folder...
+		File tempDir = File.createTempFile("moustack-profiles", ".tmp");
+		tempDir.delete();
+		tempDir.mkdir();
+
+		// register a shutdown hook to cleanup the temporary folder on exit
+		Runtime.getRuntime().addShutdownHook(new Thread() {
+			@Override
+			public void run() {
+				try {
+					FileUtils.deleteDirectory(tempDir);
+				} catch (IOException e) {
+					log.error("error", e);
+					log.error("could not delete {}", tempDir);
+				}
+			}
+		});
+
+		return tempDir;
+	}
+
+	private static ServletHolder setupGitServlet(ServerConfig config) throws Exception {
+		// remove leading file://
+		String path = config.getRepoUri().substring(7);
+
+		// prepare init command
+		InitCommand init = Git.init().setDirectory(new File(path)).setBare(false);
+
+		// if dev mode, store git metadata in a temporary folder
+		if (config.getDevMode()) {
+			log.debug("initializing git environment in dev mode");
+			init.setGitDir(createTempFolder());
+		}
+
+		// initialize repo
+		Git git = init.call();
+		Repository repository = git.getRepository();
 
 		// serve git repository
 		GitServlet gs = new GitServlet();
@@ -96,7 +136,21 @@ public class Main {
 				if (!name.equals(REPOSITORY_NAME))
 					throw new RepositoryNotFoundException(name);
 
-				repository.incrementOpen();
+				if (config.getDevMode()) {
+					// if we are in dev mode, add all files and commit
+					try {
+						git.add().addFilepattern(".").call();
+
+						// check if we actually need to commit
+						if (!git.status().call().isClean()) {
+							RevCommit commit = git.commit().setMessage("moustack dev mode").call();
+							log.debug("dev mode: created new commit {}", commit.name());
+						}
+					} catch (GitAPIException e) {
+						log.debug("dev mode: error while adding/commitinf changes", e);
+					}
+				}
+
 				return repository;
 			}
 		});
@@ -212,7 +266,7 @@ public class Main {
 
 		// Git Servlet
 		if (config.getRepoUri().startsWith("file:///"))
-			servletsContext.addServlet(setupGitServlet(config.getRepoUri().substring(7)), GIT_CONTEXT + "/*");
+			servletsContext.addServlet(setupGitServlet(config), GIT_CONTEXT + "/*");
 
 		// add default servlet to be spec compliant
 		servletsContext.addServlet(new ServletHolder(new DefaultServlet()), "/");
