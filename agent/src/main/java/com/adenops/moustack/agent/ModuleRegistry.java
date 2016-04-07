@@ -37,6 +37,7 @@ public class ModuleRegistry {
 		registry.put("neutron-controller", com.adenops.moustack.agent.module.controller.Neutron.class);
 		registry.put("glance", com.adenops.moustack.agent.module.controller.Glance.class);
 		registry.put("cinder", com.adenops.moustack.agent.module.controller.Cinder.class);
+		registry.put("designate", com.adenops.moustack.agent.module.controller.Designate.class);
 		registry.put("nova-controller", com.adenops.moustack.agent.module.controller.Nova.class);
 		registry.put("ceilometer", com.adenops.moustack.agent.module.controller.Ceilometer.class);
 		registry.put("heat", com.adenops.moustack.agent.module.controller.Heat.class);
