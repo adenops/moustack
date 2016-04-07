@@ -189,9 +189,7 @@ public class MySQLClient extends ManagedClient {
 			if (!checkDBExist(connection, database)) {
 				createDB(connection, database);
 				changed = true;
-			}
 
-			if (!checkUserExist(connection, "localhost", user, password)) {
 				createUser(connection, "localhost", database, user, password);
 				createUser(connection, "127.0.0.1", database, user, password);
 				changed = true;
