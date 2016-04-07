@@ -36,13 +36,24 @@ apt-get update
 eatmydata apt-get install -y --no-install-recommends \
 	apache2 \
 	libapache2-mod-wsgi \
-	openstack-dashboard
+	openstack-dashboard \
+	python-designateclient
 
 # Purge useless apache configuration
 rm -f /etc/apache2/sites-enabled/*
 rm -f /etc/apache2/conf-enabled/serve-cgi-bin.conf
 rm -f /etc/apache2/conf-enabled/openstack-dashboard.conf
 rm -f /etc/apache2/conf-enabled/other-vhosts-access-log.conf
+
+# Add Designate/DNSaaS web UI
+designate_ui_version=2.0.0.0rc1
+git clone https://github.com/openstack/designate-dashboard.git
+cd designate-dashboard
+git checkout ${designate_ui_version}
+python setup.py install
+/bin/cp -vf designatedashboard/enabled/* /usr/share/openstack-dashboard/openstack_dashboard/enabled/
+/bin/echo -e "__version__ = '${designate_ui_version}'" >/usr/local/lib/python2.7/dist-packages/designatedashboard/__init__.py
+rm -vf /usr/local/lib/python2.7/dist-packages/designatedashboard/__init__.pyc
 
 # Clean rootfs
 cd /
