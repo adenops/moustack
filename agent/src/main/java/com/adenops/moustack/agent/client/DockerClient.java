@@ -29,6 +29,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -75,6 +76,7 @@ import com.github.dockerjava.core.command.WaitContainerResultCallback;
 public class DockerClient extends ManagedClient {
 	private static final Logger log = LoggerFactory.getLogger(DockerClient.class);
 	private static final String DOCKER_URI = "unix:///var/run/docker.sock";
+	private final int WAIT_EPHEMERAL_TIMEOUT = 60 * 1000;
 	private final com.github.dockerjava.api.DockerClient client;
 	private final StackConfig stack;
 
@@ -383,9 +385,13 @@ public class DockerClient extends ManagedClient {
 		log.debug("executing command " + String.join(" ", command));
 		startOrRestartContainer(temporaryContainer, true, suCommand);
 		try {
-			client.waitContainerCmd(name).exec(new WaitContainerResultCallback()).awaitCompletion();
-		} catch (InterruptedException e) {
-			throw new DockerClientException("interrupted while waiting for container " + container.getImage(), e);
+			Integer code = client.waitContainerCmd(name).exec(new WaitContainerResultCallback())
+					.awaitStatusCode(WAIT_EPHEMERAL_TIMEOUT, TimeUnit.MILLISECONDS);
+			if (code != 0)
+				throw new DockerClientException("ephemeral container " + container.getImage() + " execution returned "
+						+ code + " for command " + String.join(" ", suCommand));
+		} catch (DockerClientException e) {
+			throw new DockerClientException("error while waiting for container " + container.getImage(), e);
 		}
 		removeContainer(temporaryContainer);
 	}
@@ -449,6 +455,7 @@ public class DockerClient extends ManagedClient {
 
 		CreateContainerResponse dockerContainer = createContainerCmd.exec();
 		client.startContainerCmd(dockerContainer.getId()).exec();
+
 		log.debug("started container " + container.getName());
 	}
 }
