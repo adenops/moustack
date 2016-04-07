@@ -163,12 +163,12 @@ public class MySQLClient extends ManagedClient {
 		}
 	}
 
-	private void createUser(Connection connection, String host, String database, String name, String password)
+	private void createUser(Connection connection, String host, String name, String password)
 			throws DeploymentException {
-		log.info("creating user " + name + " for database " + database + " (" + host + ")");
+		log.info("creating user " + name + " for host " + host);
 		PreparedStatement stmt = null;
 		try {
-			stmt = connection.prepareStatement("GRANT ALL PRIVILEGES ON " + database + ".* TO ?@? IDENTIFIED BY ?");
+			stmt = connection.prepareStatement("CREATE USER ?@? IDENTIFIED BY ?");
 			stmt.setString(1, name);
 			stmt.setString(2, host);
 			stmt.setString(3, password);
@@ -182,6 +182,45 @@ public class MySQLClient extends ManagedClient {
 		}
 	}
 
+	private boolean checkGrantExist(Connection connection, String host, String database, String name)
+			throws DeploymentException {
+		PreparedStatement stmt = null;
+		ResultSet resultSet = null;
+		try {
+			stmt = connection.prepareStatement("SELECT 1 FROM mysql.db WHERE db=? AND user=? AND host=?;");
+			stmt.setString(1, database);
+			stmt.setString(2, name);
+			stmt.setString(3, host);
+			if (log.isTraceEnabled())
+				log.trace(stmt.toString());
+			resultSet = stmt.executeQuery();
+			return resultSet.next();
+		} catch (SQLException e) {
+			throw new DeploymentException("cannot check user grant: " + name, e);
+		} finally {
+			close(resultSet);
+			close(stmt);
+		}
+	}
+
+	private void grantUser(Connection connection, String host, String database, String name)
+			throws DeploymentException {
+		log.info("granting user " + name + " on database " + database + " (" + host + ")");
+		PreparedStatement stmt = null;
+		try {
+			stmt = connection.prepareStatement("GRANT ALL PRIVILEGES ON " + database + ".* TO ?@?");
+			stmt.setString(1, name);
+			stmt.setString(2, host);
+			if (log.isTraceEnabled())
+				log.trace(stmt.toString());
+			stmt.executeUpdate();
+		} catch (SQLException e) {
+			throw new DeploymentException("cannot grant user: " + name, e);
+		} finally {
+			close(stmt);
+		}
+	}
+
 	public boolean createDatabaseUser(String database, String user, String password) throws DeploymentException {
 		try {
 			boolean changed = false;
@@ -189,9 +228,21 @@ public class MySQLClient extends ManagedClient {
 			if (!checkDBExist(connection, database)) {
 				createDB(connection, database);
 				changed = true;
+			}
 
-				createUser(connection, "localhost", database, user, password);
-				createUser(connection, "127.0.0.1", database, user, password);
+			if (!checkUserExist(connection, "localhost", user, password)) {
+				createUser(connection, "localhost", user, password);
+				createUser(connection, "127.0.0.1", user, password);
+				changed = true;
+			}
+
+			if (!checkGrantExist(connection, "localhost", database, user)) {
+				grantUser(connection, "localhost", database, user);
+				changed = true;
+			}
+
+			if (!checkGrantExist(connection, "127.0.0.1", database, user)) {
+				grantUser(connection, "127.0.0.1", database, user);
 				changed = true;
 			}
 
