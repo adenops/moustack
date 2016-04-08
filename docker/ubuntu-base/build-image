@@ -51,6 +51,7 @@ eatmydata apt-get dist-upgrade -y --no-install-recommends
 
 # Install usefull packages
 eatmydata apt-get install -y --no-install-recommends \
+	iputils-arping \
 	bind9-host \
 	ca-certificates \
 	cron \
