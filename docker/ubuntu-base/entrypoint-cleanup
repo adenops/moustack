@@ -21,7 +21,7 @@
 # a better solution than manually removing everything.
 
 # cleanup /run
-find /run/ ! -path '*/netns/*' -type f -delete 2>/dev/null || true
+find /run/ -type f -delete 2>/dev/null || true
 
 # cleanup /tmp
 rm -rf /tmp/* 2>/dev/null || true
