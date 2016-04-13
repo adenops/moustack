@@ -33,6 +33,7 @@ import com.adenops.moustack.agent.config.StackConfig;
 public class Clients {
 	private static DockerClient dockerClient;
 	private static KeystoneClient keystoneClient;
+	private static DesignateClient designateClient;
 	private static MongoClient mongoClient;
 	private static MySQLClient mySQLClient;
 	private static StackConfig stack;
@@ -54,6 +55,8 @@ public class Clients {
 		dockerClient = null;
 		release(keystoneClient);
 		keystoneClient = null;
+		release(designateClient);
+		designateClient = null;
 		release(mongoClient);
 		mongoClient = null;
 		release(mySQLClient);
@@ -80,6 +83,17 @@ public class Clients {
 			}
 		}
 		return keystoneClient;
+	}
+
+	public static DesignateClient getDesignateClient() throws DeploymentException {
+		if (designateClient == null) {
+			synchronized (DesignateClient.class) {
+				if (designateClient != null)
+					return designateClient;
+				designateClient = new DesignateClient(stack);
+			}
+		}
+		return designateClient;
 	}
 
 	public static MongoClient getMongoClient() throws DeploymentException {
