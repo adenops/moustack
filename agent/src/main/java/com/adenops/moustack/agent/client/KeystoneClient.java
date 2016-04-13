@@ -19,406 +19,64 @@
 
 package com.adenops.moustack.agent.client;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 
-import javax.ws.rs.ProcessingException;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.Invocation;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-
-import org.glassfish.jersey.client.HttpUrlConnectorProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.adenops.moustack.agent.DeploymentException;
 import com.adenops.moustack.agent.config.StackConfig;
 import com.adenops.moustack.agent.config.StackProperty;
-import com.adenops.moustack.agent.model.keystone.Domain;
-import com.adenops.moustack.agent.model.keystone.Domains;
-import com.adenops.moustack.agent.model.keystone.Endpoint;
-import com.adenops.moustack.agent.model.keystone.Endpoints;
-import com.adenops.moustack.agent.model.keystone.Error;
-import com.adenops.moustack.agent.model.keystone.IgnoredResponse;
-import com.adenops.moustack.agent.model.keystone.OSAuth;
-import com.adenops.moustack.agent.model.keystone.OSEntity;
-import com.adenops.moustack.agent.model.keystone.Project;
-import com.adenops.moustack.agent.model.keystone.Projects;
-import com.adenops.moustack.agent.model.keystone.Role;
-import com.adenops.moustack.agent.model.keystone.Roles;
-import com.adenops.moustack.agent.model.keystone.Service;
-import com.adenops.moustack.agent.model.keystone.ServiceResponse;
-import com.adenops.moustack.agent.model.keystone.Services;
-import com.adenops.moustack.agent.model.keystone.User;
-import com.adenops.moustack.agent.model.keystone.UserResponse;
-import com.adenops.moustack.agent.model.keystone.Users;
-import com.adenops.moustack.agent.util.HttpUtil;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider;
-import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
+import com.adenops.moustack.agent.model.openstack.BaseResponse;
+import com.adenops.moustack.agent.model.openstack.keystone.Domain;
+import com.adenops.moustack.agent.model.openstack.keystone.Endpoint;
+import com.adenops.moustack.agent.model.openstack.keystone.OSAuth;
+import com.adenops.moustack.agent.model.openstack.keystone.Project;
+import com.adenops.moustack.agent.model.openstack.keystone.Role;
+import com.adenops.moustack.agent.model.openstack.keystone.Service;
+import com.adenops.moustack.agent.model.openstack.keystone.ServiceResponse;
+import com.adenops.moustack.agent.model.openstack.keystone.TokenResponse;
+import com.adenops.moustack.agent.model.openstack.keystone.User;
+import com.adenops.moustack.agent.model.openstack.keystone.UserResponse;
 
 /*
  *  TODO: use a proxy or something to avoid duplication of the retry logic
  */
-public class KeystoneClient extends ManagedClient {
+public class KeystoneClient extends AbstractOpenStackClient {
 	private static final Logger log = LoggerFactory.getLogger(KeystoneClient.class);
-	private static final int CONNECTION_MAX_RETRY = 10;
-	private static final int CONNECTION_RETRY_SLEEP = 4;
-
-	private final WebTarget webTarget;
-	private final Client client;
-	private final ObjectMapper mapper;
 
 	protected KeystoneClient(StackConfig stack) throws DeploymentException {
-		log.debug("initializing Keystone client");
-
-		JacksonJsonProvider jacksonJsonProvider = new JacksonJaxbJsonProvider().configure(
-				DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-
-		client = ClientBuilder.newClient();
-		client.register(jacksonJsonProvider);
-
-		// allow patch method
-		client.property(HttpUrlConnectorProvider.SET_METHOD_WORKAROUND, true);
-
-		webTarget = client.target(String.format("http://%s:35357/v3", stack.get(StackProperty.SERVICES_PUBLIC_IP)));
-
-		// instanciate a single object mapper to reuse it
-		mapper = new ObjectMapper();
-		mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-	}
-
-	@Override
-	protected void release() {
-		if (client == null)
-			return;
-
-		log.debug("closing Keystone client");
-		client.close();
-	}
-
-	private static boolean stringsEqual(String str1, String str2) {
-		if (str1 == null && str2 != null)
-			return false;
-		if (str1 != null && str2 == null)
-			return false;
-
-		if (str1 == null && str2 == null)
-			return true;
-
-		return str1.equals(str2);
-	}
-
-	public <E> E get(StackConfig stack, Class<E> clazz, String path, Map<String, String> parameters)
-			throws DeploymentException {
-
-		WebTarget target = webTarget.path(path);
-		if (parameters != null)
-			for (Entry<String, String> parameter : parameters.entrySet())
-				target = target.queryParam(parameter.getKey(), parameter.getValue());
-
-		Invocation.Builder invocationBuilder = target.request(MediaType.APPLICATION_JSON_TYPE);
-		invocationBuilder.header("X-Auth-Token", stack.get(StackProperty.KEYSTONE_ADMIN_TOKEN));
-
-		if (log.isTraceEnabled()) {
-			log.trace("GET request: " + target.getUri());
-		}
-		Response response = null;
-		for (int i = 0; i < CONNECTION_MAX_RETRY; i++) {
-			try {
-				response = invocationBuilder.get();
-				break;
-			} catch (ProcessingException e) {
-				log.debug("failed to connect to keystone, waiting " + CONNECTION_RETRY_SLEEP + "s");
-				try {
-					Thread.sleep(CONNECTION_RETRY_SLEEP * 1000);
-				} catch (InterruptedException e1) {
-				}
-			}
-		}
-		if (response == null)
-			throw new DeploymentException("failed to connect to keystone");
-
-		if (!HttpUtil.isSuccess(response)) {
-			Error error = null;
-			try {
-				error = response.readEntity(Error.class);
-			} catch (Exception e) {
-			}
-
-			throw new DeploymentException("GET request " + target.getUri() + " returned HTTP code "
-					+ response.getStatus() + " (" + response.getStatusInfo() + ")"
-					+ (error == null ? "" : ": " + error.getError().getMessage()));
-		}
-
-		if (log.isTraceEnabled()) {
-			String json = response.readEntity(String.class);
-			log.trace("GET response: " + json);
-			try {
-				return mapper.reader(clazz).readValue(json);
-			} catch (IOException e) {
-				throw new DeploymentException("error while parsing json response", e);
-			}
-		}
-
-		return response.readEntity(clazz);
-	}
-
-	public boolean head(StackConfig stack, String path, Map<String, String> parameters) throws DeploymentException {
-
-		WebTarget target = webTarget.path(path);
-		if (parameters != null)
-			for (Entry<String, String> parameter : parameters.entrySet())
-				target = target.queryParam(parameter.getKey(), parameter.getValue());
-		Invocation.Builder invocationBuilder = target.request(MediaType.APPLICATION_JSON_TYPE);
-		invocationBuilder.header("X-Auth-Token", stack.get(StackProperty.KEYSTONE_ADMIN_TOKEN));
-
-		if (log.isTraceEnabled())
-			log.trace("HEAD request: " + target.getUri());
-
-		Response response = null;
-		for (int i = 0; i < CONNECTION_MAX_RETRY; i++) {
-			try {
-				response = invocationBuilder.head();
-				break;
-			} catch (ProcessingException e) {
-				log.debug("failed to connect to keystone, waiting " + CONNECTION_RETRY_SLEEP + "s");
-				try {
-					Thread.sleep(CONNECTION_RETRY_SLEEP * 1000);
-				} catch (InterruptedException e1) {
-				}
-			}
-		}
-		if (response == null)
-			throw new DeploymentException("failed to connect to keystone");
-
-		if (log.isTraceEnabled())
-			log.trace("HEAD response: " + response.getStatus());
-
-		if (HttpUtil.isSuccess(response))
-			return true;
-
-		if (HttpUtil.isNotFound(response))
-			return false;
-
-		Error error = response.readEntity(Error.class);
-		throw new DeploymentException("HEAD request " + target.getUri() + " returned HTTP code " + response.getStatus()
-				+ " (" + response.getStatusInfo() + "): " + error.getError().getMessage());
-	}
-
-	public void put(StackConfig stack, String path) throws DeploymentException {
-
-		WebTarget target = webTarget.path(path);
-		Invocation.Builder invocationBuilder = target.request(MediaType.APPLICATION_JSON_TYPE);
-		invocationBuilder.header("X-Auth-Token", stack.get(StackProperty.KEYSTONE_ADMIN_TOKEN));
-
-		if (log.isTraceEnabled())
-			log.trace("PUT request: " + target.getUri());
-
-		Response response = null;
-		for (int i = 0; i < CONNECTION_MAX_RETRY; i++) {
-			try {
-				response = invocationBuilder.put(Entity.entity("", MediaType.APPLICATION_JSON_TYPE));
-				break;
-			} catch (ProcessingException e) {
-				log.debug("failed to connect to keystone, waiting " + CONNECTION_RETRY_SLEEP + "s");
-				try {
-					Thread.sleep(CONNECTION_RETRY_SLEEP * 1000);
-				} catch (InterruptedException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
-			}
-		}
-		if (response == null)
-			throw new DeploymentException("failed to connect to keystone");
-
-		if (log.isTraceEnabled())
-			log.trace("PUT response: " + response.getStatus());
-
-		if (HttpUtil.isSuccess(response))
-			return;
-
-		Error error = response.readEntity(Error.class);
-		throw new DeploymentException("HEAD request " + target.getUri() + " returned HTTP code " + response.getStatus()
-				+ " (" + response.getStatusInfo() + "): " + error.getError().getMessage());
-	}
-
-	public void delete(StackConfig stack, String path) throws DeploymentException {
-
-		WebTarget target = webTarget.path(path);
-		Invocation.Builder invocationBuilder = target.request(MediaType.APPLICATION_JSON_TYPE);
-		invocationBuilder.header("X-Auth-Token", stack.get(StackProperty.KEYSTONE_ADMIN_TOKEN));
-
-		if (log.isTraceEnabled())
-			log.trace("DELETE request: " + target.getUri());
-
-		Response response = null;
-		for (int i = 0; i < CONNECTION_MAX_RETRY; i++) {
-			try {
-				response = invocationBuilder.delete();
-				break;
-			} catch (ProcessingException e) {
-				log.debug("failed to connect to keystone, waiting " + CONNECTION_RETRY_SLEEP + "s");
-				try {
-					Thread.sleep(CONNECTION_RETRY_SLEEP * 1000);
-				} catch (InterruptedException e1) {
-				}
-			}
-		}
-		if (response == null)
-			throw new DeploymentException("failed to connect to keystone");
-
-		if (log.isTraceEnabled())
-			log.trace("DELETE response: " + response.getStatus());
-
-		if (HttpUtil.isSuccess(response))
-			return;
-
-		Error error = response.readEntity(Error.class);
-		throw new DeploymentException("DELETE request " + target.getUri() + " returned HTTP code "
-				+ response.getStatus() + " (" + response.getStatusInfo() + "): " + error.getError().getMessage());
-	}
-
-	public <E> E post(StackConfig stack, Class<E> clazz, String path, String key, Object entity)
-			throws DeploymentException {
-
-		WebTarget target = webTarget.path(path);
-		Invocation.Builder invocationBuilder = target.request(MediaType.APPLICATION_JSON_TYPE);
-		invocationBuilder.header("X-Auth-Token", stack.get(StackProperty.KEYSTONE_ADMIN_TOKEN));
-
-		if (log.isTraceEnabled()) {
-			log.trace("POST request: " + target.getUri());
-		}
-
-		// XXX: workaround to ensure we are not posting en entry with an id
-		// jackson 2.6 support allowGetters and allowSetters properties for
-		// the annotation JsonIgnoreProperties unfortunately jersey-media-json-jackson
-		// depends on jackson 2.5.
-		if (entity instanceof OSEntity)
-			((OSEntity) entity).setId(null);
-
-		Response response = null;
-		for (int i = 0; i < CONNECTION_MAX_RETRY; i++) {
-			try {
-				response = invocationBuilder.post(Entity.entity(Collections.singletonMap(key, entity),
-						MediaType.APPLICATION_JSON_TYPE));
-				break;
-			} catch (ProcessingException e) {
-				log.debug("failed to connect to keystone, waiting " + CONNECTION_RETRY_SLEEP + "s");
-				try {
-					Thread.sleep(CONNECTION_RETRY_SLEEP * 1000);
-				} catch (InterruptedException e1) {
-				}
-			}
-		}
-		if (response == null)
-			throw new DeploymentException("failed to connect to keystone");
-
-		if (!HttpUtil.isSuccess(response)) {
-			Error error = response.readEntity(Error.class);
-			throw new DeploymentException("POST request " + target.getUri() + " returned HTTP code "
-					+ response.getStatus() + " (" + response.getStatusInfo() + "): " + error.getError().getMessage());
-		}
-
-		if (log.isTraceEnabled()) {
-			String json = response.readEntity(String.class);
-			log.trace("POST response: " + json);
-			try {
-				return mapper.reader(clazz).readValue(json);
-			} catch (IOException e) {
-				throw new DeploymentException("error while parsing json response", e);
-			}
-		}
-
-		return response.readEntity(clazz);
-	}
-
-	public void patch(StackConfig stack, String path, String key, Object entity) throws DeploymentException {
-
-		WebTarget target = webTarget.path(path);
-		Invocation.Builder invocationBuilder = target.request(MediaType.APPLICATION_JSON_TYPE);
-		invocationBuilder.header("X-Auth-Token", stack.get(StackProperty.KEYSTONE_ADMIN_TOKEN));
-
-		if (log.isTraceEnabled()) {
-			log.trace("PATCH request: " + target.getUri());
-		}
-
-		Response response = null;
-		for (int i = 0; i < CONNECTION_MAX_RETRY; i++) {
-			try {
-				response = invocationBuilder.method("PATCH",
-						Entity.entity(Collections.singletonMap(key, entity), MediaType.APPLICATION_JSON_TYPE));
-				break;
-			} catch (ProcessingException e) {
-				log.debug("failed to connect to keystone, waiting " + CONNECTION_RETRY_SLEEP + "s");
-				try {
-					Thread.sleep(CONNECTION_RETRY_SLEEP * 1000);
-				} catch (InterruptedException e1) {
-				}
-			}
-		}
-		if (response == null)
-			throw new DeploymentException("failed to connect to keystone");
-
-		if (!HttpUtil.isSuccess(response)) {
-			Error error = response.readEntity(Error.class);
-			throw new DeploymentException("PATCH request " + target.getUri() + " returned HTTP code "
-					+ response.getStatus() + " (" + response.getStatusInfo() + "): " + error.getError().getMessage());
-		}
+		super("keystone", String.format("http://%s:35357/v3", stack.get(StackProperty.SERVICES_PUBLIC_IP)));
+		token = stack.get(StackProperty.KEYSTONE_ADMIN_TOKEN);
 	}
 
 	public User getUser(StackConfig stack, String name) throws DeploymentException {
-		Users users = get(stack, Users.class, "users", Collections.singletonMap("name", name));
-		if (users.getUsers().isEmpty())
-			return null;
-		return users.getUsers().get(0);
+		return getSingle(stack, "users", User.class, "users", Collections.singletonMap("name", name));
 	}
 
 	public Role getRole(StackConfig stack, String name) throws DeploymentException {
-		Roles roles = get(stack, Roles.class, "roles", Collections.singletonMap("name", name));
-		if (roles.getRoles().isEmpty())
-			return null;
-		return roles.getRoles().get(0);
+		return getSingle(stack, "roles", Role.class, "roles", Collections.singletonMap("name", name));
 	}
 
 	public Project getProject(StackConfig stack, String name) throws DeploymentException {
-		Projects projects = get(stack, Projects.class, "projects", Collections.singletonMap("name", name));
-		if (projects.getProjects().isEmpty())
-			return null;
-		return projects.getProjects().get(0);
+		return getSingle(stack, "projects", Project.class, "projects", Collections.singletonMap("name", name));
 	}
 
 	public Domain getDomain(StackConfig stack, String name) throws DeploymentException {
-		Domains domains = get(stack, Domains.class, "domains", Collections.singletonMap("name", name));
-		if (domains.getDomains().isEmpty())
-			return null;
-		return domains.getDomains().get(0);
+		return getSingle(stack, "domains", Domain.class, "domains", Collections.singletonMap("name", name));
 	}
 
 	public Service getService(StackConfig stack, String name) throws DeploymentException {
-		Services services = get(stack, Services.class, "services", Collections.singletonMap("name", name));
-		if (services.getServices().isEmpty())
-			return null;
-		return services.getServices().get(0);
+		return getSingle(stack, "services", Service.class, "services", Collections.singletonMap("name", name));
 	}
 
 	public Endpoint getEndpoint(StackConfig stack, String serviceId, String _interface) throws DeploymentException {
 		Map<String, String> parameters = new HashMap<>();
 		parameters.put("service_id", serviceId);
 		parameters.put("interface", _interface);
-		Endpoints endpoints = get(stack, Endpoints.class, "endpoints", parameters);
-		if (endpoints.getEndpoints().isEmpty())
-			return null;
-		return endpoints.getEndpoints().get(0);
+		return getSingle(stack, "endpoints", Endpoint.class, "endpoints", parameters);
 	}
 
 	public boolean createUser(StackConfig stack, String name, String description, String email, String password,
@@ -446,7 +104,8 @@ public class KeystoneClient extends ManagedClient {
 				try {
 					// checking authentication
 					log.debug("checking authentication for user " + name);
-					post(stack, UserResponse.class, "auth/tokens", "auth", new OSAuth(user.getId(), password));
+					// lollol
+					post(UserResponse.class, "auth/tokens", "auth", new OSAuth(name, password, domainId));
 
 					// no exception, authentication success
 					return false;
@@ -464,12 +123,11 @@ public class KeystoneClient extends ManagedClient {
 
 			// delete the user because we cannot update the password
 			log.info("deleting user " + name + " (for password update)");
-			delete(stack, String.format("users/%s", user.getId()));
+			delete(String.format("users/%s", user.getId()));
 		}
 
 		log.info("creating user " + name);
-		post(stack, UserResponse.class, "users", "user", new User(name, description, email, password, projectId,
-				domainId));
+		post(UserResponse.class, "users", "user", new User(name, description, email, password, projectId, domainId));
 
 		return true;
 	}
@@ -480,7 +138,7 @@ public class KeystoneClient extends ManagedClient {
 			return false;
 		}
 		log.info("creating role " + name);
-		post(stack, IgnoredResponse.class, "roles", "role", new Role(name));
+		post(BaseResponse.class, "roles", "role", new Role(name));
 		return true;
 	}
 
@@ -498,7 +156,7 @@ public class KeystoneClient extends ManagedClient {
 		}
 
 		log.info("creating domain " + name);
-		post(stack, IgnoredResponse.class, "domains", "domain", new Domain(name, description));
+		post(BaseResponse.class, "domains", "domain", new Domain(name, description));
 		return true;
 	}
 
@@ -516,7 +174,7 @@ public class KeystoneClient extends ManagedClient {
 		}
 
 		log.info("creating project " + name);
-		post(stack, IgnoredResponse.class, "projects", "project", new Project(name, description));
+		post(BaseResponse.class, "projects", "project", new Project(name, description));
 		return true;
 	}
 
@@ -535,7 +193,7 @@ public class KeystoneClient extends ManagedClient {
 			}
 		} else {
 			log.info("creating service " + name + " of type " + type);
-			ServiceResponse response = post(stack, ServiceResponse.class, "services", "service", new Service(name,
+			ServiceResponse response = post(ServiceResponse.class, "services", "service", new Service(name,
 					description, type));
 			changed = true;
 			service = response.getService();
@@ -567,7 +225,7 @@ public class KeystoneClient extends ManagedClient {
 			return true;
 		}
 		log.info("creating endpoint " + url + " of type " + _interface);
-		post(stack, IgnoredResponse.class, "endpoints", "endpoint",
+		post(BaseResponse.class, "endpoints", "endpoint",
 				new Endpoint(serviceId, _interface, stack.get(StackProperty.REGION), url));
 		return true;
 	}
@@ -587,7 +245,7 @@ public class KeystoneClient extends ManagedClient {
 		if (role == null)
 			throw new DeploymentException("role " + roleName + " not found");
 
-		boolean hasRole = head(stack,
+		boolean hasRole = head(
 				String.format("projects/%s/users/%s/roles/%s", project.getId(), user.getId(), role.getId()), null);
 
 		if (hasRole) {
@@ -597,7 +255,7 @@ public class KeystoneClient extends ManagedClient {
 		}
 
 		log.info("granting " + roleName + " role to " + userName + " in project " + projectName);
-		put(stack, String.format("projects/%s/users/%s/roles/%s", project.getId(), user.getId(), role.getId()));
+		put(String.format("projects/%s/users/%s/roles/%s", project.getId(), user.getId(), role.getId()));
 
 		return true;
 	}
@@ -617,7 +275,7 @@ public class KeystoneClient extends ManagedClient {
 		if (role == null)
 			throw new DeploymentException("role " + roleName + " not found");
 
-		boolean hasRole = head(stack,
+		boolean hasRole = head(
 				String.format("domains/%s/users/%s/roles/%s", domain.getId(), user.getId(), role.getId()), null);
 
 		if (hasRole) {
@@ -627,7 +285,7 @@ public class KeystoneClient extends ManagedClient {
 		}
 
 		log.info("granting " + roleName + " role to " + userName + " in domain " + domainName);
-		put(stack, String.format("domains/%s/users/%s/roles/%s", domain.getId(), user.getId(), role.getId()));
+		put(String.format("domains/%s/users/%s/roles/%s", domain.getId(), user.getId(), role.getId()));
 
 		return true;
 	}
@@ -670,5 +328,11 @@ public class KeystoneClient extends ManagedClient {
 		String domain = stack.get(domainKey);
 
 		return createUser(stack, user, description, email, password, null, domain);
+	}
+
+	public TokenResponse getAdminToken(StackConfig stack) throws DeploymentException {
+		return post(TokenResponse.class, "auth/tokens", "auth", new OSAuth(
+				stack.get(StackProperty.KEYSTONE_ADMIN_USER), stack.get(StackProperty.KEYSTONE_ADMIN_PASSWORD),
+				User.DEFAULT_DOMAIN_ID));
 	}
 }

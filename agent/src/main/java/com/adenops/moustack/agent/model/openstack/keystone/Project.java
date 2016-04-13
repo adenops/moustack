@@ -17,18 +17,20 @@
  * limitations under the License.
  */
 
-package com.adenops.moustack.agent.model.keystone;
+package com.adenops.moustack.agent.model.openstack.keystone;
 
-public class Domain extends OSEntity {
+import com.adenops.moustack.agent.model.openstack.OSEntity;
+
+public class Project extends OSEntity {
 	private String name;
 	private String description;
 	private String domain_id = "default";
 	private boolean enabled = true;
 
-	public Domain() {
+	public Project() {
 	}
 
-	public Domain(String name, String description) {
+	public Project(String name, String description) {
 		this.name = name;
 		this.description = description;
 	}

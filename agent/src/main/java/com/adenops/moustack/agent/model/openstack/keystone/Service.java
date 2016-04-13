@@ -17,7 +17,9 @@
  * limitations under the License.
  */
 
-package com.adenops.moustack.agent.model.keystone;
+package com.adenops.moustack.agent.model.openstack.keystone;
+
+import com.adenops.moustack.agent.model.openstack.OSEntity;
 
 public class Service extends OSEntity {
 	private String name;

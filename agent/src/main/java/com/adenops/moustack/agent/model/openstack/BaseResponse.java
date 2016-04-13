@@ -17,16 +17,21 @@
  * limitations under the License.
  */
 
-package com.adenops.moustack.agent.model.keystone;
+package com.adenops.moustack.agent.model.openstack;
 
-public class UserResponse extends IgnoredResponse {
-	private User user;
+import javax.ws.rs.core.MultivaluedMap;
 
-	public User getUser() {
-		return user;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+public class BaseResponse {
+	@JsonIgnore
+	private MultivaluedMap<String, Object> headers;
+
+	public MultivaluedMap<String, Object> getHeaders() {
+		return headers;
 	}
 
-	public void setUser(User user) {
-		this.user = user;
+	public void setHeaders(MultivaluedMap<String, Object> headers) {
+		this.headers = headers;
 	}
 }

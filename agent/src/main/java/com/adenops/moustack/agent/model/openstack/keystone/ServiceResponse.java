@@ -17,18 +17,18 @@
  * limitations under the License.
  */
 
-package com.adenops.moustack.agent.model.keystone;
+package com.adenops.moustack.agent.model.openstack.keystone;
 
-import java.util.List;
+import com.adenops.moustack.agent.model.openstack.BaseResponse;
 
-public class Users {
-	private List<User> users;
+public class ServiceResponse extends BaseResponse {
+	private Service service;
 
-	public List<User> getUsers() {
-		return users;
+	public Service getService() {
+		return service;
 	}
 
-	public void setUsers(List<User> users) {
-		this.users = users;
+	public void setService(Service service) {
+		this.service = service;
 	}
 }

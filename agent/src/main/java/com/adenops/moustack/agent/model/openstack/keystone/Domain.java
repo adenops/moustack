@@ -17,29 +17,26 @@
  * limitations under the License.
  */
 
-package com.adenops.moustack.agent.model.keystone;
+package com.adenops.moustack.agent.model.openstack.keystone;
 
-public class User extends OSEntity {
-	// TODO: should be configurable
-	public static final String DEFAULT_DOMAIN_ID = "default";
+import com.adenops.moustack.agent.model.openstack.OSEntity;
+
+public class Domain extends OSEntity {
 	private String name;
 	private String description;
-	private String email;
-	private String password;
-	private String default_project_id;
-	private String domain_id = DEFAULT_DOMAIN_ID;
+	private String domain_id = "default";
 	private boolean enabled = true;
 
-	public User() {
+	public Domain() {
 	}
 
-	public User(String name, String description, String email, String password, String default_project_id, String domain_id) {
+	public Domain(String id) {
+		this.id = id;
+	}
+
+	public Domain(String name, String description) {
 		this.name = name;
 		this.description = description;
-		this.email = email;
-		this.password = password;
-		this.default_project_id = default_project_id;
-		this.domain_id = domain_id;
 	}
 
 	public String getName() {
@@ -72,29 +69,5 @@ public class User extends OSEntity {
 
 	public void setEnabled(boolean enabled) {
 		this.enabled = enabled;
-	}
-
-	public String getEmail() {
-		return email;
-	}
-
-	public void setEmail(String email) {
-		this.email = email;
-	}
-
-	public String getPassword() {
-		return password;
-	}
-
-	public void setPassword(String password) {
-		this.password = password;
-	}
-
-	public String getDefault_project_id() {
-		return default_project_id;
-	}
-
-	public void setDefault_project_id(String default_project_id) {
-		this.default_project_id = default_project_id;
 	}
 }

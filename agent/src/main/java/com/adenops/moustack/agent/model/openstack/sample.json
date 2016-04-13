@@ -1,0 +1,99 @@
+{
+  "token": {
+    "methods": [
+      "password"
+    ],
+    "roles": [
+      {
+        "id": "f3a7682e93f24bbbbf903841ea51e533",
+        "name": "admin"
+      }
+    ],
+    "expires_at": "2016-04-08T18:03:08.224512Z",
+    "project": {
+      "domain": {
+        "id": "default",
+        "name": "Default"
+      },
+      "id": "e1b6b5b9e88d422880d3882f00e0d11c",
+      "name": "admin"
+    },
+    "catalog": [
+      {
+        "endpoints": [
+          {
+            "region_id": "RegionOne",
+            "url": "http://10.10.32.10:5000/v2.0",
+            "region": "RegionOne",
+            "id": "49afaeead0c54c8a9192b9317370f1a3",
+            "interface": "internal",
+            "domain_id": "default"
+          },
+          {
+            "region_id": "RegionOne",
+            "url": "http://10.10.32.10:35357/v2.0",
+            "region": "RegionOne",
+            "id": "6ef63b872179433a99cedde5c35cf6ff",
+            "interface": "admin",
+            "domain_id": "default"
+          },
+          {
+            "region_id": "RegionOne",
+            "url": "http://10.10.32.10:5000/v2.0",
+            "region": "RegionOne",
+            "id": "d87907991a9245f2bb76c0bc28de1587",
+            "interface": "public",
+            "domain_id": "default"
+          }
+        ],
+        "type": "identity",
+        "id": "18925f899bf04cfe953a305eceb424e8",
+        "name": "keystone"
+      },
+      {
+        "endpoints": [
+          {
+            "region_id": "RegionOne",
+            "url": "http://10.10.32.10:9001",
+            "region": "RegionOne",
+            "id": "205a4dae93f645fca9fcdc9fb22ddbfe",
+            "interface": "public",
+            "domain_id": "default"
+          },
+          {
+            "region_id": "RegionOne",
+            "url": "http://10.10.32.10:9001",
+            "region": "RegionOne",
+            "id": "2db7b7b5fb7e4aed897c9e0c79837413",
+            "interface": "internal",
+            "domain_id": "default"
+          },
+          {
+            "region_id": "RegionOne",
+            "url": "http://10.10.32.10:9001",
+            "region": "RegionOne",
+            "id": "9b825ae144f849f99a7181cf150a849e",
+            "interface": "admin",
+            "domain_id": "default"
+          }
+        ],
+        "type": "dns",
+        "id": "935927804f99459f9b290ec33af83477",
+        "name": "designate"
+      }
+    ],
+    "extras": {},
+    "user": {
+      "domain": {
+        "id": "default",
+        "name": "Default"
+      },
+      "id": "893122dc366a443cb41fa5d2c2ece973",
+      "name": "admin"
+    },
+    "audit_ids": [
+      "Um8TqQ5bRq-bny3zZEhghQ"
+    ],
+    "issued_at": "2016-04-08T17:03:08.224544Z"
+  }
+}

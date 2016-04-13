@@ -17,8 +17,10 @@
  * limitations under the License.
  */
 
-package com.adenops.moustack.agent.model.keystone;
+package com.adenops.moustack.agent.model.openstack.keystone;
 
-public class IgnoredResponse {
+import com.adenops.moustack.agent.model.openstack.OSEntity;
+
+public class Token extends OSEntity {
 
 }

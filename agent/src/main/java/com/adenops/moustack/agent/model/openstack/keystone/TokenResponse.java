@@ -17,32 +17,18 @@
  * limitations under the License.
  */
 
-package com.adenops.moustack.agent.model.keystone;
+package com.adenops.moustack.agent.model.openstack.keystone;
 
-public class Role extends OSEntity {
-	private String name;
-	private String domain_id = "default";
+import com.adenops.moustack.agent.model.openstack.BaseResponse;
 
-	public Role() {
+public class TokenResponse extends BaseResponse {
+	private Token token;
+
+	public Token getToken() {
+		return token;
 	}
 
-	public Role(String name) {
-		this.name = name;
-	}
-
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	public String getDomain_id() {
-		return domain_id;
-	}
-
-	public void setDomain_id(String domain_id) {
-		this.domain_id = domain_id;
+	public void setToken(Token token) {
+		this.token = token;
 	}
 }

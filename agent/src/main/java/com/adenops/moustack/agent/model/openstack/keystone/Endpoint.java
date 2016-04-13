@@ -17,8 +17,9 @@
  * limitations under the License.
  */
 
-package com.adenops.moustack.agent.model.keystone;
+package com.adenops.moustack.agent.model.openstack.keystone;
 
+import com.adenops.moustack.agent.model.openstack.OSEntity;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class Endpoint extends OSEntity {

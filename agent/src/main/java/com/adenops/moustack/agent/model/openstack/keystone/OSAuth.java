@@ -17,7 +17,7 @@
  * limitations under the License.
  */
 
-package com.adenops.moustack.agent.model.keystone;
+package com.adenops.moustack.agent.model.openstack.keystone;
 
 public class OSAuth {
 	private Identity identity;
@@ -25,16 +25,16 @@ public class OSAuth {
 	public OSAuth() {
 	}
 
-	public OSAuth(String id, String password) {
-		this.identity = new Identity(id, password);
+	public OSAuth(String name, String password, String domainId) {
+		this.identity = new Identity(name, password, domainId);
 	}
 
 	public class Identity {
 		private String[] methods = new String[] { "password" };
 		private Password password;
 
-		public Identity(String id, String password) {
-			this.password = new Password(id, password);
+		public Identity(String id, String password, String domainId) {
+			this.password = new Password(id, password, domainId);
 		}
 
 		public class Password {
@@ -43,28 +43,30 @@ public class OSAuth {
 			public Password() {
 			}
 
-			public Password(String id, String password) {
-				this.user = new User(id, password);
+			public Password(String name, String password, String domainId) {
+				this.user = new User(name, password, domainId);
 			}
 
 			public class User {
-				private String id;
+				private String name;
 				private String password;
+				private Domain domain;
 
 				public User() {
 				}
 
-				public User(String id, String password) {
-					this.id = id;
+				public User(String name, String password, String domainId) {
+					this.name = name;
 					this.password = password;
+					this.domain = new Domain(domainId);
 				}
 
-				public String getId() {
-					return id;
+				public String getName() {
+					return name;
 				}
 
-				public void setId(String id) {
-					this.id = id;
+				public void setName(String name) {
+					this.name = name;
 				}
 
 				public String getPassword() {
@@ -73,6 +75,14 @@ public class OSAuth {
 
 				public void setPassword(String password) {
 					this.password = password;
+				}
+
+				public Domain getDomain() {
+					return domain;
+				}
+
+				public void setDomain(Domain domain) {
+					this.domain = domain;
 				}
 			}
 

@@ -23,7 +23,6 @@ import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.concurrent.ExecutionException;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
@@ -31,14 +30,8 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
-import javax.ws.rs.ProcessingException;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-
-import com.adenops.moustack.agent.DeploymentException;
 
 public class HttpUtil {
 
@@ -112,53 +105,5 @@ public class HttpUtil {
 
 	public static boolean isNotFound(Response response) {
 		return Status.Family.familyOf(response.getStatus()).equals(Status.Family.CLIENT_ERROR);
-	}
-
-	public static Response get(WebTarget target) throws DeploymentException {
-		Response response;
-		try {
-			response = target.request(MediaType.APPLICATION_JSON_TYPE).get();
-		} catch (ProcessingException e) {
-			throw new DeploymentException("communication error with the server", e);
-		}
-		if (!HttpUtil.isSuccess(response)) {
-			throw new DeploymentException("GET request " + target.getUri() + " returned HTTP code "
-					+ response.getStatus() + " (" + response.getStatusInfo() + ")");
-		}
-		return response;
-	}
-
-	public static Response post(WebTarget target, Object object) throws DeploymentException {
-		Response response;
-		try {
-			response = target.request(MediaType.APPLICATION_JSON_TYPE).post(
-					Entity.entity(object, MediaType.APPLICATION_JSON_TYPE));
-		} catch (ProcessingException e) {
-			throw new DeploymentException("communication error with the server", e);
-		}
-		if (!HttpUtil.isSuccess(response)) {
-			throw new DeploymentException("POST request " + target.getUri() + " returned HTTP code "
-					+ response.getStatus() + " (" + response.getStatusInfo() + ")");
-		}
-		return response;
-	}
-
-	public static Response longPoll(WebTarget target) throws DeploymentException {
-		Response response;
-		try {
-			response = target.request(MediaType.APPLICATION_JSON_TYPE).async().get().get();
-		} catch (ProcessingException | ExecutionException e) {
-			throw new DeploymentException("communication error with the server", e);
-		} catch (InterruptedException e) {
-			throw new DeploymentException("received interruption during long polling", e);
-		}
-
-		// for long polling, we consider timeout not an error
-		if (!HttpUtil.isSuccess(response) && !response.getStatusInfo().equals(Response.Status.REQUEST_TIMEOUT)) {
-			throw new DeploymentException("GET request " + target.getUri() + " returned HTTP code "
-					+ response.getStatus() + " (" + response.getStatusInfo() + ")");
-		}
-
-		return response;
 	}
 }

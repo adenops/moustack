@@ -17,18 +17,18 @@
  * limitations under the License.
  */
 
-package com.adenops.moustack.agent.model.keystone;
+package com.adenops.moustack.agent.model.openstack;
 
-import java.util.List;
+// XXX: keep the annotation here, for when we upgrade to jackson 2.6
+//@JsonIgnoreProperties(value = { "id" }, allowGetters = false, allowSetters = true)
+public abstract class OSEntity {
+	protected String id;
 
-public class Domains {
-	private List<Domain> domains;
-
-	public List<Domain> getDomains() {
-		return domains;
+	public String getId() {
+		return id;
 	}
 
-	public void setDomains(List<Domain> domains) {
-		this.domains = domains;
+	public void setId(String id) {
+		this.id = id;
 	}
 }
