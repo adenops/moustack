@@ -29,7 +29,9 @@ import com.adenops.moustack.agent.client.Clients;
 import com.adenops.moustack.agent.config.StackConfig;
 import com.adenops.moustack.agent.config.StackProperty;
 import com.adenops.moustack.agent.model.docker.Volume;
+import com.adenops.moustack.agent.model.openstack.designate.Domain;
 import com.adenops.moustack.agent.module.ContainerModule;
+import com.github.dockerjava.api.exception.DockerClientException;
 import com.github.dockerjava.api.model.Capability;
 
 public class Designate extends ContainerModule {
@@ -66,6 +68,35 @@ public class Designate extends ContainerModule {
 			log.info("running designate pool manager DB migration");
 			Clients.getDockerClient().startEphemeralContainer(this, "designate", "designate-manage", "pool-manager-cache", "sync");
 			Clients.getDockerClient().startOrRestartContainer(this);
+		}
+
+		changed = false;
+		changed |= Clients.getDesignateClient().createServer(stack, stack.get(StackProperty.DESIGNATE_SERVER_NAME) + ".");
+		changed |= Clients.getDesignateClient().createDomain(stack, stack.get(StackProperty.DHCP_DOMAIN) + ".", "root@" + stack.get(StackProperty.DHCP_DOMAIN), 60, "Default domain");
+
+		// if a new domain have been created, wait for it to be available using DNS query
+		if (changed) {
+			int dns_ready_count = 10;
+
+			while (dns_ready_count != 0) {
+				try {
+					Clients.getDockerClient().startEphemeralContainer(this, "designate", "host", "-W1", "-t SOA", stack.get(StackProperty.DHCP_DOMAIN), stack.get(StackProperty.SERVICES_PUBLIC_IP));
+					dns_ready_count = 0;
+
+				} catch (DockerClientException e) {
+					log.info("Waiting for SOA (" + dns_ready_count + " attempts left)");
+
+					try {
+						Thread.sleep(1000);
+					} catch (InterruptedException thread_interrupted) {
+						Thread.currentThread().interrupt();
+					}
+				}
+			}
+
+			if (dns_ready_count != 0) {
+				throw new DeploymentException("Timeout while waiting for DNS server to be ready");
+			}
 		}
 
 		return changed;
