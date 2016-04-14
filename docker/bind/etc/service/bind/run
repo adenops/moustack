@@ -22,4 +22,7 @@
 
 wait_for syslog
 
+service_mkdir bind /var/run/named
+service_mkdir bind /var/cache/bind
+
 exec /usr/sbin/named -u bind -g -4
