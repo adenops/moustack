@@ -25,7 +25,6 @@ import com.adenops.moustack.agent.DeploymentException;
 
 public class StackConfig {
 	private Properties properties;
-	private String[] roles;
 	private String gitRepo;
 	private String gitBranch = "master";
 	private String gitHead;
@@ -42,11 +41,18 @@ public class StackConfig {
 		if (variable == null)
 			return null;
 
-		String value = (String) properties.get(variable.getName());
+		String value = properties.getProperty(variable.getName());
 		if (value == null)
 			throw new DeploymentException("cannot find property value for " + variable.getName());
 
 		return value;
+	}
+
+	/**
+	 * This is a dirty and modify properties should be avoid as much as possible. This has been introduced for designate.
+	 */
+	public void set(StackProperty variable, String value) {
+		properties.setProperty(variable.getName(), value);
 	}
 
 	public Properties getProperties() {
