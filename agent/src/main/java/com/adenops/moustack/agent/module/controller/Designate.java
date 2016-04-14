@@ -99,6 +99,19 @@ public class Designate extends ContainerModule {
 			}
 		}
 
+		String dhcp_domain_id = Clients.getDesignateClient().getDomain(stack, stack.get(StackProperty.DHCP_DOMAIN) + ".").getId();
+		log.debug("DHCP domain " + stack.get(StackProperty.DHCP_DOMAIN) + " has id " + dhcp_domain_id);
+
+		// Inject DHCP domain ID into stack properties
+		stack.set(StackProperty.DESIGNATE_DEFAULT_DOMAIN_ID, dhcp_domain_id);
+		changed |= deployConfig(stack);
+
+		if (changed) {
+			Clients.getDockerClient().stopContainer(this);
+			log.info("Restart designate container to use newly created domain");
+			Clients.getDockerClient().startOrRestartContainer(this);
+		}
+
 		return changed;
 	}
 }
