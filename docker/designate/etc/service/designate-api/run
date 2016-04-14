@@ -24,5 +24,6 @@ wait_for syslog
 wait_for mysql
 wait_for rabbitmq
 wait_for keystone
+wait_for designate-mdns
 
 service_start designate /usr/bin/designate-api --config-file=/etc/designate/designate.conf
