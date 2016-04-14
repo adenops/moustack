@@ -49,6 +49,8 @@ service_start() {
 		chown -R ${user}:${group} /var/${dir}/${name} || true
 	done
 
+	notify "all prerequisite conditions are met, starting service ..."
+
 	cd /var/lib/${name} || true
 	exec gosu ${user}:${group} $@
 }
