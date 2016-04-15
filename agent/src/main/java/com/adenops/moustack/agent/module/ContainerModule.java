@@ -22,6 +22,9 @@ package com.adenops.moustack.agent.module;
 import java.util.Collections;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.adenops.moustack.agent.DeploymentException;
 import com.adenops.moustack.agent.client.Clients;
 import com.adenops.moustack.agent.config.StackConfig;
@@ -30,6 +33,8 @@ import com.adenops.moustack.agent.util.DeploymentUtil;
 import com.github.dockerjava.api.model.Capability;
 
 public class ContainerModule extends BaseModule {
+	private static final Logger log = LoggerFactory.getLogger(ContainerModule.class);
+
 	private final String image;
 	private final List<String> files;
 	private final List<String> environments;
@@ -86,6 +91,13 @@ public class ContainerModule extends BaseModule {
 		changed |= DeploymentUtil.deployContainerFiles(stack, name, getFiles());
 		changed |= Clients.getDockerClient().containerCheckUpdate(this);
 		return changed;
+	}
+
+	@Override
+	public void validate(StackConfig stack) throws DeploymentException {
+		log.debug("validating container " + name);
+		if (!Clients.getDockerClient().containerIsRunning(this))
+			throw new DeploymentException("container " + name + " is not running");
 	}
 
 	public String getImage() {

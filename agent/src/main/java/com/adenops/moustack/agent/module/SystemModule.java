@@ -21,6 +21,9 @@ package com.adenops.moustack.agent.module;
 
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.adenops.moustack.agent.DeploymentException;
 import com.adenops.moustack.agent.config.StackConfig;
 import com.adenops.moustack.agent.util.DeploymentUtil;
@@ -33,6 +36,8 @@ import com.adenops.moustack.agent.util.YumUtil;
  *
  */
 public class SystemModule extends BaseModule {
+	private static final Logger log = LoggerFactory.getLogger(SystemModule.class);
+
 	protected final List<String> packages;
 	protected final List<String> files;
 	protected final List<String> services;
@@ -56,6 +61,15 @@ public class SystemModule extends BaseModule {
 		boolean changed = YumUtil.install(packages.toArray(new String[packages.size()]));
 		changed |= DeploymentUtil.deploySystemFiles(stack, name, files);
 		return changed;
+	}
+
+	@Override
+	public void validate(StackConfig stack) throws DeploymentException {
+		for (String service : services) {
+			log.debug("validating service " + service);
+			if (!SystemCtlUtil.unitIsActive(service))
+				throw new DeploymentException("service " + service + " is not running");
+		}
 	}
 
 	public List<String> getPackages() {

@@ -21,6 +21,8 @@ package com.adenops.moustack.agent.module.controller;
 
 import java.util.List;
 
+import javax.ws.rs.core.Response.Status;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,7 +31,6 @@ import com.adenops.moustack.agent.client.Clients;
 import com.adenops.moustack.agent.config.StackConfig;
 import com.adenops.moustack.agent.config.StackProperty;
 import com.adenops.moustack.agent.model.docker.Volume;
-import com.adenops.moustack.agent.model.openstack.designate.Domain;
 import com.adenops.moustack.agent.module.ContainerModule;
 import com.github.dockerjava.api.exception.DockerClientException;
 import com.github.dockerjava.api.model.Capability;
@@ -45,11 +46,11 @@ public class Designate extends ContainerModule {
 	@Override
 	public boolean deploy(StackConfig stack) throws DeploymentException {
 		boolean changed = false;
-		changed |= Clients.getKeystoneClient().createService(stack, "designate",
-				"OpenStack DNS service", "dns", "http://%s:9001",
-				"http://%s:9001", "http://%s:9001");
-		changed |= Clients.getKeystoneClient().createProjectUser(stack, StackProperty.KS_DESIGNATE_USER, "Designate user",
-				"designate@localhost", StackProperty.KS_DESIGNATE_PASSWORD, StackProperty.KEYSTONE_SERVICES_PROJECT);
+		changed |= Clients.getKeystoneClient().createService(stack, "designate", "OpenStack DNS service", "dns",
+				"http://%s:9001", "http://%s:9001", "http://%s:9001");
+		changed |= Clients.getKeystoneClient().createProjectUser(stack, StackProperty.KS_DESIGNATE_USER,
+				"Designate user", "designate@localhost", StackProperty.KS_DESIGNATE_PASSWORD,
+				StackProperty.KEYSTONE_SERVICES_PROJECT);
 		changed |= Clients.getKeystoneClient().grantProjectRole(stack, StackProperty.KS_DESIGNATE_USER,
 				StackProperty.KEYSTONE_SERVICES_PROJECT, StackProperty.KEYSTONE_ADMIN_ROLE);
 
@@ -64,15 +65,19 @@ public class Designate extends ContainerModule {
 		if (changed) {
 			Clients.getDockerClient().stopContainer(this);
 			log.info("running designate DB migration");
-			Clients.getDockerClient().startEphemeralContainer(this, "designate", "designate-manage", "database", "sync");
+			Clients.getDockerClient()
+					.startEphemeralContainer(this, "designate", "designate-manage", "database", "sync");
 			log.info("running designate pool manager DB migration");
-			Clients.getDockerClient().startEphemeralContainer(this, "designate", "designate-manage", "pool-manager-cache", "sync");
+			Clients.getDockerClient().startEphemeralContainer(this, "designate", "designate-manage",
+					"pool-manager-cache", "sync");
 			Clients.getDockerClient().startOrRestartContainer(this);
 		}
 
 		changed = false;
-		changed |= Clients.getDesignateClient().createServer(stack, stack.get(StackProperty.DESIGNATE_SERVER_NAME) + ".");
-		changed |= Clients.getDesignateClient().createDomain(stack, stack.get(StackProperty.DHCP_DOMAIN) + ".", "root@" + stack.get(StackProperty.DHCP_DOMAIN), 60, "Default domain");
+		changed |= Clients.getDesignateClient().createServer(stack,
+				stack.get(StackProperty.DESIGNATE_SERVER_NAME) + ".");
+		changed |= Clients.getDesignateClient().createDomain(stack, stack.get(StackProperty.DHCP_DOMAIN) + ".",
+				"root@" + stack.get(StackProperty.DHCP_DOMAIN), 60, "Default domain");
 
 		// if a new domain have been created, wait for it to be available using DNS query
 		if (changed) {
@@ -80,7 +85,8 @@ public class Designate extends ContainerModule {
 
 			while (dns_ready_count != 0) {
 				try {
-					Clients.getDockerClient().startEphemeralContainer(this, "designate", "host", "-W1", "-t SOA", stack.get(StackProperty.DHCP_DOMAIN), stack.get(StackProperty.SERVICES_PUBLIC_IP));
+					Clients.getDockerClient().startEphemeralContainer(this, "designate", "host", "-W1", "-t SOA",
+							stack.get(StackProperty.DHCP_DOMAIN), stack.get(StackProperty.SERVICES_PUBLIC_IP));
 					dns_ready_count = 0;
 
 				} catch (DockerClientException e) {
@@ -99,7 +105,8 @@ public class Designate extends ContainerModule {
 			}
 		}
 
-		String dhcp_domain_id = Clients.getDesignateClient().getDomain(stack, stack.get(StackProperty.DHCP_DOMAIN) + ".").getId();
+		String dhcp_domain_id = Clients.getDesignateClient()
+				.getDomain(stack, stack.get(StackProperty.DHCP_DOMAIN) + ".").getId();
 		log.debug("DHCP domain " + stack.get(StackProperty.DHCP_DOMAIN) + " has id " + dhcp_domain_id);
 
 		// Inject DHCP domain ID into stack properties
@@ -113,5 +120,11 @@ public class Designate extends ContainerModule {
 		}
 
 		return changed;
+	}
+
+	@Override
+	public void validate(StackConfig stack) throws DeploymentException {
+		super.validate(stack);
+		Clients.getValidationClient().validateEndpoint(stack, "designate", "http://%s:9001", Status.OK.getStatusCode());
 	}
 }

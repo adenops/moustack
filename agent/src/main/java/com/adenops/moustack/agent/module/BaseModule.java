@@ -33,6 +33,8 @@ public abstract class BaseModule {
 
 	protected abstract boolean deployConfig(StackConfig stack) throws DeploymentException;
 
+	public abstract void validate(StackConfig stack) throws DeploymentException;
+
 	public abstract String getType();
 
 	public String getName() {

@@ -64,4 +64,10 @@ public class Glance extends ContainerModule {
 
 		return changed;
 	}
+
+	@Override
+	public void validate(StackConfig stack) throws DeploymentException {
+		super.validate(stack);
+		Clients.getValidationClient().validateEndpoint(stack, "glance", "http://%s:9292/", 300);
+	}
 }

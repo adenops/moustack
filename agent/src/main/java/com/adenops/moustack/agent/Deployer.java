@@ -323,6 +323,7 @@ public class Deployer {
 		for (BaseModule module : deploymentPlan) {
 			log.info("deploying {} module [{}]", module.getType(), module.getName());
 			changed |= module.deploy(stack);
+			module.validate(stack);
 		}
 
 		long duration = System.currentTimeMillis() - start;

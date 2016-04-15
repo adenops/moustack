@@ -183,6 +183,17 @@ public class DockerClient extends ManagedClient {
 		sb.append("\n");
 	}
 
+	public boolean containerIsRunning(ContainerModule container) {
+		InspectContainerResponse containerInspect = null;
+		try {
+			// inspect container and retrieve corresponding image id
+			containerInspect = client.inspectContainerCmd(container.getName()).exec();
+		} catch (NotFoundException e) {
+			return false;
+		}
+		return containerInspect.getState().getRunning();
+	}
+
 	public String getContainerInfo(ContainerModule container) {
 		InspectContainerResponse containerInspect = null;
 		try {

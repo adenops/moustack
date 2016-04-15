@@ -51,9 +51,6 @@ public class Ceilometer extends ContainerModule {
 		changed |= Clients.getKeystoneClient().grantProjectRole(stack, StackProperty.KS_CEILOMETER_USER,
 				StackProperty.KEYSTONE_SERVICES_PROJECT, StackProperty.KEYSTONE_ADMIN_ROLE);
 
-		changed |= Clients.getMySQLClient().createDatabaseUser("nova", "nova",
-				stack.get(StackProperty.DB_NOVA_PASSWORD));
-
 		Clients.getMongoClient().createDatabaseUser(stack.get(StackProperty.DB_CEILOMETER_DATABASE),
 				stack.get(StackProperty.DB_CEILOMETER_USER), stack.get(StackProperty.DB_CEILOMETER_PASSWORD));
 
@@ -63,5 +60,11 @@ public class Ceilometer extends ContainerModule {
 			Clients.getDockerClient().startOrRestartContainer(this);
 
 		return changed;
+	}
+
+	@Override
+	public void validate(StackConfig stack) throws DeploymentException {
+		super.validate(stack);
+		Clients.getValidationClient().validateEndpoint(stack, "ceilometer", "http://%s:8777", 300);
 	}
 }

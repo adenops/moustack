@@ -66,4 +66,10 @@ public class Keystone extends ContainerModule {
 
 		return changed;
 	}
+
+	@Override
+	public void validate(StackConfig stack) throws DeploymentException {
+		super.validate(stack);
+		Clients.getValidationClient().validateEndpoint(stack, "keystone", "http://%s:5000/", 300);
+	}
 }

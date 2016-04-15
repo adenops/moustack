@@ -61,7 +61,7 @@ public class SystemCtlUtil {
 		return result.getExitCode() == 0;
 	}
 
-	private static boolean unitIsUpdated(String unit) throws DeploymentException {
+	public static boolean unitIsUpdated(String unit) throws DeploymentException {
 		ExecResult result = systemctlExec("show", "--property=NeedDaemonReload");
 		if (result.getExitCode() != 0)
 			throw new DeploymentException("systemctl command failed with exit code " + result.getExitCode());
@@ -69,33 +69,33 @@ public class SystemCtlUtil {
 		return stdout.equals("NeedDaemonReload=yes");
 	}
 
-	private static void daemonReload() throws DeploymentException {
+	public static void daemonReload() throws DeploymentException {
 		ExecResult result = systemctlExec("daemon-reload");
 		if (result.getExitCode() != 0)
 			throw new DeploymentException("systemctl command failed with exit code " + result.getExitCode());
 	}
 
-	private static boolean unitIsActive(String unit) throws DeploymentException {
+	public static boolean unitIsActive(String unit) throws DeploymentException {
 		return systemctlCheck("is-active", unit);
 	}
 
-	private static boolean unitIsEnabled(String unit) throws DeploymentException {
+	public static boolean unitIsEnabled(String unit) throws DeploymentException {
 		return systemctlCheck("is-enabled", unit);
 	}
 
-	private static void unitStop(String unit) throws DeploymentException {
+	public static void unitStop(String unit) throws DeploymentException {
 		systemctlCmd("stop", unit);
 	}
 
-	private static void unitRestart(String unit) throws DeploymentException {
+	public static void unitRestart(String unit) throws DeploymentException {
 		systemctlCmd("restart", unit);
 	}
 
-	private static void unitEnable(String unit) throws DeploymentException {
+	public static void unitEnable(String unit) throws DeploymentException {
 		systemctlCmd("enable", unit);
 	}
 
-	private static void unitDisable(String unit) throws DeploymentException {
+	public static void unitDisable(String unit) throws DeploymentException {
 		systemctlCmd("disable", unit);
 	}
 

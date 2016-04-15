@@ -36,6 +36,7 @@ public class Clients {
 	private static DesignateClient designateClient;
 	private static MongoClient mongoClient;
 	private static MySQLClient mySQLClient;
+	private static ValidationClient validationClient;
 	private static StackConfig stack;
 
 	public static synchronized void init(StackConfig stack) throws DeploymentException {
@@ -61,6 +62,8 @@ public class Clients {
 		mongoClient = null;
 		release(mySQLClient);
 		mySQLClient = null;
+		release(validationClient);
+		validationClient = null;
 	}
 
 	public static DockerClient getDockerClient() throws DeploymentException {
@@ -116,5 +119,16 @@ public class Clients {
 			}
 		}
 		return mySQLClient;
+	}
+
+	public static ValidationClient getValidationClient() throws DeploymentException {
+		if (validationClient == null) {
+			synchronized (ValidationClient.class) {
+				if (validationClient != null)
+					return validationClient;
+				validationClient = new ValidationClient(stack);
+			}
+		}
+		return validationClient;
 	}
 }

@@ -21,6 +21,8 @@ package com.adenops.moustack.agent.module.controller;
 
 import java.util.List;
 
+import javax.ws.rs.core.Response.Status;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,5 +69,11 @@ public class Cinder extends ContainerModule {
 		}
 
 		return changed;
+	}
+
+	@Override
+	public void validate(StackConfig stack) throws DeploymentException {
+		super.validate(stack);
+		Clients.getValidationClient().validateEndpoint(stack, "cinder", "http://%s:8776/", Status.OK.getStatusCode());
 	}
 }
