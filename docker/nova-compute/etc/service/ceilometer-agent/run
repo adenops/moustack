@@ -17,6 +17,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-echo "$1: waiting for Libvirt..."
-while ! virsh list >/dev/null; do sleep 1; done
+# source shell library
+. /usr/lib/runit/load
 
+wait_for rabbitmq
+wait_for libvirt
+
+exec gosu ceilometer /usr/bin/ceilometer-polling --config-file=/etc/ceilometer/ceilometer.conf --polling-namespaces compute
