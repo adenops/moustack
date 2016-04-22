@@ -25,4 +25,24 @@ wait_for rabbitmq
 wait_for neutron-server
 wait_for designate-api
 
-service_start designate /usr/bin/designate-sink --config-file=/etc/designate/designate.conf
+# create default domain for nova and neutron notifications
+. /etc/openstack/variables
+
+server_id=`designate server-list | awk '/'${designate_server_name}'\./ { print $2; }'`
+domain_id=`designate domain-list | awk '/'${dhcp_domain}'\./ { print $2; }'`
+
+if [ -z "${server_id}" ]; then
+	designate server-create --name ${designate_server_name}.
+	server_id=`designate server-list | awk '/'${designate_server_name}'\./ { print $2; }'`
+fi
+
+if [ -z "${domain_id}" ]; then
+	designate domain-create --name ${dhcp_domain}. --email root@${dhcp_domain}
+	domain_id=`designate domain-list | awk '/'${dhcp_domain}'\./ { print $2; }'`
+fi
+
+sed -ri "s/THIS_WILL_BE_REPLACED_BY_SINK_STARTUP_SCRIPT/${domain_id}/g" /etc/designate/designate-notifications.conf
+
+service_start designate /usr/bin/designate-sink \
+	--config-file=/etc/designate/designate.conf \
+	--config-file=/etc/designate/designate-notifications.conf
