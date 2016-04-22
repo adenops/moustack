@@ -73,52 +73,6 @@ public class Designate extends ContainerModule {
 			Clients.getDockerClient().startOrRestartContainer(this);
 		}
 
-		changed = false;
-		changed |= Clients.getDesignateClient().createServer(stack,
-				stack.get(StackProperty.DESIGNATE_SERVER_NAME) + ".");
-		changed |= Clients.getDesignateClient().createDomain(stack, stack.get(StackProperty.DHCP_DOMAIN) + ".",
-				"root@" + stack.get(StackProperty.DHCP_DOMAIN), 60, "Default domain");
-
-		// if a new domain have been created, wait for it to be available using DNS query
-		if (changed) {
-			int dns_ready_count = 10;
-
-			while (dns_ready_count != 0) {
-				try {
-					Clients.getDockerClient().startEphemeralContainer(this, "designate", "host", "-W1", "-t SOA",
-							stack.get(StackProperty.DHCP_DOMAIN), stack.get(StackProperty.SERVICES_PUBLIC_IP));
-					dns_ready_count = 0;
-
-				} catch (DockerClientException e) {
-					log.info("Waiting for SOA (" + dns_ready_count + " attempts left)");
-
-					try {
-						Thread.sleep(1000);
-					} catch (InterruptedException thread_interrupted) {
-						Thread.currentThread().interrupt();
-					}
-				}
-			}
-
-			if (dns_ready_count != 0) {
-				throw new DeploymentException("Timeout while waiting for DNS server to be ready");
-			}
-		}
-
-		String dhcp_domain_id = Clients.getDesignateClient()
-				.getDomain(stack, stack.get(StackProperty.DHCP_DOMAIN) + ".").getId();
-		log.debug("DHCP domain " + stack.get(StackProperty.DHCP_DOMAIN) + " has id " + dhcp_domain_id);
-
-		// Inject DHCP domain ID into stack properties
-		stack.set(StackProperty.DESIGNATE_DEFAULT_DOMAIN_ID, dhcp_domain_id);
-		changed |= deployConfig(stack);
-
-		if (changed) {
-			Clients.getDockerClient().stopContainer(this);
-			log.info("Restart designate container to use newly created domain");
-			Clients.getDockerClient().startOrRestartContainer(this);
-		}
-
 		return changed;
 	}
 
