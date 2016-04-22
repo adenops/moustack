@@ -48,7 +48,7 @@ public class KeystoneClient extends AbstractOpenStackClient {
 	private static final Logger log = LoggerFactory.getLogger(KeystoneClient.class);
 
 	protected KeystoneClient(StackConfig stack) throws DeploymentException {
-		super("keystone", String.format("http://%s:35357/v3", stack.get(StackProperty.SERVICES_PUBLIC_IP)));
+		super("keystone", String.format("http://%s:35357/v3", stack.get(StackProperty.SERVICES_ADMIN_IP)));
 		token = stack.get(StackProperty.KEYSTONE_ADMIN_TOKEN);
 	}
 
