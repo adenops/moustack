@@ -36,7 +36,7 @@ public class DesignateClient extends AbstractOpenStackClient {
 	private static final Logger log = LoggerFactory.getLogger(DesignateClient.class);
 
 	protected DesignateClient(StackConfig stack) throws DeploymentException {
-		super("designate", String.format("http://%s:9001/v1", stack.get(StackProperty.SERVICES_PUBLIC_IP)));
+		super("designate", String.format("http://%s:9001/v1", stack.get(StackProperty.SERVICES_INTERNAL_IP)));
 		TokenResponse response = Clients.getKeystoneClient().getAdminToken(stack);
 		token = (String) response.getHeaders().getFirst("X-Subject-Token");
 		log.debug("got token {}", token);
