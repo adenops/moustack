@@ -65,6 +65,6 @@ public class Ceilometer extends ContainerModule {
 	@Override
 	public void validate(StackConfig stack) throws DeploymentException {
 		super.validate(stack);
-		Clients.getValidationClient().validateEndpoint(stack, "ceilometer", "http://%s:8777", 300);
+		Clients.getValidationClient().validateEndpoint(stack, "ceilometer", "http://%s:8777", 401);
 	}
 }

@@ -39,12 +39,15 @@ public class ModuleRegistry {
 		registry.put("cinder", com.adenops.moustack.agent.module.controller.Cinder.class);
 		registry.put("designate", com.adenops.moustack.agent.module.controller.Designate.class);
 		registry.put("nova-controller", com.adenops.moustack.agent.module.controller.Nova.class);
-		registry.put("ceilometer", com.adenops.moustack.agent.module.controller.Ceilometer.class);
+		registry.put("ceilometer-controller", com.adenops.moustack.agent.module.controller.Ceilometer.class);
 		registry.put("heat", com.adenops.moustack.agent.module.controller.Heat.class);
 		registry.put("yumrepos", com.adenops.moustack.agent.module.misc.YumRepos.class);
 	}
 
-	public static Class<? extends BaseModule> getRegistered(String name) {
-		return registry.get(name);
+	public static Class<? extends BaseModule> getRegistered(String name) throws DeploymentException {
+		Class<? extends BaseModule> clazz = registry.get(name);
+		if (clazz == null)
+			throw new DeploymentException("could not find registered class " + name);
+		return clazz;
 	}
 }

@@ -114,7 +114,8 @@ public class Deployer {
 				log.debug("adding module [{}] to the role [{}] deployment plan", moduleName, role);
 				BaseModule module = modules.get(moduleName);
 				if (module == null)
-					throw new DeploymentException("module " + module + " not defined but declared by the role " + role);
+					throw new DeploymentException("module " + moduleName + " not defined but declared by the role "
+							+ role);
 				plan.add(module);
 			}
 
