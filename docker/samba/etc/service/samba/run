@@ -22,4 +22,4 @@
 
 wait_for syslog
 
-exec /usr/sbin/smbd --foreground --log-stdout
+exec ionice -c 3 /usr/sbin/smbd --foreground --log-stdout < /dev/null
