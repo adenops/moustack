@@ -37,6 +37,9 @@ eatmydata apt-get install -y --no-install-recommends \
 	openvswitch-switch \
 	ethtool
 
+# remove ntpdate hook to speed up ifup command (ntpdate should be handled by host)
+rm -vf /etc/network/if-up.d/ntpdate
+
 # Clean rootfs
 cd /
 apt-get clean
