@@ -1,0 +1,25 @@
+# Include base configuration
+lxc.include = /var/lib/lxc/${CONTAINER_BASE}/config
+
+# Container configuration
+lxc.rootfs = /var/lib/lxc/${CONTAINER_NAME}/rootfs
+lxc.utsname = ${CONTAINER_NAME}
+
+# Network configuration
+lxc.network.type = veth
+lxc.network.flags = up
+lxc.network.name = eth0
+lxc.network.link = br-mgmt
+lxc.network.hwaddr = ${MAC_PREFIX}:01
+
+lxc.network.type = veth
+lxc.network.flags = up
+lxc.network.name = eth1
+lxc.network.link = br-public
+lxc.network.hwaddr = ${MAC_PREFIX}:02
+
+lxc.network.type = veth
+lxc.network.flags = up
+lxc.network.name = eth2
+lxc.network.link = br-private
+lxc.network.hwaddr = ${MAC_PREFIX}:03

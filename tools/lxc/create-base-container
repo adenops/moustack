@@ -1,0 +1,143 @@
+#!/bin/sh
+
+# exit on failure
+set -e
+
+# exit on unassigned variables
+set -u
+
+# switch to current directory
+cd $(dirname $0)
+
+# default variables
+name="moustack-base"
+domain="cloud.local"
+username="moustack"
+password="qwer1234"
+registry="172.30.0.254"
+pubkey="~/.ssh/authorized_keys"
+
+# define usage
+usage() {
+	echo "usage: $0 [-h] [-n] [-d] [-u] [-p] [-r] [-s]"
+	echo
+	echo "	-h	show this help message"
+	echo "	-n	container name (default: ${name})"
+	echo "	-d	domain name (default: ${domain})"
+	echo "	-u	username (default: ${username})"
+	echo "	-p	password (default: ${password})"
+	echo "	-r	local docker registry IP address (default: ${registry})"
+	echo "	-s	ssh public key file (default: ${pubkey})"
+	echo
+	exit ${1:-0}
+}
+
+# define colorized log
+logme() {
+	/bin/echo -e "\n\033[1;32m--- $@ ---\033[0m\n"
+}
+
+while getopts "hn:d:u:p:r:s:" opt; do
+	case $opt in
+		h) usage 0;;
+		n) name="${OPTARG}" ;;
+		d) domain="${OPTARG}" ;;
+		u) username="${OPTARG}" ;;
+		p) password="${OPTARG}" ;;
+		r) registry="${OPTARG}" ;;
+		s) pubkey="${OPTARG}" ;;
+		*) usage 1;;
+	esac
+done
+
+if [ "`id -u`" -ne 0 ]; then
+	echo "Please run as root or use sudo"
+	exit 1
+elif [ "${#}" -eq 0 ]; then
+	usage 1
+fi
+
+# export HTTP proxy variable if set by caller script
+export http_proxy=${http_proxy:-}
+
+logme "create base container with initial packages"
+# note: default-jre-headless is not installed there, it fails because lxc-create do not mount /proc
+lxc-create \
+	--name ${name} \
+	--template=ubuntu \
+	-- \
+	--release xenial \
+	--arch amd64 \
+	--auth-key ${pubkey} \
+	--user ${username} \
+	--password ${password} \
+	--packages bash-completion,htop,dstat,vim-scripts,tcpdump,strace,less,most,apt-transport-https,ca-certificates,bind9-host,python-openstackclient,python-keystoneclient,python-heatclient,python-novaclient,python-neutronclient,python-cinderclient,python-glanceclient
+
+logme "install hooks"
+cp -v hook.* /var/lib/lxc/${name}/
+
+logme "install Java (which require /proc)"
+chroot /var/lib/lxc/${name}/rootfs sh -c 'mount -t proc proc /proc; apt-get install --force-yes -y --no-install-recommends default-jre-headless; umount /proc'
+
+logme "install docker"
+cat >/var/lib/lxc/${name}/rootfs/etc/apt/sources.list.d/docker.list <<EOF
+deb https://apt.dockerproject.org/repo ubuntu-xenial main
+EOF
+chroot /var/lib/lxc/${name}/rootfs apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 58118E89F3A912897C070ADBF76221572C52609D
+chroot /var/lib/lxc/${name}/rootfs apt-get update
+chroot /var/lib/lxc/${name}/rootfs apt-get install -y docker-engine
+
+logme "create container configuration"
+sed "s/\${CONTAINER_NAME}/${name}/g" ./config.base.template >/var/lib/lxc/${name}/config
+
+logme "remove default network interfaces configuration"
+cat >/var/lib/lxc/${name}/rootfs/etc/network/interfaces <<EOF
+# The loopback network interface
+auto lo
+iface lo inet loopback
+EOF
+
+logme "disable resolv.conf handling by resolvconf"
+rm -f /var/lib/lxc/${name}/rootfs/etc/resolv.conf
+touch /var/lib/lxc/${name}/rootfs/etc/resolv.conf
+
+logme "configure hostname"
+echo ${name} >/var/lib/lxc/${name}/rootfs/etc/hostname
+
+cat >/var/lib/lxc/${name}/rootfs/etc/hosts <<EOF
+127.0.0.1	localhost
+127.0.1.1	${name}.${domain} ${name}
+
+${registry}	local-registry
+
+# The following lines are desirable for IPv6 capable hosts
+::1     ip6-localhost ip6-loopback
+fe00::0 ip6-localnet
+ff00::0 ip6-mcastprefix
+ff02::1 ip6-allnodes
+ff02::2 ip6-allrouters
+EOF
+
+logme "configure docker service"
+mkdir -p /var/lib/lxc/${name}/rootfs/etc/systemd/system/docker.service.d
+cp -v systemd.docker.conf /var/lib/lxc/${name}/rootfs/etc/systemd/system/docker.service.d/moustack.conf
+
+logme "configure root SSH access"
+cp -rv /var/lib/lxc/${name}/rootfs/home/${username}/.ssh /var/lib/lxc/${name}/rootfs/root/
+
+logme "start container to make final checks"
+lxc-start -n ${name}
+
+while ! lxc-attach -n ${name} -- true; do
+	echo "waiting for container to be ready"
+	sleep 1
+done
+
+logme "check docker status"
+while ! lxc-attach -n ${name} -- docker ps; do
+	echo "waiting for nested docker daemon to be ready"
+	sleep 1
+done
+
+logme "stop container"
+lxc-stop -n ${name}

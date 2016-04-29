@@ -1,0 +1,5 @@
+# create base container
+sudo http_proxy=http://172.17.0.1:18080 ./create-base-container -n moustack-base -d cloud.local -u moustack -p qwer1234 -r 172.30.0.254 -s /home/lionel/.ssh/authorized_keys
+
+# create container from base
+sudo ./create-moustack-container -b moustack-base -n moustack-controller -d cloud.local -m 00:16:3e:10:11 -r 172.30.0.254
