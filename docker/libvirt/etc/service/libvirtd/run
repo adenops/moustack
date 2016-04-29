@@ -16,6 +16,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# XXX: all this user logic is messy, is this (or some part of it) related to
+# our dev environment? Is all of this relevant on a server?
+# It seems it could also mess up live migration, libvirt and nova user have to
+# be the same everywhere, so we should probably solve it during docker build.
 
 # source shell library
 . /usr/lib/runit/load
@@ -24,6 +28,29 @@ wait_for syslog
 
 mkdir -p /var/run/libvirt/
 rm -f /var/run/libvirtd.pid
+
+# ensure nova user matches with nova-compute
+# TODO: this is not very safe, there should be better solution
+# create custom user for nova at build time in docker?
+if ! grep -q '^nova:' /etc/group; then
+	groupadd --gid 109 nova
+fi
+if ! grep -q '^nova:' /etc/passwd; then
+	# NOTE: uid should be 105 but it may already been taken by libvirt so
+	# we don't enfore it (it seems to work)
+	useradd --home-dir /var/lib/nova --no-create-home --shell /bin/false \
+		--gid 109 nova
+fi
+
+# same thing as nova
+# XXX: this is very ugly, need to be fixed
+if ! grep -q '^ceilometer:' /etc/group; then
+	groupadd --gid 108 ceilometer
+fi
+if ! grep -q '^ceilometer:' /etc/passwd; then
+	useradd --home-dir /bin --no-create-home --shell /bin/false \
+		--gid 108 ceilometer
+fi
 
 # fix /dev/kvm permissions
 kvm_host_group=kvm-host

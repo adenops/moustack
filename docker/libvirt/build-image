@@ -34,16 +34,10 @@ apt-get update
 
 # Install and patch usefull python modules
 eatmydata apt-get install -y --no-install-recommends \
-	cifs-utils \
-	nfs-common \
-	nova-compute \
-	ceilometer-agent-compute \
-	openvswitch-switch \
-	sysfsutils \
-	libvirt-bin
-
-# Purge nova local database
-rm -f /var/lib/nova/nova.sqlite
+	dmidecode \
+	pm-utils \
+	libvirt-bin \
+	qemu-kvm
 
 # Remove libvirtd default network
 rm -f /etc/libvirt/qemu/networks/autostart/default.xml

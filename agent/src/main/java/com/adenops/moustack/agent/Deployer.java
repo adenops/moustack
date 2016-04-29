@@ -163,8 +163,8 @@ public class Deployer {
 			Class<SystemModule> registeredClass = (Class<SystemModule>) ModuleRegistry.getRegistered(name);
 
 			try {
-				module = registeredClass.getConstructor(String.class, List.class, List.class, List.class, List.class)
-						.newInstance(name, moduleFiles, modulePackages, moduleServices);
+				module = registeredClass.getConstructor(String.class, List.class, List.class, List.class).newInstance(
+						name, moduleFiles, modulePackages, moduleServices);
 			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
 					| InvocationTargetException | NoSuchMethodException | SecurityException e) {
 				throw new DeploymentException("cannot register module " + name, e);
@@ -198,21 +198,20 @@ public class Deployer {
 			String to = Paths.get("/", file).toString();
 			validateFile(from, null);
 			files.add(file);
-			volumes.add(new Volume(PathUtil.getContainerTargetFilePath(stack, name, file), to, true));
+			// TODO: "ro" is ugly
+			volumes.add(new Volume(PathUtil.getContainerTargetFilePath(stack, name, file), to, "ro"));
 		}
 
 		// add environments to files for deployment
 		files.addAll(environments);
 
-		// TODO: use enum for ro/rw?
 		for (String entry : YamlUtil.getList(moduleConfig.get("volumes"))) {
 			String[] split = entry.split(":");
 			if (split.length < 2 || split.length > 3)
 				throw new DeploymentException("invalid volume definition: " + entry);
-			String permission = split.length == 3 ? split[2] : "rw";
-			if (!permission.equals("rw") && !permission.equals("ro"))
-				throw new DeploymentException("invalid volume permission: " + entry);
-			volumes.add(new Volume(split[0], split[1], permission.equals("ro")));
+			String mode = split.length == 3 ? split[2] : "rw";
+			// TODO: add mode validation
+			volumes.add(new Volume(split[0], split[1], mode));
 		}
 
 		for (String entry : YamlUtil.getList(moduleConfig.get("capabilities"))) {

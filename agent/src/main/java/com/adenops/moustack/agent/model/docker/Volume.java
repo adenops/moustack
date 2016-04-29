@@ -19,15 +19,16 @@
 
 package com.adenops.moustack.agent.model.docker;
 
+// TODO: we use a String for the mode, it would be better to use an enum
 public class Volume {
 	private final String hostPath;
 	private final String guestPath;
-	private final boolean readOnly;
+	private final String mode;
 
-	public Volume(String hostPath, String guestPath, boolean readOnly) {
+	public Volume(String hostPath, String guestPath, String mode) {
 		this.hostPath = hostPath;
 		this.guestPath = guestPath;
-		this.readOnly = readOnly;
+		this.mode = mode;
 	}
 
 	public String getHostPath() {
@@ -38,7 +39,7 @@ public class Volume {
 		return guestPath;
 	}
 
-	public boolean isReadOnly() {
-		return readOnly;
+	public String getMode() {
+		return mode;
 	}
 }

@@ -132,7 +132,7 @@
 		<dependency>
 			<groupId>com.github.docker-java</groupId>
 			<artifactId>docker-java</artifactId>
-			<version>3.0.0-RC4</version>
+			<version>3.0.0-RC5-PATCHED</version>
 			<exclusions>
 				<exclusion>
 					<artifactId>commons-logging</artifactId>
@@ -166,6 +166,10 @@
 			<snapshots>
 				<enabled>true</enabled>
 			</snapshots>
+		</repository>
+		<repository>
+			<id>jbonjean-github</id>
+			<url>https://github.com/jbonjean/maven-repository/raw/master</url>
 		</repository>
 	</repositories>
 </project>

@@ -51,7 +51,6 @@ import com.github.dockerjava.api.exception.DockerClientException;
 import com.github.dockerjava.api.exception.InternalServerErrorException;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.exception.NotModifiedException;
-import com.github.dockerjava.api.model.AccessMode;
 import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.Capability;
 import com.github.dockerjava.api.model.Device;
@@ -87,7 +86,7 @@ public class DockerClient extends ManagedClient {
 
 		// TODO: this should be configurable
 		DockerClientConfig config = DockerClientConfig.createDefaultConfigBuilder().withDockerHost(DOCKER_URI)
-				.withDockerTlsVerify(false).withApiVersion("1.21").build();
+				.withDockerTlsVerify(false).withApiVersion("1.22").build();
 
 		client = DockerClientBuilder.getInstance(config).build();
 
@@ -243,7 +242,7 @@ public class DockerClient extends ManagedClient {
 		}
 
 		// compare privileged value
-		if (containerInspect != null && containerInspect.getHostConfig().isPrivileged() != container.isPrivileged()) {
+		if (containerInspect != null && containerInspect.getHostConfig().getPrivileged() != container.isPrivileged()) {
 			log.info("container " + container.getName() + " privilege changed");
 			needRestart = true;
 		}
@@ -262,13 +261,11 @@ public class DockerClient extends ManagedClient {
 		if (containerInspect != null && !needRestart) {
 			Set<String> currentVolumes = new HashSet<>();
 			for (Bind bind : containerInspect.getHostConfig().getBinds())
-				currentVolumes.add(bind.getPath() + ":" + bind.getVolume().getPath() + ":"
-						+ bind.getAccessMode().name());
+				currentVolumes.add(bind.getPath() + ":" + bind.getVolume().getPath() + ":" + bind.getAccessMode());
 
 			Set<String> newVolumes = new HashSet<>();
 			for (Volume volume : container.getVolumes())
-				newVolumes.add(volume.getHostPath() + ":" + volume.getGuestPath() + ":"
-						+ (volume.isReadOnly() ? "ro" : "rw"));
+				newVolumes.add(volume.getHostPath() + ":" + volume.getGuestPath() + ":" + volume.getMode());
 
 			if (!currentVolumes.equals(newVolumes)) {
 				log.info("container " + container.getName() + " volumes changed");
@@ -445,7 +442,7 @@ public class DockerClient extends ManagedClient {
 		List<Bind> binds = new ArrayList<>();
 		for (Volume volume : volumes)
 			binds.add(new Bind(volume.getHostPath(), new com.github.dockerjava.api.model.Volume(volume.getGuestPath()),
-					AccessMode.fromBoolean(!volume.isReadOnly())));
+					volume.getMode()));
 		createContainerCmd.withBinds(binds.toArray(new Bind[binds.size()]));
 
 		// prepare environment
