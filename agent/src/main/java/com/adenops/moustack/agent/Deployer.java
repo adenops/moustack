@@ -35,7 +35,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.adenops.moustack.agent.client.Clients;
+import com.adenops.moustack.agent.DeploymentEnvironment.OSFamily;
 import com.adenops.moustack.agent.client.MoustackClient;
 import com.adenops.moustack.agent.config.AgentConfig;
 import com.adenops.moustack.agent.config.StackConfig;
@@ -50,7 +50,6 @@ import com.adenops.moustack.agent.util.PathUtil;
 import com.adenops.moustack.agent.util.ProcessUtil;
 import com.adenops.moustack.agent.util.PropertiesUtil;
 import com.adenops.moustack.agent.util.YamlUtil;
-import com.adenops.moustack.agent.util.YumUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.dockerjava.api.model.Capability;
@@ -67,13 +66,25 @@ public class Deployer {
 	// this is a global list of files to ensure there are no overrides
 	private final List<String> systemFiles = new ArrayList<>();
 
-	private final StackConfig stack;
-	private final Map<String, BaseModule> modules;
+	// deployment plan (ordered modules list to deploy)
 	private final List<BaseModule> deploymentPlan;
 
+	// deployment environment
+	private final DeploymentEnvironment env;
+
 	public Deployer() throws DeploymentException {
+		// detect the OS (for the packaging)
+		DeploymentEnvironment.OSFamily osFamily = null;
+		if (new File("/etc/debian_version").exists())
+			osFamily = OSFamily.DEBIAN;
+		else if (new File("/etc/redhat-release").exists())
+			osFamily = OSFamily.REDHAT;
+		else
+			throw new DeploymentException("could no detect OS family");
+		log.info("detected OS family {}", osFamily);
+
 		// prepare the stack config for this run
-		stack = new StackConfig();
+		StackConfig stack = new StackConfig();
 
 		// retrieve repository information from the server
 		Map<String, String> json = MoustackClient.getInstance().getRepositoryInfo();
@@ -88,21 +99,21 @@ public class Deployer {
 		// load node properties hierarchy
 		stack.setProperties(PropertiesUtil.loadHostProperties(AgentConfig.getInstance()));
 
+		// load deployment environment
+		env = new DeploymentEnvironment(stack, osFamily);
+
 		// load the global modules list
-		modules = loadModules();
+		Map<String, BaseModule> modules = loadModules();
 		log.info("loaded {} modules definitions", modules.size());
 
 		// load deployment plan
-		deploymentPlan = loadDeploymentPlan();
-
-		// initialize clients
-		Clients.init(stack);
+		deploymentPlan = loadDeploymentPlan(modules);
 	}
 
-	private List<BaseModule> loadDeploymentPlan() throws DeploymentException {
+	private List<BaseModule> loadDeploymentPlan(Map<String, BaseModule> modules) throws DeploymentException {
 		List<BaseModule> plan = new ArrayList<BaseModule>();
 
-		for (String role : stack.getRoles()) {
+		for (String role : env.getStack().getRoles()) {
 			log.debug("loading deployment plan for role [{}]", role);
 
 			Map<Object, Object> planConfig = YamlUtil.loadYaml(PathUtil.getRoleModulesConfigPath(
@@ -199,7 +210,7 @@ public class Deployer {
 			validateFile(from, null);
 			files.add(file);
 			// TODO: "ro" is ugly
-			volumes.add(new Volume(PathUtil.getContainerTargetFilePath(stack, name, file), to, "ro"));
+			volumes.add(new Volume(PathUtil.getContainerTargetFilePath(env.getStack(), name, file), to, "ro"));
 		}
 
 		// add environments to files for deployment
@@ -314,16 +325,12 @@ public class Deployer {
 		boolean changed = false;
 
 		log.info("starting deployment of " + AgentConfig.getInstance().getId() + " (roles: "
-				+ String.join(",", stack.getRoles()) + ")");
-
-		// install eatmydata if we are going to use it
-		if (YumUtil.EATMYDATA)
-			YumUtil.install("eatmydata");
+				+ String.join(",", env.getStack().getRoles()) + ")");
 
 		for (BaseModule module : deploymentPlan) {
 			log.info("deploying {} module [{}]", module.getType(), module.getName());
-			changed |= module.deploy(stack);
-			module.validate(stack);
+			changed |= module.deploy(env);
+			module.validate(env);
 		}
 
 		long duration = System.currentTimeMillis() - start;
@@ -362,10 +369,10 @@ public class Deployer {
 		// general information
 		appendLine(sb, "date: ", new Date().toString());
 		appendLine(sb, "host: ", AgentConfig.getInstance().getId());
-		appendLine(sb, "roles: ", String.join(",", stack.getRoles()));
-		appendLine(sb, "git repo: ", stack.getGitRepo());
-		appendLine(sb, "git branch: ", stack.getGitBranch());
-		appendLine(sb, "git head: ", stack.getGitHead());
+		appendLine(sb, "roles: ", String.join(",", env.getStack().getRoles()));
+		appendLine(sb, "git repo: ", env.getStack().getGitRepo());
+		appendLine(sb, "git branch: ", env.getStack().getGitBranch());
+		appendLine(sb, "git head: ", env.getStack().getGitHead());
 		appendLine(sb);
 
 		report.put("general", toBase64(sb.toString()));
@@ -381,7 +388,7 @@ public class Deployer {
 		sb = new StringBuffer();
 		for (BaseModule module : deploymentPlan) {
 			if (module instanceof ContainerModule) {
-				sb.append(Clients.getDockerClient().getContainerInfo((ContainerModule) module));
+				sb.append(env.getDockerClient().getContainerInfo((ContainerModule) module));
 				appendLine(sb);
 			}
 		}

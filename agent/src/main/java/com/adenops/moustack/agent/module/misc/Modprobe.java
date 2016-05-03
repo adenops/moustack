@@ -27,9 +27,9 @@ import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.adenops.moustack.agent.DeploymentEnvironment;
 import com.adenops.moustack.agent.DeploymentException;
 import com.adenops.moustack.agent.config.AgentConfig;
-import com.adenops.moustack.agent.config.StackConfig;
 import com.adenops.moustack.agent.module.SystemModule;
 import com.adenops.moustack.agent.util.PathUtil;
 import com.adenops.moustack.agent.util.ProcessUtil;
@@ -42,8 +42,8 @@ public class Modprobe extends SystemModule {
 	}
 
 	@Override
-	public boolean deploy(StackConfig stack) throws DeploymentException {
-		boolean changed = super.deploy(stack);
+	public boolean deploy(DeploymentEnvironment env) throws DeploymentException {
+		boolean changed = super.deploy(env);
 
 		if (!changed)
 			return false;

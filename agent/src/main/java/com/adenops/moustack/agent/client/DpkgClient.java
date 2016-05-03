@@ -17,7 +17,7 @@
  * limitations under the License.
  */
 
-package com.adenops.moustack.agent.util;
+package com.adenops.moustack.agent.client;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,31 +28,24 @@ import org.slf4j.LoggerFactory;
 
 import com.adenops.moustack.agent.DeploymentException;
 import com.adenops.moustack.agent.model.exec.ExecResult;
+import com.adenops.moustack.agent.util.ProcessUtil;
 
-public class YumUtil {
-	private static final Logger log = LoggerFactory.getLogger(YumUtil.class);
+public class DpkgClient extends AbstractPackagingClient {
+	private static final Logger log = LoggerFactory.getLogger(DpkgClient.class);
 
-	// XXX: make configurable
-	public static final boolean EATMYDATA = false;
-
-	private static void yum(String action, String... packages) throws DeploymentException {
-		String[] command = ArrayUtils.addAll(new String[] { "yum", action, "--assumeyes", "--debuglevel=0",
-				"--errorlevel=0" }, packages);
-
-		if (EATMYDATA)
-			command = ArrayUtils.addAll(new String[] { "eatmydata" }, command);
-
+	private void apt(String action, String... packages) throws DeploymentException {
+		String[] command = ArrayUtils.addAll(new String[] { "apt-get", action, "--assume-yes", "--quiet" }, packages);
 		ProcessUtil.execute(command);
 	}
 
-	private static String[] filterPackages(boolean filterInstalled, String... pkgs) throws DeploymentException {
+	private String[] filterPackages(boolean filterInstalled, String... pkgs) throws DeploymentException {
 		if (pkgs.length == 0)
 			return pkgs;
 
 		List<String> result = new ArrayList<>();
 
 		for (String pkg : pkgs) {
-			ExecResult execResult = ProcessUtil.execute(null, null, null, true, "rpm", "-q", pkg);
+			ExecResult execResult = ProcessUtil.execute(null, null, null, true, "dpkg", "-s", pkg);
 
 			// if the package is installed and we filter packages installed, add it to the results
 			if (execResult.getExitCode() == 0 && filterInstalled)
@@ -66,21 +59,23 @@ public class YumUtil {
 		return result.toArray(new String[result.size()]);
 	}
 
-	public static boolean install(String... packages) throws DeploymentException {
+	@Override
+	public boolean install(String... packages) throws DeploymentException {
 		packages = filterPackages(false, packages);
 		if (packages.length == 0)
 			return false;
 		log.info("installing " + String.join(" ", packages));
-		yum("install", packages);
+		apt("install", packages);
 		return true;
 	}
 
-	public static boolean remove(String... packages) throws DeploymentException {
+	@Override
+	public boolean remove(String... packages) throws DeploymentException {
 		packages = filterPackages(true, packages);
 		if (packages.length == 0)
 			return false;
 		log.info("removing " + String.join(" ", packages));
-		yum("erase", packages);
+		apt("purge", packages);
 		return true;
 	}
 }

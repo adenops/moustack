@@ -34,13 +34,13 @@ import com.adenops.moustack.agent.DeploymentException;
 import com.adenops.moustack.agent.config.StackConfig;
 import com.adenops.moustack.agent.config.StackProperty;
 
-public class ValidationClient extends ManagedClient {
+public class ValidationClient {
 	private static final Logger log = LoggerFactory.getLogger(ValidationClient.class);
 	private static final int MAX_RETRIES = 20;
 	private static final int RETRY_WAIT = 1;
 	protected final Client client;
 
-	protected ValidationClient(StackConfig stack) throws DeploymentException {
+	public ValidationClient(StackConfig stack) throws DeploymentException {
 		client = ClientBuilder.newBuilder().build();
 	}
 
@@ -69,14 +69,5 @@ public class ValidationClient extends ManagedClient {
 			} catch (InterruptedException e) {
 			}
 		}
-	}
-
-	@Override
-	protected void release() {
-		if (client == null)
-			return;
-
-		log.debug("closing validation client");
-		client.close();
 	}
 }

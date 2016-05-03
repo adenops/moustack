@@ -24,14 +24,13 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.adenops.moustack.agent.DeploymentEnvironment;
 import com.adenops.moustack.agent.DeploymentException;
-import com.adenops.moustack.agent.config.StackConfig;
 import com.adenops.moustack.agent.config.StackProperty;
 import com.adenops.moustack.agent.module.SystemModule;
 import com.adenops.moustack.agent.util.DeploymentUtil;
 import com.adenops.moustack.agent.util.ProcessUtil;
 import com.adenops.moustack.agent.util.SystemCtlUtil;
-import com.adenops.moustack.agent.util.YumUtil;
 
 public class Network extends SystemModule {
 	private static final Logger log = LoggerFactory.getLogger(Network.class);
@@ -41,17 +40,17 @@ public class Network extends SystemModule {
 	}
 
 	@Override
-	public boolean deploy(StackConfig stack) throws DeploymentException {
+	public boolean deploy(DeploymentEnvironment env) throws DeploymentException {
 		boolean changed = false;
 
-		changed |= YumUtil.install(packages.toArray(new String[packages.size()]));
+		changed |= env.getPackagingClient().install(packages.toArray(new String[packages.size()]));
 
 		// TODO: the logic for restart could be improved
 
-		changed |= YumUtil.remove("NetworkManager", "firewalld", "openvswitch");
-		changed |= YumUtil.install("iptables-services");
+		changed |= env.getPackagingClient().remove("NetworkManager", "firewalld", "openvswitch");
+		changed |= env.getPackagingClient().install("iptables-services");
 
-		changed |= DeploymentUtil.deploySystemFiles(stack, name, files);
+		changed |= DeploymentUtil.deploySystemFiles(env.getStack(), name, files);
 
 		changed |= SystemCtlUtil.stopService("NetworkManager");
 
@@ -62,9 +61,9 @@ public class Network extends SystemModule {
 
 		// FIXME
 		try {
-			ProcessUtil.execute("test", "$(hostname)", "=", stack.get(StackProperty.HOSTNAME));
+			ProcessUtil.execute("test", "$(hostname)", "=", env.getStack().get(StackProperty.HOSTNAME));
 		} catch (Exception e) {
-			ProcessUtil.execute("hostnamectl", "set-hostname", stack.get(StackProperty.HOSTNAME));
+			ProcessUtil.execute("hostnamectl", "set-hostname", env.getStack().get(StackProperty.HOSTNAME));
 		}
 
 		return changed;

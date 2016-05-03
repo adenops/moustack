@@ -26,9 +26,8 @@ import javax.ws.rs.core.Response.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.adenops.moustack.agent.DeploymentEnvironment;
 import com.adenops.moustack.agent.DeploymentException;
-import com.adenops.moustack.agent.client.Clients;
-import com.adenops.moustack.agent.config.StackConfig;
 import com.adenops.moustack.agent.config.StackProperty;
 import com.adenops.moustack.agent.model.docker.Volume;
 import com.adenops.moustack.agent.module.ContainerModule;
@@ -43,49 +42,52 @@ public class Heat extends ContainerModule {
 	}
 
 	@Override
-	public boolean deploy(StackConfig stack) throws DeploymentException {
+	public boolean deploy(DeploymentEnvironment env) throws DeploymentException {
 		boolean changed = false;
-		changed |= Clients.getKeystoneClient().createService(stack, "heat", "OpenStack Orchestration service",
+		changed |= env.getKeystoneClient().createService(env.getStack(), "heat", "OpenStack Orchestration service",
 				"orchestration", "http://%s:8004/v1/%%(tenant_id)s", "http://%s:8004/v1/%%(tenant_id)s",
 				"http://%s:8004/v1/%%(tenant_id)s");
-		changed |= Clients.getKeystoneClient()
-				.createService(stack, "heat-cfn", "OpenStack Orchestration service", "cloudformation",
+		changed |= env.getKeystoneClient()
+				.createService(env.getStack(), "heat-cfn", "OpenStack Orchestration service", "cloudformation",
 						"http://%s:8774/v2/8000/v1", "http://%s:8774/v2/8000/v1", "http://%s:8774/v2/8000/v1");
-		changed |= Clients.getKeystoneClient().createProjectUser(stack, StackProperty.KS_HEAT_USER, "Heat user",
+		changed |= env.getKeystoneClient().createProjectUser(env.getStack(), StackProperty.KS_HEAT_USER, "Heat user",
 				"heat@localhost", StackProperty.KS_HEAT_PASSWORD, StackProperty.KEYSTONE_SERVICES_PROJECT);
-		changed |= Clients.getKeystoneClient().grantProjectRole(stack, StackProperty.KS_HEAT_USER,
+		changed |= env.getKeystoneClient().grantProjectRole(env.getStack(), StackProperty.KS_HEAT_USER,
 				StackProperty.KEYSTONE_SERVICES_PROJECT, StackProperty.KEYSTONE_ADMIN_ROLE);
 
-		changed |= Clients.getKeystoneClient().createRole(stack, stack.get(StackProperty.HEAT_DELEGATED_ROLE));
-		changed |= Clients.getKeystoneClient().createRole(stack, stack.get(StackProperty.HEAT_STACK_USER_ROLE));
-		changed |= Clients.getKeystoneClient().createDomain(stack, stack.get(StackProperty.HEAT_DOMAIN),
+		changed |= env.getKeystoneClient().createRole(env.getStack(),
+				env.getStack().get(StackProperty.HEAT_DELEGATED_ROLE));
+		changed |= env.getKeystoneClient().createRole(env.getStack(),
+				env.getStack().get(StackProperty.HEAT_STACK_USER_ROLE));
+		changed |= env.getKeystoneClient().createDomain(env.getStack(), env.getStack().get(StackProperty.HEAT_DOMAIN),
 				"Stack projects and users");
-		changed |= Clients.getKeystoneClient().createDomainUser(stack, StackProperty.HEAT_DOMAIN_ADMIN,
+		changed |= env.getKeystoneClient().createDomainUser(env.getStack(), StackProperty.HEAT_DOMAIN_ADMIN,
 				"Heat domain admin", "heat@localhost", StackProperty.HEAT_DOMAIN_ADMIN_PASSWORD,
 				StackProperty.HEAT_DOMAIN);
-		changed |= Clients.getKeystoneClient().grantDomainRole(stack, StackProperty.HEAT_DOMAIN_ADMIN,
+		changed |= env.getKeystoneClient().grantDomainRole(env.getStack(), StackProperty.HEAT_DOMAIN_ADMIN,
 				StackProperty.HEAT_DOMAIN, StackProperty.KEYSTONE_ADMIN_ROLE);
-		changed |= Clients.getKeystoneClient().grantProjectRole(stack, StackProperty.KEYSTONE_ADMIN_USER,
+		changed |= env.getKeystoneClient().grantProjectRole(env.getStack(), StackProperty.KEYSTONE_ADMIN_USER,
 				StackProperty.KEYSTONE_ADMIN_PROJECT, StackProperty.HEAT_DELEGATED_ROLE);
 
-		changed |= Clients.getMySQLClient().createDatabaseUser("heat", "heat",
-				stack.get(StackProperty.DB_HEAT_PASSWORD));
+		changed |= env.getMySQLClient().createDatabaseUser("heat", "heat",
+				env.getStack().get(StackProperty.DB_HEAT_PASSWORD));
 
-		changed |= deployConfig(stack);
+		changed |= deployConfig(env);
 
 		if (changed) {
-			Clients.getDockerClient().stopContainer(this);
+			env.getDockerClient().stopContainer(this);
 			log.info("running glance DB migration");
-			Clients.getDockerClient().startEphemeralContainer(this, "heat", "heat-manage", "db_sync");
-			Clients.getDockerClient().startOrRestartContainer(this);
+			env.getDockerClient().startEphemeralContainer(this, "heat", "heat-manage", "db_sync");
+			env.getDockerClient().startOrRestartContainer(this);
 		}
 
 		return changed;
 	}
 
 	@Override
-	public void validate(StackConfig stack) throws DeploymentException {
-		super.validate(stack);
-		Clients.getValidationClient().validateEndpoint(stack, "heat", "http://%s:8774/", Status.OK.getStatusCode());
+	public void validate(DeploymentEnvironment env) throws DeploymentException {
+		super.validate(env);
+		env.getValidationClient()
+				.validateEndpoint(env.getStack(), "heat", "http://%s:8774/", Status.OK.getStatusCode());
 	}
 }

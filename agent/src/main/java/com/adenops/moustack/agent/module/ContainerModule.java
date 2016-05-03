@@ -25,9 +25,8 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.adenops.moustack.agent.DeploymentEnvironment;
 import com.adenops.moustack.agent.DeploymentException;
-import com.adenops.moustack.agent.client.Clients;
-import com.adenops.moustack.agent.config.StackConfig;
 import com.adenops.moustack.agent.model.docker.Volume;
 import com.adenops.moustack.agent.util.DeploymentUtil;
 import com.github.dockerjava.api.model.Capability;
@@ -78,25 +77,25 @@ public class ContainerModule extends BaseModule {
 	}
 
 	@Override
-	public boolean deploy(StackConfig stack) throws DeploymentException {
-		boolean changed = deployConfig(stack);
+	public boolean deploy(DeploymentEnvironment env) throws DeploymentException {
+		boolean changed = deployConfig(env);
 		if (changed)
-			Clients.getDockerClient().startOrRestartContainer(this);
+			env.getDockerClient().startOrRestartContainer(this);
 		return changed;
 	}
 
 	@Override
-	protected boolean deployConfig(StackConfig stack) throws DeploymentException {
+	protected boolean deployConfig(DeploymentEnvironment env) throws DeploymentException {
 		boolean changed = false;
-		changed |= DeploymentUtil.deployContainerFiles(stack, name, getFiles());
-		changed |= Clients.getDockerClient().containerCheckUpdate(this);
+		changed |= DeploymentUtil.deployContainerFiles(env.getStack(), name, getFiles());
+		changed |= env.getDockerClient().containerCheckUpdate(this);
 		return changed;
 	}
 
 	@Override
-	public void validate(StackConfig stack) throws DeploymentException {
+	public void validate(DeploymentEnvironment env) throws DeploymentException {
 		log.debug("validating container " + name);
-		if (!Clients.getDockerClient().containerIsRunning(this))
+		if (!env.getDockerClient().containerIsRunning(this))
 			throw new DeploymentException("container " + name + " is not running");
 	}
 

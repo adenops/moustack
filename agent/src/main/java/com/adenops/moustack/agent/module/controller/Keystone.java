@@ -24,9 +24,8 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.adenops.moustack.agent.DeploymentEnvironment;
 import com.adenops.moustack.agent.DeploymentException;
-import com.adenops.moustack.agent.client.Clients;
-import com.adenops.moustack.agent.config.StackConfig;
 import com.adenops.moustack.agent.config.StackProperty;
 import com.adenops.moustack.agent.model.docker.Volume;
 import com.adenops.moustack.agent.module.ContainerModule;
@@ -41,35 +40,35 @@ public class Keystone extends ContainerModule {
 	}
 
 	@Override
-	public boolean deploy(StackConfig stack) throws DeploymentException {
+	public boolean deploy(DeploymentEnvironment env) throws DeploymentException {
 		boolean changed = false;
-		changed |= Clients.getMySQLClient().createDatabaseUser("keystone", "keystone",
-				stack.get(StackProperty.DB_KEYSTONE_PASSWORD));
-		changed |= deployConfig(stack);
+		changed |= env.getMySQLClient().createDatabaseUser("keystone", "keystone",
+				env.getStack().get(StackProperty.DB_KEYSTONE_PASSWORD));
+		changed |= deployConfig(env);
 
 		if (changed) {
-			Clients.getDockerClient().stopContainer(this);
+			env.getDockerClient().stopContainer(this);
 			log.info("running keystone DB migration");
-			Clients.getDockerClient().startEphemeralContainer(this, "keystone", "keystone-manage", "db_sync");
-			Clients.getDockerClient().startOrRestartContainer(this);
+			env.getDockerClient().startEphemeralContainer(this, "keystone", "keystone-manage", "db_sync");
+			env.getDockerClient().startOrRestartContainer(this);
 		}
 
-		Clients.getKeystoneClient().createProject(stack, "admin", "Admin project");
-		Clients.getKeystoneClient().createProject(stack, "services", "Services project");
-		Clients.getKeystoneClient().createRole(stack, "admin");
-		Clients.getKeystoneClient().createProjectUser(stack, StackProperty.KEYSTONE_ADMIN_USER, "Admin user",
+		env.getKeystoneClient().createProject(env.getStack(), "admin", "Admin project");
+		env.getKeystoneClient().createProject(env.getStack(), "services", "Services project");
+		env.getKeystoneClient().createRole(env.getStack(), "admin");
+		env.getKeystoneClient().createProjectUser(env.getStack(), StackProperty.KEYSTONE_ADMIN_USER, "Admin user",
 				"admin@localhost", StackProperty.KEYSTONE_ADMIN_PASSWORD, StackProperty.KEYSTONE_ADMIN_PROJECT);
-		Clients.getKeystoneClient().grantProjectRole(stack, StackProperty.KEYSTONE_ADMIN_USER,
+		env.getKeystoneClient().grantProjectRole(env.getStack(), StackProperty.KEYSTONE_ADMIN_USER,
 				StackProperty.KEYSTONE_ADMIN_PROJECT, StackProperty.KEYSTONE_ADMIN_ROLE);
-		Clients.getKeystoneClient().createService(stack, "keystone", "OpenStack Identity", "identity",
+		env.getKeystoneClient().createService(env.getStack(), "keystone", "OpenStack Identity", "identity",
 				"http://%s:5000/v2.0", "http://%s:5000/v2.0", "http://%s:35357/v2.0");
 
 		return changed;
 	}
 
 	@Override
-	public void validate(StackConfig stack) throws DeploymentException {
-		super.validate(stack);
-		Clients.getValidationClient().validateEndpoint(stack, "keystone", "http://%s:5000/", 300);
+	public void validate(DeploymentEnvironment env) throws DeploymentException {
+		super.validate(env);
+		env.getValidationClient().validateEndpoint(env.getStack(), "keystone", "http://%s:5000/", 300);
 	}
 }

@@ -24,9 +24,8 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.adenops.moustack.agent.DeploymentEnvironment;
 import com.adenops.moustack.agent.DeploymentException;
-import com.adenops.moustack.agent.client.Clients;
-import com.adenops.moustack.agent.config.StackConfig;
 import com.adenops.moustack.agent.config.StackProperty;
 import com.adenops.moustack.agent.model.docker.Volume;
 import com.adenops.moustack.agent.module.ContainerModule;
@@ -41,30 +40,31 @@ public class Ceilometer extends ContainerModule {
 	}
 
 	@Override
-	public boolean deploy(StackConfig stack) throws DeploymentException {
+	public boolean deploy(DeploymentEnvironment env) throws DeploymentException {
 		boolean changed = false;
-		changed |= Clients.getKeystoneClient().createService(stack, "ceilometer", "OpenStack Telemetry service",
+		changed |= env.getKeystoneClient().createService(env.getStack(), "ceilometer", "OpenStack Telemetry service",
 				"metering", "http://%s:8777", "http://%s:8777", "http://%s:8777");
-		changed |= Clients.getKeystoneClient().createProjectUser(stack, StackProperty.KS_CEILOMETER_USER,
+		changed |= env.getKeystoneClient().createProjectUser(env.getStack(), StackProperty.KS_CEILOMETER_USER,
 				"Ceilometer user", "ceilometer@localhost", StackProperty.KS_CEILOMETER_PASSWORD,
 				StackProperty.KEYSTONE_SERVICES_PROJECT);
-		changed |= Clients.getKeystoneClient().grantProjectRole(stack, StackProperty.KS_CEILOMETER_USER,
+		changed |= env.getKeystoneClient().grantProjectRole(env.getStack(), StackProperty.KS_CEILOMETER_USER,
 				StackProperty.KEYSTONE_SERVICES_PROJECT, StackProperty.KEYSTONE_ADMIN_ROLE);
 
-		Clients.getMongoClient().createDatabaseUser(stack.get(StackProperty.DB_CEILOMETER_DATABASE),
-				stack.get(StackProperty.DB_CEILOMETER_USER), stack.get(StackProperty.DB_CEILOMETER_PASSWORD));
+		env.getMongoClient().createDatabaseUser(env.getStack().get(StackProperty.DB_CEILOMETER_DATABASE),
+				env.getStack().get(StackProperty.DB_CEILOMETER_USER),
+				env.getStack().get(StackProperty.DB_CEILOMETER_PASSWORD));
 
-		changed |= deployConfig(stack);
+		changed |= deployConfig(env);
 
 		if (changed)
-			Clients.getDockerClient().startOrRestartContainer(this);
+			env.getDockerClient().startOrRestartContainer(this);
 
 		return changed;
 	}
 
 	@Override
-	public void validate(StackConfig stack) throws DeploymentException {
-		super.validate(stack);
-		Clients.getValidationClient().validateEndpoint(stack, "ceilometer", "http://%s:8777", 401);
+	public void validate(DeploymentEnvironment env) throws DeploymentException {
+		super.validate(env);
+		env.getValidationClient().validateEndpoint(env.getStack(), "ceilometer", "http://%s:8777", 401);
 	}
 }

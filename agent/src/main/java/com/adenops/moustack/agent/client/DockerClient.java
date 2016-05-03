@@ -72,14 +72,14 @@ import com.github.dockerjava.core.command.WaitContainerResultCallback;
  * maintain its state in /run/network/ifstate.
  *
  */
-public class DockerClient extends ManagedClient {
+public class DockerClient {
 	private static final Logger log = LoggerFactory.getLogger(DockerClient.class);
 	private static final String DOCKER_URI = "unix:///var/run/docker.sock";
 	private final int WAIT_EPHEMERAL_TIMEOUT = 60 * 1000;
 	private final com.github.dockerjava.api.DockerClient client;
 	private final StackConfig stack;
 
-	protected DockerClient(StackConfig stack) throws DeploymentException {
+	public DockerClient(StackConfig stack) throws DeploymentException {
 		log.debug("initializing Docker client");
 
 		this.stack = stack;
@@ -93,20 +93,6 @@ public class DockerClient extends ManagedClient {
 		Info info = client.infoCmd().exec();
 		log.debug("images: " + info.getImages());
 		log.debug("containers: " + info.getContainers());
-	}
-
-	@Override
-	protected void release() {
-		if (client == null)
-			return;
-
-		log.debug("closing Docker client");
-
-		try {
-			client.close();
-		} catch (IOException e) {
-			log.error("error when closing docker connection");
-		}
 	}
 
 	public void stopContainers(List<ContainerModule> containers) {

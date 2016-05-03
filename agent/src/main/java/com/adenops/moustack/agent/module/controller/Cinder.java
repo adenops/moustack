@@ -26,9 +26,8 @@ import javax.ws.rs.core.Response.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.adenops.moustack.agent.DeploymentEnvironment;
 import com.adenops.moustack.agent.DeploymentException;
-import com.adenops.moustack.agent.client.Clients;
-import com.adenops.moustack.agent.config.StackConfig;
 import com.adenops.moustack.agent.config.StackProperty;
 import com.adenops.moustack.agent.model.docker.Volume;
 import com.adenops.moustack.agent.module.ContainerModule;
@@ -43,37 +42,39 @@ public class Cinder extends ContainerModule {
 	}
 
 	@Override
-	public boolean deploy(StackConfig stack) throws DeploymentException {
+	public boolean deploy(DeploymentEnvironment env) throws DeploymentException {
 		boolean changed = false;
-		changed |= Clients.getKeystoneClient().createService(stack, "cinder",
+		changed |= env.getKeystoneClient().createService(env.getStack(), "cinder",
 				"OpenStack OpenStack Block Storage service", "volume", "http://%s:8776/v1/%%(tenant_id)s",
 				"http://%s:8776/v1/%%(tenant_id)s", "http://%s:8776/v1/%%(tenant_id)s");
-		changed |= Clients.getKeystoneClient().createService(stack, "cinderv2",
+		changed |= env.getKeystoneClient().createService(env.getStack(), "cinderv2",
 				"OpenStack OpenStack Block Storage service", "volumev2", "http://%s:8776/v2/%%(tenant_id)s",
 				"http://%s:8776/v2/%%(tenant_id)s", "http://%s:8776/v2/%%(tenant_id)s");
-		changed |= Clients.getKeystoneClient().createProjectUser(stack, StackProperty.KS_CINDER_USER, "Cinder user",
-				"cinder@localhost", StackProperty.KS_CINDER_PASSWORD, StackProperty.KEYSTONE_SERVICES_PROJECT);
-		changed |= Clients.getKeystoneClient().grantProjectRole(stack, StackProperty.KS_CINDER_USER,
+		changed |= env.getKeystoneClient().createProjectUser(env.getStack(), StackProperty.KS_CINDER_USER,
+				"Cinder user", "cinder@localhost", StackProperty.KS_CINDER_PASSWORD,
+				StackProperty.KEYSTONE_SERVICES_PROJECT);
+		changed |= env.getKeystoneClient().grantProjectRole(env.getStack(), StackProperty.KS_CINDER_USER,
 				StackProperty.KEYSTONE_SERVICES_PROJECT, StackProperty.KEYSTONE_ADMIN_ROLE);
 
-		changed |= Clients.getMySQLClient().createDatabaseUser("cinder", "cinder",
-				stack.get(StackProperty.DB_CINDER_PASSWORD));
+		changed |= env.getMySQLClient().createDatabaseUser("cinder", "cinder",
+				env.getStack().get(StackProperty.DB_CINDER_PASSWORD));
 
-		changed |= deployConfig(stack);
+		changed |= deployConfig(env);
 
 		if (changed) {
-			Clients.getDockerClient().stopContainer(this);
+			env.getDockerClient().stopContainer(this);
 			log.info("running cinder DB migration");
-			Clients.getDockerClient().startEphemeralContainer(this, "cinder", "cinder-manage", "db sync");
-			Clients.getDockerClient().startOrRestartContainer(this);
+			env.getDockerClient().startEphemeralContainer(this, "cinder", "cinder-manage", "db sync");
+			env.getDockerClient().startOrRestartContainer(this);
 		}
 
 		return changed;
 	}
 
 	@Override
-	public void validate(StackConfig stack) throws DeploymentException {
-		super.validate(stack);
-		Clients.getValidationClient().validateEndpoint(stack, "cinder", "http://%s:8776/", Status.OK.getStatusCode());
+	public void validate(DeploymentEnvironment env) throws DeploymentException {
+		super.validate(env);
+		env.getValidationClient().validateEndpoint(env.getStack(), "cinder", "http://%s:8776/",
+				Status.OK.getStatusCode());
 	}
 }

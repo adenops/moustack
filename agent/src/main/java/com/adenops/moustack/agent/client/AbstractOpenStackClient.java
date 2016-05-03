@@ -47,15 +47,6 @@ public abstract class AbstractOpenStackClient extends AbstractRestClient {
 	}
 
 	@Override
-	protected void release() {
-		if (client == null)
-			return;
-
-		log.debug("closing REST client [{}]", name);
-		client.close();
-	}
-
-	@Override
 	protected void setHeaders(Builder invocationBuilder) {
 		super.setHeaders(invocationBuilder);
 		invocationBuilder.header("X-Auth-Token", token);

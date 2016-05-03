@@ -24,9 +24,8 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.adenops.moustack.agent.DeploymentEnvironment;
 import com.adenops.moustack.agent.DeploymentException;
-import com.adenops.moustack.agent.client.Clients;
-import com.adenops.moustack.agent.config.StackConfig;
 import com.adenops.moustack.agent.config.StackProperty;
 import com.adenops.moustack.agent.model.docker.Volume;
 import com.adenops.moustack.agent.module.ContainerModule;
@@ -41,33 +40,34 @@ public class Glance extends ContainerModule {
 	}
 
 	@Override
-	public boolean deploy(StackConfig stack) throws DeploymentException {
+	public boolean deploy(DeploymentEnvironment env) throws DeploymentException {
 		boolean changed = false;
-		changed |= Clients.getKeystoneClient().createService(stack, "glance", "OpenStack Image service", "image",
+		changed |= env.getKeystoneClient().createService(env.getStack(), "glance", "OpenStack Image service", "image",
 				"http://%s:9292/", "http://%s:9292/", "http://%s:9292/");
-		changed |= Clients.getKeystoneClient().createProjectUser(stack, StackProperty.KS_GLANCE_USER, "Glance user",
-				"glance@localhost", StackProperty.KS_GLANCE_PASSWORD, StackProperty.KEYSTONE_SERVICES_PROJECT);
-		changed |= Clients.getKeystoneClient().grantProjectRole(stack, StackProperty.KS_GLANCE_USER,
+		changed |= env.getKeystoneClient().createProjectUser(env.getStack(), StackProperty.KS_GLANCE_USER,
+				"Glance user", "glance@localhost", StackProperty.KS_GLANCE_PASSWORD,
+				StackProperty.KEYSTONE_SERVICES_PROJECT);
+		changed |= env.getKeystoneClient().grantProjectRole(env.getStack(), StackProperty.KS_GLANCE_USER,
 				StackProperty.KEYSTONE_SERVICES_PROJECT, StackProperty.KEYSTONE_ADMIN_ROLE);
 
-		changed |= Clients.getMySQLClient().createDatabaseUser("glance", "glance",
-				stack.get(StackProperty.DB_GLANCE_PASSWORD));
+		changed |= env.getMySQLClient().createDatabaseUser("glance", "glance",
+				env.getStack().get(StackProperty.DB_GLANCE_PASSWORD));
 
-		changed |= deployConfig(stack);
+		changed |= deployConfig(env);
 
 		if (changed) {
-			Clients.getDockerClient().stopContainer(this);
+			env.getDockerClient().stopContainer(this);
 			log.info("running glance DB migration");
-			Clients.getDockerClient().startEphemeralContainer(this, "glance", "glance-manage", "db_sync");
-			Clients.getDockerClient().startOrRestartContainer(this);
+			env.getDockerClient().startEphemeralContainer(this, "glance", "glance-manage", "db_sync");
+			env.getDockerClient().startOrRestartContainer(this);
 		}
 
 		return changed;
 	}
 
 	@Override
-	public void validate(StackConfig stack) throws DeploymentException {
-		super.validate(stack);
-		Clients.getValidationClient().validateEndpoint(stack, "glance", "http://%s:9292/", 300);
+	public void validate(DeploymentEnvironment env) throws DeploymentException {
+		super.validate(env);
+		env.getValidationClient().validateEndpoint(env.getStack(), "glance", "http://%s:9292/", 300);
 	}
 }

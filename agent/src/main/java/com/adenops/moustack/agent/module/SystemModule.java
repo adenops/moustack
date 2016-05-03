@@ -24,11 +24,10 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.adenops.moustack.agent.DeploymentEnvironment;
 import com.adenops.moustack.agent.DeploymentException;
-import com.adenops.moustack.agent.config.StackConfig;
 import com.adenops.moustack.agent.util.DeploymentUtil;
 import com.adenops.moustack.agent.util.SystemCtlUtil;
-import com.adenops.moustack.agent.util.YumUtil;
 
 /**
  *
@@ -50,21 +49,21 @@ public class SystemModule extends BaseModule {
 	}
 
 	@Override
-	public boolean deploy(StackConfig stack) throws DeploymentException {
-		boolean changed = deployConfig(stack);
+	public boolean deploy(DeploymentEnvironment env) throws DeploymentException {
+		boolean changed = deployConfig(env);
 		changed |= SystemCtlUtil.startServices(changed, services);
 		return changed;
 	}
 
 	@Override
-	protected boolean deployConfig(StackConfig stack) throws DeploymentException {
-		boolean changed = YumUtil.install(packages.toArray(new String[packages.size()]));
-		changed |= DeploymentUtil.deploySystemFiles(stack, name, files);
+	protected boolean deployConfig(DeploymentEnvironment env) throws DeploymentException {
+		boolean changed = env.getPackagingClient().install(packages.toArray(new String[packages.size()]));
+		changed |= DeploymentUtil.deploySystemFiles(env.getStack(), name, files);
 		return changed;
 	}
 
 	@Override
-	public void validate(StackConfig stack) throws DeploymentException {
+	public void validate(DeploymentEnvironment env) throws DeploymentException {
 		for (String service : services) {
 			log.debug("validating service " + service);
 			if (!SystemCtlUtil.unitIsActive(service))

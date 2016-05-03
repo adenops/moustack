@@ -19,8 +19,8 @@
 
 package com.adenops.moustack.agent.module;
 
+import com.adenops.moustack.agent.DeploymentEnvironment;
 import com.adenops.moustack.agent.DeploymentException;
-import com.adenops.moustack.agent.config.StackConfig;
 
 public abstract class BaseModule {
 	protected final String name;
@@ -29,11 +29,11 @@ public abstract class BaseModule {
 		this.name = name;
 	}
 
-	public abstract boolean deploy(StackConfig stack) throws DeploymentException;
+	public abstract boolean deploy(DeploymentEnvironment env) throws DeploymentException;
 
-	protected abstract boolean deployConfig(StackConfig stack) throws DeploymentException;
+	protected abstract boolean deployConfig(DeploymentEnvironment env) throws DeploymentException;
 
-	public abstract void validate(StackConfig stack) throws DeploymentException;
+	public abstract void validate(DeploymentEnvironment env) throws DeploymentException;
 
 	public abstract String getType();
 

@@ -33,13 +33,13 @@ import com.adenops.moustack.agent.DeploymentException;
 import com.adenops.moustack.agent.config.StackConfig;
 import com.adenops.moustack.agent.config.StackProperty;
 
-public class MySQLClient extends ManagedClient {
+public class MySQLClient {
 	private static final Logger log = LoggerFactory.getLogger(MySQLClient.class);
 	private static final int CONNECTION_MAX_RETRY = 10;
 	private static final int CONNECTION_RETRY_SLEEP = 4;
 	private Connection connection;
 
-	protected MySQLClient(StackConfig stack) throws DeploymentException {
+	public MySQLClient(StackConfig stack) throws DeploymentException {
 		log.debug("initializing MySQL client");
 		try {
 			Class.forName("com.mysql.jdbc.Driver");
@@ -65,20 +65,6 @@ public class MySQLClient extends ManagedClient {
 		}
 		log.error("could not connection to MySQL database");
 		throw new DeploymentException("db connection error");
-	}
-
-	@Override
-	protected void release() {
-		if (connection == null)
-			return;
-
-		log.debug("closing MySQL client");
-
-		try {
-			connection.close();
-		} catch (SQLException e) {
-			log.error("error when closing MySQL connection");
-		}
 	}
 
 	private void close(ResultSet resultSet) {
@@ -203,8 +189,7 @@ public class MySQLClient extends ManagedClient {
 		}
 	}
 
-	private void grantUser(Connection connection, String host, String database, String name)
-			throws DeploymentException {
+	private void grantUser(Connection connection, String host, String database, String name) throws DeploymentException {
 		log.info("granting user " + name + " on database " + database + " (" + host + ")");
 		PreparedStatement stmt = null;
 		try {

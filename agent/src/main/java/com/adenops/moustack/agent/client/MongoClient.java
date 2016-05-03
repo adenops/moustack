@@ -31,22 +31,13 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 
-public class MongoClient extends ManagedClient {
+public class MongoClient {
 	private static final Logger log = LoggerFactory.getLogger(MongoClient.class);
 	private com.mongodb.MongoClient client;
 
-	protected MongoClient(StackConfig stack) throws DeploymentException {
+	public MongoClient(StackConfig stack) throws DeploymentException {
 		log.debug("initializing MongoDB client");
 		client = new com.mongodb.MongoClient("127.0.0.1", 27017);
-	}
-
-	@Override
-	protected void release() {
-		if (client == null)
-			return;
-
-		log.debug("closing MongoDB client");
-		client.close();
 	}
 
 	public boolean createDatabaseUser(String database, String user, String password) {

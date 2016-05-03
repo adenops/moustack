@@ -24,8 +24,8 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.adenops.moustack.agent.DeploymentEnvironment;
 import com.adenops.moustack.agent.DeploymentException;
-import com.adenops.moustack.agent.config.StackConfig;
 import com.adenops.moustack.agent.config.StackProperty;
 import com.adenops.moustack.agent.module.SystemModule;
 import com.adenops.moustack.agent.util.ProcessUtil;
@@ -38,10 +38,10 @@ public class SELinux extends SystemModule {
 	}
 
 	@Override
-	public boolean deploy(StackConfig stack) throws DeploymentException {
-		boolean changed = super.deploy(stack);
+	public boolean deploy(DeploymentEnvironment env) throws DeploymentException {
+		boolean changed = super.deploy(env);
 		if (changed)
-			ProcessUtil.execute("setenforce", stack.get(StackProperty.SELINUX_POLICY));
+			ProcessUtil.execute("setenforce", env.getStack().get(StackProperty.SELINUX_POLICY));
 		return changed;
 	}
 }

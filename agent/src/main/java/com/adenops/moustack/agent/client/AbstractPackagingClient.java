@@ -19,7 +19,10 @@
 
 package com.adenops.moustack.agent.client;
 
+import com.adenops.moustack.agent.DeploymentException;
 
-public abstract class ManagedClient {
-	abstract protected void release();
+public abstract class AbstractPackagingClient {
+	public abstract boolean install(String... packages) throws DeploymentException;
+
+	public abstract boolean remove(String... packages) throws DeploymentException;
 }

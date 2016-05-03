@@ -53,7 +53,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider;
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 
-public abstract class AbstractRestClient extends ManagedClient {
+public abstract class AbstractRestClient {
 	private static final Logger log = LoggerFactory.getLogger(AbstractRestClient.class);
 
 	protected final String name;
@@ -102,15 +102,6 @@ public abstract class AbstractRestClient extends ManagedClient {
 		// instanciate a single object mapper to reuse it
 		mapper = new ObjectMapper();
 		mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-	}
-
-	@Override
-	protected void release() {
-		if (client == null)
-			return;
-
-		log.debug("closing REST client [{}]", name);
-		client.close();
 	}
 
 	protected void setHeaders(Builder invocationBuilder) {

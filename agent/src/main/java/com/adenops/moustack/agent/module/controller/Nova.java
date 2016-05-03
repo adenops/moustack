@@ -26,9 +26,8 @@ import javax.ws.rs.core.Response.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.adenops.moustack.agent.DeploymentEnvironment;
 import com.adenops.moustack.agent.DeploymentException;
-import com.adenops.moustack.agent.client.Clients;
-import com.adenops.moustack.agent.config.StackConfig;
 import com.adenops.moustack.agent.config.StackProperty;
 import com.adenops.moustack.agent.model.docker.Volume;
 import com.adenops.moustack.agent.module.ContainerModule;
@@ -43,34 +42,35 @@ public class Nova extends ContainerModule {
 	}
 
 	@Override
-	public boolean deploy(StackConfig stack) throws DeploymentException {
+	public boolean deploy(DeploymentEnvironment env) throws DeploymentException {
 		boolean changed = false;
-		changed |= Clients.getKeystoneClient().createService(stack, "nova", "OpenStack Compute service", "compute",
-				"http://%s:8774/v2/%%(tenant_id)s", "http://%s:8774/v2/%%(tenant_id)s",
+		changed |= env.getKeystoneClient().createService(env.getStack(), "nova", "OpenStack Compute service",
+				"compute", "http://%s:8774/v2/%%(tenant_id)s", "http://%s:8774/v2/%%(tenant_id)s",
 				"http://%s:8774/v2/%%(tenant_id)s");
-		changed |= Clients.getKeystoneClient().createProjectUser(stack, StackProperty.KS_NOVA_USER, "Nova user",
+		changed |= env.getKeystoneClient().createProjectUser(env.getStack(), StackProperty.KS_NOVA_USER, "Nova user",
 				"nova@localhost", StackProperty.KS_NOVA_PASSWORD, StackProperty.KEYSTONE_SERVICES_PROJECT);
-		changed |= Clients.getKeystoneClient().grantProjectRole(stack, StackProperty.KS_NOVA_USER,
+		changed |= env.getKeystoneClient().grantProjectRole(env.getStack(), StackProperty.KS_NOVA_USER,
 				StackProperty.KEYSTONE_SERVICES_PROJECT, StackProperty.KEYSTONE_ADMIN_ROLE);
 
-		changed |= Clients.getMySQLClient().createDatabaseUser("nova", "nova",
-				stack.get(StackProperty.DB_NOVA_PASSWORD));
+		changed |= env.getMySQLClient().createDatabaseUser("nova", "nova",
+				env.getStack().get(StackProperty.DB_NOVA_PASSWORD));
 
-		changed |= deployConfig(stack);
+		changed |= deployConfig(env);
 
 		if (changed) {
-			Clients.getDockerClient().stopContainer(this);
+			env.getDockerClient().stopContainer(this);
 			log.info("running nova DB migration");
-			Clients.getDockerClient().startEphemeralContainer(this, "nova", "nova-manage", "db sync");
-			Clients.getDockerClient().startOrRestartContainer(this);
+			env.getDockerClient().startEphemeralContainer(this, "nova", "nova-manage", "db sync");
+			env.getDockerClient().startOrRestartContainer(this);
 		}
 
 		return changed;
 	}
 
 	@Override
-	public void validate(StackConfig stack) throws DeploymentException {
-		super.validate(stack);
-		Clients.getValidationClient().validateEndpoint(stack, "nova", "http://%s:8774/", Status.OK.getStatusCode());
+	public void validate(DeploymentEnvironment env) throws DeploymentException {
+		super.validate(env);
+		env.getValidationClient()
+				.validateEndpoint(env.getStack(), "nova", "http://%s:8774/", Status.OK.getStatusCode());
 	}
 }
