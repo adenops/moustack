@@ -62,11 +62,11 @@ public class SystemCtlUtil {
 	}
 
 	public static boolean unitIsUpdated(String unit) throws DeploymentException {
-		ExecResult result = systemctlExec("show", "--property=NeedDaemonReload");
+		ExecResult result = systemctlExec("show", unit, "--property=NeedDaemonReload");
 		if (result.getExitCode() != 0)
 			throw new DeploymentException("systemctl command failed with exit code " + result.getExitCode());
 		String stdout = new String(result.getStdout().toByteArray(), StandardCharsets.UTF_8);
-		return stdout.equals("NeedDaemonReload=yes");
+		return stdout.contains("NeedDaemonReload=yes");
 	}
 
 	public static void daemonReload() throws DeploymentException {
