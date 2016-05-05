@@ -32,6 +32,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,7 +57,6 @@ import com.github.dockerjava.api.model.Capability;
 
 // TODO: review files/volumes declarations & deployment logic
 // TODO: factorise "files: section from container/system modules if possible
-// TODO: detect OS: debian/redhat, abstract packaging
 public class Deployer {
 	public static final Logger log = LoggerFactory.getLogger(Deployer.class);
 
@@ -152,8 +152,8 @@ public class Deployer {
 		systemFiles.add(fileTo);
 	}
 
-	private BaseModule loadSystemModule(String name, boolean registered, Map<Object, Object> moduleConfig)
-			throws DeploymentException {
+	private BaseModule loadSystemModule(String name, Map<Object, Object> moduleConfig) throws DeploymentException {
+		String register = (String) moduleConfig.get("register");
 		List<String> moduleFiles = YamlUtil.getList(moduleConfig.get("files"));
 		List<String> modulePackages = YamlUtil.getList(moduleConfig.get("packages"));
 		List<String> moduleServices = YamlUtil.getList(moduleConfig.get("services"));
@@ -166,12 +166,13 @@ public class Deployer {
 		}
 
 		SystemModule module = null;
-		if (registered) {
-
-			if (!(SystemModule.class.isAssignableFrom(ModuleRegistry.getRegistered(name))))
+		if (StringUtils.isEmpty(register)) {
+			module = new SystemModule(name, moduleFiles, modulePackages, moduleServices);
+		} else {
+			if (!(SystemModule.class.isAssignableFrom(ModuleRegistry.getRegistered(register))))
 				throw new DeploymentException("module " + name + " registration error");
 			@SuppressWarnings("unchecked")
-			Class<SystemModule> registeredClass = (Class<SystemModule>) ModuleRegistry.getRegistered(name);
+			Class<SystemModule> registeredClass = (Class<SystemModule>) ModuleRegistry.getRegistered(register);
 
 			try {
 				module = registeredClass.getConstructor(String.class, List.class, List.class, List.class).newInstance(
@@ -180,17 +181,15 @@ public class Deployer {
 					| InvocationTargetException | NoSuchMethodException | SecurityException e) {
 				throw new DeploymentException("cannot register module " + name, e);
 			}
-		} else {
-			module = new SystemModule(name, moduleFiles, modulePackages, moduleServices);
 		}
 
-		logModule(name, "system", registered);
+		logModule(name, "system", register);
 		return module;
 	}
 
-	private BaseModule loadContainerModule(String name, boolean registered, Map<Object, Object> moduleConfig)
-			throws DeploymentException {
+	private BaseModule loadContainerModule(String name, Map<Object, Object> moduleConfig) throws DeploymentException {
 		// TODO: better handling of default values
+		String register = (String) moduleConfig.get("register");
 		String image = (String) moduleConfig.get("image");
 		boolean privileged = Boolean.valueOf((String) moduleConfig.get("privileged"));
 		boolean syslog = Boolean.valueOf((String) moduleConfig.getOrDefault("syslog", "true"));
@@ -239,12 +238,14 @@ public class Deployer {
 		}
 
 		ContainerModule module = null;
-		if (registered) {
-
-			if (!(ContainerModule.class.isAssignableFrom(ModuleRegistry.getRegistered(name))))
+		if (StringUtils.isEmpty(register)) {
+			module = new ContainerModule(name, image, files, environments, volumes, capabilities, privileged, devices,
+					syslog);
+		} else {
+			if (!(ContainerModule.class.isAssignableFrom(ModuleRegistry.getRegistered(register))))
 				throw new DeploymentException("module " + name + " registration error");
 			@SuppressWarnings("unchecked")
-			Class<ContainerModule> registeredClass = (Class<ContainerModule>) ModuleRegistry.getRegistered(name);
+			Class<ContainerModule> registeredClass = (Class<ContainerModule>) ModuleRegistry.getRegistered(register);
 
 			try {
 				module = registeredClass.getConstructor(String.class, String.class, List.class, List.class, List.class,
@@ -254,12 +255,9 @@ public class Deployer {
 					| InvocationTargetException | NoSuchMethodException | SecurityException e) {
 				throw new DeploymentException("cannot register module " + name, e);
 			}
-		} else {
-			module = new ContainerModule(name, image, files, environments, volumes, capabilities, privileged, devices,
-					syslog);
 		}
 
-		logModule(name, "container", registered);
+		logModule(name, "container", register);
 		return module;
 	}
 
@@ -269,15 +267,14 @@ public class Deployer {
 
 		String type = (String) moduleConfig.get("type");
 		String name = (String) moduleConfig.get("name");
-		boolean registered = Boolean.valueOf((String) moduleConfig.get("registered"));
 
 		log.trace("module {} type is {}", name, type);
 
 		switch (type) {
 		case "system":
-			return loadSystemModule(name, registered, moduleConfig);
+			return loadSystemModule(name, moduleConfig);
 		case "container":
-			return loadContainerModule(name, registered, moduleConfig);
+			return loadContainerModule(name, moduleConfig);
 		default:
 			throw new DeploymentException("invalid module type: " + type);
 		}
@@ -305,13 +302,15 @@ public class Deployer {
 		return modules;
 	}
 
-	private void logModule(String name, String type, boolean registered) {
+	private void logModule(String name, String type, String register) {
 		if (!log.isDebugEnabled())
 			return;
 		StringBuffer sb = new StringBuffer("loaded ");
-		if (registered)
-			sb.append("registered ");
-		else
+		if (StringUtils.isEmpty(register)) {
+			sb.append("registered (");
+			sb.append(register);
+			sb.append(")");
+		} else
 			sb.append("anonymous ");
 		sb.append(type);
 		sb.append(" module [");
