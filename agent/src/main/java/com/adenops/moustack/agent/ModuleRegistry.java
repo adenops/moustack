@@ -32,7 +32,8 @@ public class ModuleRegistry {
 		registry.put("sysctl", com.adenops.moustack.agent.module.misc.Sysctl.class);
 		registry.put("selinux", com.adenops.moustack.agent.module.misc.SELinux.class);
 		registry.put("modprobe", com.adenops.moustack.agent.module.misc.Modprobe.class);
-		registry.put("yumrepos", com.adenops.moustack.agent.module.misc.YumRepos.class);
+		registry.put("yum-repos", com.adenops.moustack.agent.module.misc.YumRepos.class);
+		registry.put("apt-repos", com.adenops.moustack.agent.module.misc.AptRepos.class);
 		registry.put("shell", com.adenops.moustack.agent.module.misc.Shell.class);
 
 		registry.put("keystone", com.adenops.moustack.agent.module.controller.Keystone.class);
