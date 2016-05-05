@@ -64,4 +64,4 @@ if ! grep -q "${kvm_host_group}:.*${kvm_user}" /etc/group; then
 	adduser ${kvm_user} ${kvm_host_group}
 fi
 
-exec /usr/sbin/libvirtd
+exec /usr/sbin/libvirtd --listen
