@@ -33,7 +33,7 @@ public class ModuleRegistry {
 		registry.put("selinux", com.adenops.moustack.agent.module.misc.SELinux.class);
 		registry.put("modprobe", com.adenops.moustack.agent.module.misc.Modprobe.class);
 		registry.put("yumrepos", com.adenops.moustack.agent.module.misc.YumRepos.class);
-		registry.put("misc", com.adenops.moustack.agent.module.misc.Misc.class);
+		registry.put("shell", com.adenops.moustack.agent.module.misc.Shell.class);
 
 		registry.put("keystone", com.adenops.moustack.agent.module.controller.Keystone.class);
 		registry.put("neutron", com.adenops.moustack.agent.module.controller.Neutron.class);
