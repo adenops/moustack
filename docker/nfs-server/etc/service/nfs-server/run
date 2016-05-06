@@ -30,6 +30,11 @@ wait_for statd
 log "Mounting NFS filesystem"
 mount -t nfsd nfsd /proc/fs/nfsd
 
+log "Fix permissions on exported shares"
+for share in `awk '/^\// { print $1; }' /etc/exports`; do
+	chmod 777 ${share}
+done
+
 log "Re-export all directories in /etc/exports"
 exportfs -ra > /dev/null
 
