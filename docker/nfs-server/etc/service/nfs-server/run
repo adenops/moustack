@@ -33,7 +33,10 @@ mount -t nfsd nfsd /proc/fs/nfsd
 log "Re-export all directories in /etc/exports"
 exportfs -ra > /dev/null
 
+log "stop existing nfsd kernel threads if any"
+rpc.nfsd --debug 0
+
 log "start nfsd kernel threads"
-/usr/sbin/rpc.nfsd --debug ${NFSD_COUNT:-8}
+rpc.nfsd --debug ${NFSD_COUNT:-8}
 
 exec rpc.mountd --foreground
