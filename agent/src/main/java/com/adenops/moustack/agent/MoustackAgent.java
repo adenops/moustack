@@ -22,6 +22,7 @@ package com.adenops.moustack.agent;
 import java.io.File;
 import java.io.IOException;
 import java.nio.channels.FileLock;
+import java.util.Map;
 
 import javax.ws.rs.core.Response;
 
@@ -34,6 +35,7 @@ import org.slf4j.LoggerFactory;
 
 import com.adenops.moustack.agent.client.MoustackClient;
 import com.adenops.moustack.agent.config.AgentConfig;
+import com.adenops.moustack.agent.config.StackConfig;
 import com.adenops.moustack.agent.model.moustack.AgentReport;
 import com.adenops.moustack.agent.model.moustack.AgentStatus;
 import com.adenops.moustack.agent.model.moustack.ServerCommand;
@@ -41,8 +43,8 @@ import com.adenops.moustack.lib.argsparser.ArgumentsParser;
 import com.adenops.moustack.lib.argsparser.exception.ParserInternalException;
 import com.adenops.moustack.lib.util.LockUtil;
 
-public class Main {
-	public static final Logger log = LoggerFactory.getLogger(Main.class);
+public class MoustackAgent {
+	public static final Logger log = LoggerFactory.getLogger(MoustackAgent.class);
 
 	private static final String PROG_NAME = "Moustack Agent";
 	private static final String PROG_CMD = "moustack-agent";
@@ -51,12 +53,12 @@ public class Main {
 	private static final String HELP_FOOTER = "https://github.com/adenops/moustack";
 
 	// for locking (prevent multiple parallel runs)
-	private static final File lockFile = new File("/var/run/moustack-agent.lock");
-	private static FileLock lock;
+	private final File lockFile = new File("/var/run/moustack-agent.lock");
+	private FileLock lock;
 
 	// keep track of the last deployer instance, so we can reapply config even
 	// if the connection with the server is broken
-	private static Deployer deployer;
+	private Deployer deployer;
 
 	private static void error(String message) {
 		System.err.println(PROG_NAME + ": error: " + message);
@@ -75,7 +77,7 @@ public class Main {
 
 		int exitCode = 5;
 		try {
-			exitCode = run(args);
+			exitCode = new MoustackAgent().start(agentConfig);
 		} catch (DeploymentException e) {
 			log.error("the following exception occurred:", e);
 		}
@@ -84,11 +86,11 @@ public class Main {
 		System.exit(exitCode);
 	}
 
-	private static boolean validString(String string) {
+	private boolean validString(String string) {
 		return string != null && !string.isEmpty();
 	}
 
-	public static int run(String[] args) throws DeploymentException {
+	public int start(AgentConfig agentConfig) throws DeploymentException {
 
 		// try to acquire lock
 		// TODO: try to lock only the configuration update part
@@ -182,11 +184,21 @@ public class Main {
 		}
 	}
 
-	private static int deploy() throws DeploymentException {
+	private int deploy() throws DeploymentException {
 		MoustackClient.getInstance().postStatus(AgentStatus.StatusEnum.UPDATING);
 
 		try {
-			deployer = new Deployer();
+			// prepare the stack config for this run
+			StackConfig stack = new StackConfig();
+
+			// retrieve repository information from the server
+			Map<String, String> json = MoustackClient.getInstance().getRepositoryInfo();
+			stack.setGitRepo(json.get("config_git_url"));
+			stack.setGitBranch(json.get("config_git_branch"));
+			log.info("config git repo: " + stack.getGitRepo());
+			log.info("config git branch: " + stack.getGitBranch());
+
+			deployer = new Deployer(stack);
 
 			boolean changed = deployer.start();
 			MoustackClient.getInstance().postReport(
@@ -205,7 +217,7 @@ public class Main {
 		}
 	}
 
-	private static void displayStats() {
+	private void displayStats() {
 		Runtime instance = Runtime.getRuntime();
 		log.info("JVM Total Memory: " + instance.totalMemory() / 1048576);
 		log.info("JVM Free Memory: " + instance.freeMemory() / 1048576);

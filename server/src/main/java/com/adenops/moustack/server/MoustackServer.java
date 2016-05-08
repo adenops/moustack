@@ -68,8 +68,8 @@ import com.adenops.moustack.lib.argsparser.ArgumentsParser;
 import com.adenops.moustack.lib.util.LockUtil;
 import com.adenops.moustack.server.client.PersistenceClient;
 
-public class Main {
-	public static final Logger log = LoggerFactory.getLogger(Main.class);
+public class MoustackServer {
+	public static final Logger log = LoggerFactory.getLogger(MoustackServer.class);
 
 	private static final String PROG_NAME = "Moustack Server";
 	private static final String PROG_CMD = "moustack-server";
@@ -191,7 +191,7 @@ public class Main {
 
 	private static ServletContextHandler setupSwaggerContextHandler() {
 		// prepare context for swagger ui (static files)
-		String swaggerUIResourceBasePath = Main.class.getResource("/webapp/swagger-ui").toExternalForm();
+		String swaggerUIResourceBasePath = MoustackServer.class.getResource("/webapp/swagger-ui").toExternalForm();
 		ServletContextHandler swaggerContext = new ServletContextHandler(ServletContextHandler.SESSIONS);
 		swaggerContext.setContextPath(SWAGGER_CONTEXT);
 		swaggerContext.setWelcomeFiles(new String[] { "index.html" });
@@ -215,7 +215,7 @@ public class Main {
 		return swaggerContext;
 	}
 
-	private static Server startServer(ServerConfig config) throws Exception {
+	public Server start(ServerConfig config) throws Exception {
 		long startTime = System.currentTimeMillis();
 		Server server = new Server(config.getPort());
 
@@ -257,7 +257,7 @@ public class Main {
 		servletsContext.setContextPath("/");
 
 		// add static resources for the UI in the main context
-		String staticresourceBasePath = Main.class.getResource("/webapp/moustack").toExternalForm();
+		String staticresourceBasePath = MoustackServer.class.getResource("/webapp/moustack").toExternalForm();
 		servletsContext.setWelcomeFiles(new String[] { "index.html" });
 		servletsContext.setResourceBase(staticresourceBasePath);
 
@@ -279,14 +279,9 @@ public class Main {
 		contexts.setHandlers(new Handler[] { servletsContext, swaggerContext });
 		security.setHandler(contexts);
 
-		try {
-			server.start();
-			System.out.println("server listening on port " + config.getPort());
-			System.out.println("server started in " + (System.currentTimeMillis() - startTime) + " ms");
-			server.join();
-		} finally {
-			server.destroy();
-		}
+		server.start();
+		System.out.println("server listening on port " + config.getPort());
+		System.out.println("server started in " + (System.currentTimeMillis() - startTime) + " ms");
 
 		return server;
 	}
@@ -322,6 +317,13 @@ public class Main {
 		// check if database connection is OK
 		PersistenceClient.getInstance().check();
 
-		startServer(config);
+		Server server = null;
+		try {
+			server = new MoustackServer().start(config);
+			server.join();
+		} finally {
+			if (server != null)
+				server.destroy();
+		}
 	}
 }

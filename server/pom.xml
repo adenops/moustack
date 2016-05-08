@@ -14,7 +14,7 @@
 	<name>moustack server</name>
 
 	<properties>
-		<main.class>com.adenops.moustack.server.Main</main.class>
+		<main.class>com.adenops.moustack.server.MoustackServer</main.class>
 	</properties>
 
 	<build>

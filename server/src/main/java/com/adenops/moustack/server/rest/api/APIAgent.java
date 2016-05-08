@@ -44,7 +44,7 @@ import javax.ws.rs.core.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.adenops.moustack.server.Main;
+import com.adenops.moustack.server.MoustackServer;
 import com.adenops.moustack.server.ServerConfig;
 import com.adenops.moustack.server.client.PersistenceClient;
 import com.adenops.moustack.server.rest.model.AgentInfo;
@@ -77,14 +77,14 @@ public class APIAgent extends APIBase {
 		sb.append(baseUri.getHost());
 		sb.append(":");
 		sb.append(baseUri.getPort());
-		sb.append(Main.GIT_CONTEXT);
+		sb.append(MoustackServer.GIT_CONTEXT);
 		sb.append("/");
-		sb.append(Main.REPOSITORY_NAME);
+		sb.append(MoustackServer.REPOSITORY_NAME);
 		return sb.toString();
 	}
 
 	public static String getRepositoryBranch() {
-		return Main.REPOSITORY_BRANCH;
+		return MoustackServer.REPOSITORY_BRANCH;
 	}
 
 	@GET

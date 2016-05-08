@@ -37,7 +37,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.adenops.moustack.agent.DeploymentEnvironment.OSFamily;
-import com.adenops.moustack.agent.client.MoustackClient;
 import com.adenops.moustack.agent.config.AgentConfig;
 import com.adenops.moustack.agent.config.StackConfig;
 import com.adenops.moustack.agent.log4j2.MemoryAppender;
@@ -72,7 +71,7 @@ public class Deployer {
 	// deployment environment
 	private final DeploymentEnvironment env;
 
-	public Deployer() throws DeploymentException {
+	public Deployer(StackConfig stack) throws DeploymentException {
 		// detect the OS (for the packaging)
 		DeploymentEnvironment.OSFamily osFamily = null;
 		if (new File("/etc/debian_version").exists())
@@ -82,16 +81,6 @@ public class Deployer {
 		else
 			throw new DeploymentException("could no detect OS family");
 		log.info("detected OS family {}", osFamily);
-
-		// prepare the stack config for this run
-		StackConfig stack = new StackConfig();
-
-		// retrieve repository information from the server
-		Map<String, String> json = MoustackClient.getInstance().getRepositoryInfo();
-		stack.setGitRepo(json.get("config_git_url"));
-		stack.setGitBranch(json.get("config_git_branch"));
-		log.info("config git repo: " + stack.getGitRepo());
-		log.info("config git branch: " + stack.getGitBranch());
 
 		// synchronize git repo locally
 		GitUtil.synchronizeConfiguration(stack);

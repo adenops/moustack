@@ -1,0 +1,5 @@
+---
+type: system
+name: system
+files: tmp/junit
+register: shell

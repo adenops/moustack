@@ -1,0 +1,4 @@
+---
+type: container
+name: container
+image: local-registry:5000/openstack/test:latest
