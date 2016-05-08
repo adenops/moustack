@@ -21,6 +21,7 @@ package com.adenops.moustack.server.rest.api;
 
 import java.util.Locale;
 
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
@@ -50,8 +51,8 @@ public class GeneralExceptionMapper implements ExceptionMapper<Throwable> {
 		final Locale locale = headers.getLanguage();
 		Status status = Response.Status.INTERNAL_SERVER_ERROR;
 
-		if (exception.getMessage() != null)
-			log.error(exception.getMessage());
+		if (exception.getMessage() != null && !(exception instanceof NotFoundException))
+			log.error("exception", exception);
 
 		// extract status code for WebApplicationException to respect
 		// Jersey built-in behaviour
@@ -60,7 +61,10 @@ public class GeneralExceptionMapper implements ExceptionMapper<Throwable> {
 			status = Status.fromStatusCode(jerseyResponse.getStatus());
 		}
 
-		return Response.status(status).type(type).language(locale).entity(new ApiResponse(exception.getMessage()))
-				.build();
+		String message = exception.getMessage();
+		if (message == null || message.isEmpty())
+			message = exception.getClass().getName();
+
+		return Response.status(status).type(type).language(locale).entity(new ApiResponse(message)).build();
 	}
 }

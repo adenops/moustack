@@ -49,7 +49,7 @@ public class DeploymentTest {
 		agentConfig.setServer("http://127.0.0.1:8989");
 		agentConfig.setProfile("junit");
 		agentConfig.setLevel(LogLevel.DEBUG);
-		agentConfig.setConfigDir("/tmp/integration-tests");
+		agentConfig.setConfigDir(TMP_DIR.toPath().resolve("config").toFile().toURI().toString());
 
 		File source = new File(DeploymentTest.class.getResource("/profiles").toURI());
 

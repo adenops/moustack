@@ -50,17 +50,16 @@ public class PersistenceClient {
 	private PersistenceClient() {
 		try {
 			Properties persistenceProperties = new Properties();
-			StringBuilder jdbUrl = new StringBuilder("jdbc:mysql://");
-			jdbUrl.append(ServerConfig.getInstance().getDbHost());
-			jdbUrl.append("/");
-			jdbUrl.append(ServerConfig.getInstance().getDbName());
-			jdbUrl.append("?createDatabaseIfNotExist=true&amp;useTimezone=true&amp;serverTimezone=UTC&amp;autoReconnect=true");
-			persistenceProperties.put("javax.persistence.jdbc.url", jdbUrl.toString());
-			persistenceProperties.put("javax.persistence.jdbc.user", ServerConfig.getInstance().getDbUser());
-			persistenceProperties.put("javax.persistence.jdbc.password", ServerConfig.getInstance().getDbPassword());
-			entityManagerFactory = Persistence.createEntityManagerFactory("com.adenops.moustack",
-					persistenceProperties);
+			persistenceProperties.load(PersistenceClient.class.getResourceAsStream("/database.properties"));
+			String jdbUrl = String.format(persistenceProperties.getProperty("hibernate.connection.url"), ServerConfig
+					.getInstance().getDbHost(), ServerConfig.getInstance().getDbName());
+			persistenceProperties.put("hibernate.connection.url", jdbUrl);
+			persistenceProperties.put("hibernate.connection.username", ServerConfig.getInstance().getDbUser());
+			persistenceProperties.put("hibernate.connection.password", ServerConfig.getInstance().getDbPassword());
+			entityManagerFactory = Persistence
+					.createEntityManagerFactory("com.adenops.moustack", persistenceProperties);
 		} catch (Throwable e) {
+			// TODO: exceptions seem to be hidden here (because of the static instantiation?
 			throw new RuntimeException("error while connection to the database", e);
 		}
 	}
