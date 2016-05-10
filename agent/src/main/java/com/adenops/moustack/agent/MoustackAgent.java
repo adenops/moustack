@@ -128,9 +128,8 @@ public class MoustackAgent {
 
 		MoustackClient.getInstance().postStatus(AgentStatus.StatusEnum.STANDBY);
 
-		int code = deploy();
-
 		if (!AgentConfig.getInstance().isLongPolling()) {
+			int code = deploy();
 			MoustackClient.getInstance().postStatus(AgentStatus.StatusEnum.SHUTDOWN);
 			return code;
 		}
