@@ -92,7 +92,7 @@ public class MoustackClient extends AbstractRestClient {
 	}
 
 	public Response longPoll() throws DeploymentException {
-		return longPoll(String.join(API_AGENT, AgentConfig.getInstance().getId(), "poll"));
+		return longPoll(String.join("/", API_AGENT, AgentConfig.getInstance().getId(), "poll"));
 	}
 
 	// TODO: let's see later if we can improve that
