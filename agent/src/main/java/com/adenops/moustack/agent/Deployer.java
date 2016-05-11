@@ -373,15 +373,19 @@ public class Deployer {
 		}
 
 		// containers
-		sb = new StringBuffer();
-		for (BaseModule module : deploymentPlan) {
-			if (module instanceof ContainerModule) {
-				sb.append(env.getDockerClient().getContainerInfo((ContainerModule) module));
-				appendLine(sb);
+		try {
+			sb = new StringBuffer();
+			for (BaseModule module : deploymentPlan) {
+				if (module instanceof ContainerModule) {
+					sb.append(env.getDockerClient().getContainerInfo((ContainerModule) module));
+					appendLine(sb);
+				}
 			}
+			report.put("containers", toBase64(sb.toString()));
+		} catch (Throwable e) {
+			// docker may not yet be present/ready
+			log.warn("could not retrieve containers information");
 		}
-
-		report.put("containers", toBase64(sb.toString()));
 
 		// packages installed
 		if (REPORT_YUM_PACKAGES) {
