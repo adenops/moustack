@@ -6,7 +6,9 @@ target/
 dependency-reduced-pom.xml
 *.class
 *.jar
-bin/
+agent/bin/
+server/bin/
+lib/bin/
 rebel.xml
 
 # swap
