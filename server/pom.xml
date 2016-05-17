@@ -18,6 +18,27 @@
 	</properties>
 
 	<build>
+		<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+				<filtering>true</filtering>
+				<includes>
+					<include>**/index.html</include>
+				</includes>
+			</resource>
+			<resource>
+				<directory>src/main/resources</directory>
+				<filtering>false</filtering>
+				<includes>
+					<include>**/*</include>
+				</includes>
+				<excludes>
+					<exclude>webapp/moustack/index.html</exclude>
+				</excludes>
+			</resource>
+		</resources>
+		<!--
+		-->
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
