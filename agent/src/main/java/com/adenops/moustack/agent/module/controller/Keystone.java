@@ -56,6 +56,7 @@ public class Keystone extends ContainerModule {
 		env.getKeystoneClient().createProject(env.getStack(), "admin", "Admin project");
 		env.getKeystoneClient().createProject(env.getStack(), "services", "Services project");
 		env.getKeystoneClient().createRole(env.getStack(), "admin");
+		env.getKeystoneClient().createRole(env.getStack(), "_member_");
 		env.getKeystoneClient().createProjectUser(env.getStack(), StackProperty.KEYSTONE_ADMIN_USER, "Admin user",
 				"admin@localhost", StackProperty.KEYSTONE_ADMIN_PASSWORD, StackProperty.KEYSTONE_ADMIN_PROJECT);
 		env.getKeystoneClient().grantProjectRole(env.getStack(), StackProperty.KEYSTONE_ADMIN_USER,
