@@ -37,7 +37,7 @@ import com.adenops.moustack.agent.config.StackConfig;
 
 public class DeploymentUtil {
 	private static final Logger log = LoggerFactory.getLogger(DeploymentUtil.class);
-	private static final Pattern TOKEN_PATTERN = Pattern.compile("\\$\\{([^}]+)\\}");
+	private static final Pattern TOKEN_PATTERN = Pattern.compile("\\@\\{([^}]+)\\}");
 	private static final boolean ERROR_ON_MISSING_VAR = true;
 
 	private static String replaceTokens(String value, Properties tokens) throws DeploymentException {
