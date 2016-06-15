@@ -55,9 +55,17 @@ fi
 # fix /dev/kvm permissions
 kvm_host_group=kvm-host
 kvm_user=libvirt-qemu
+kvm_gid=`ls -ln /dev/kvm | awk '{ print $4; }'`
+
+if [ ${kvm_gid} -eq 0 ]; then
+	kvm_gid=124
+
+	chgrp ${kvm_gid} /dev/kvm
+	chmod g+rw /dev/kvm
+fi
 
 if ! grep -q "${kvm_host_group}:" /etc/group; then
-	groupadd --gid `ls -l /dev/kvm | awk '{ print $4; }'` ${kvm_host_group}
+	groupadd --gid ${kvm_gid} ${kvm_host_group}
 fi
 
 if ! grep -q "${kvm_host_group}:.*${kvm_user}" /etc/group; then
