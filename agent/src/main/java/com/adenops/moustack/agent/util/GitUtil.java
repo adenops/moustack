@@ -102,6 +102,9 @@ public class GitUtil {
 				config.setString("http", null, "sslVerify", "false");
 
 			config.setString("remote", "origin", "url", stack.getGitRepo());
+
+			// Workaround for JGit bug that doesn't properly detect file mode support when run as root.
+			config.setBoolean("core", null, "filemode", true);
 			try {
 				config.save();
 			} catch (IOException e) {

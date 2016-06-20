@@ -80,7 +80,7 @@ public class Deployer {
 			osFamily = OSFamily.REDHAT;
 		else
 			throw new DeploymentException("could no detect OS family");
-		log.info("detected OS family {}", osFamily);
+		log.info("detected OS family: {}", osFamily.name().toLowerCase());
 
 		// synchronize git repo locally
 		GitUtil.synchronizeConfiguration(stack);

@@ -22,12 +22,14 @@ package com.adenops.moustack.agent.util;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.attribute.PosixFilePermission;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,41 +67,57 @@ public class DeploymentUtil {
 	}
 
 	// TODO: use something more efficient like MD5 comparison
-	private static boolean deployFile(StackConfig stack, String fileFrom, String fileTo) throws DeploymentException {
+	private static boolean deployFile(StackConfig stack, String fileFromPath, String fileToPath)
+			throws DeploymentException {
+		boolean changed = false;
+		File fileFrom = new File(fileFromPath);
+		File fileTo = new File(fileToPath);
+
 		// ensure the source file exists
-		if (!new File(fileFrom).exists())
-			throw new DeploymentException("file " + fileFrom + " not found");
+		if (!fileFrom.exists())
+			throw new DeploymentException("file " + fileFromPath + " not found");
 
 		// load the new file and replace tokens
-		String fileFromContent = FilesUtils.fileToString(fileFrom, false);
+		String fileFromContent = FilesUtils.fileToString(fileFromPath, false);
 		fileFromContent = replaceTokens(fileFromContent, stack.getProperties());
 
-		if (new File(fileTo).exists()) {
-			// if the target file already exists, compare the content
-
-			// load old file
-			String fileToContent = FilesUtils.fileToString(fileTo, false);
-
-			// if content is the same, we are done
-			if (fileFromContent.equals(fileToContent)) {
-				log.trace("file " + fileToContent + " did not change");
-				return false;
-			}
-		} else {
+		if (!fileTo.exists()) {
 			// if the file did not exist, ensure parent directory exists
-			File parentFile = new File(fileTo).getParentFile();
+			File parentFile = fileTo.getParentFile();
 			if (parentFile.mkdirs())
-				log.debug("created directory " + parentFile);
+				log.debug("created directory {}", parentFile);
 		}
 
-		log.info("updating " + fileTo);
-		try {
-			Files.write(Paths.get(fileTo), fileFromContent.getBytes());
-		} catch (IOException e) {
-			throw new DeploymentException("cannot write file " + fileTo, e);
+		String fileToContent = null;
+		boolean alreadyExists = fileTo.exists();
+		if (alreadyExists)
+			// if the file already exists, load the content
+			fileToContent = FilesUtils.fileToString(fileToPath, false);
+
+		if (!fileFromContent.equals(fileToContent)) {
+			// if content is different, update the file
+			log.info("{} file {}", alreadyExists ? "creating" : "updating", fileToPath);
+			try {
+				Files.write(fileTo.toPath(), fileFromContent.getBytes());
+			} catch (IOException e) {
+				throw new DeploymentException("cannot write file " + fileToPath, e);
+			}
+			changed = true;
 		}
 
-		return true;
+		// now we check the permissions
+		Set<PosixFilePermission> permissionsFrom = FilesUtils.getPermissions(fileFrom);
+		Set<PosixFilePermission> permissionsTo = FilesUtils.getPermissions(fileTo);
+
+		// update permission if necessary
+		if (!CollectionUtils.isEqualCollection(permissionsFrom, permissionsTo)) {
+			if (alreadyExists)
+				log.info("updating file permissions {}", fileTo);
+			FilesUtils.updatePermissions(fileTo, permissionsFrom);
+			changed = true;
+		}
+
+		return changed;
 	}
 
 	public static boolean deploySystemFiles(StackConfig stack, String module, List<String> files)

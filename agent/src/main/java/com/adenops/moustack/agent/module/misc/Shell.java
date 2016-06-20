@@ -53,7 +53,7 @@ public class Shell extends SystemModule {
 			boolean fileChanged = DeploymentUtil.deploySystemFiles(env.getStack(), name, files);
 			if (fileChanged) {
 				String scriptPath = PathUtil.getSystemTargetFilePath(AgentConfig.getInstance(), file);
-				log.debug("executing {}", scriptPath);
+				log.info("executing {}", scriptPath);
 
 				ExecResult result = ProcessUtil.execute("/bin/sh", scriptPath);
 

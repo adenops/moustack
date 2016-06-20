@@ -24,13 +24,10 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.attribute.GroupPrincipal;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFileAttributes;
 import java.nio.file.attribute.PosixFilePermission;
-import java.nio.file.attribute.PosixFilePermissions;
 import java.nio.file.attribute.UserPrincipal;
 import java.nio.file.attribute.UserPrincipalLookupService;
 import java.util.Set;
@@ -53,68 +50,66 @@ public class FilesUtils {
 		}
 	}
 
-	public static boolean chown(String owner, String group, String pathStr) throws DeploymentException {
+	public static Set<PosixFilePermission> getPermissions(File file) throws DeploymentException {
+		try {
+			return Files.getPosixFilePermissions(file.toPath());
+		} catch (IOException e) {
+			throw new DeploymentException("error while getting file permissions " + file, e);
+		}
+	}
+
+	public static void updatePermissions(File file, Set<PosixFilePermission> permissions) throws DeploymentException {
+		try {
+			Files.setPosixFilePermissions(file.toPath(), permissions);
+		} catch (IOException e) {
+			throw new DeploymentException("error while setting file permissions " + file, e);
+		}
+	}
+
+	public static boolean chown(File file, String owner, String group) throws DeploymentException {
 		boolean changed = false;
 
-		Path path = Paths.get(pathStr);
-		if (!path.toFile().exists())
-			throw new DeploymentException("cannot chown path " + pathStr + " (not found)");
+		if (!file.exists())
+			throw new DeploymentException("cannot chown path " + file + " (not found)");
 
-		PosixFileAttributeView view = Files.getFileAttributeView(path, PosixFileAttributeView.class);
+		PosixFileAttributeView view = Files.getFileAttributeView(file.toPath(), PosixFileAttributeView.class);
 		PosixFileAttributes attributes;
 		try {
 			attributes = view.readAttributes();
 		} catch (IOException e) {
-			throw new DeploymentException("error while reading attributes from file " + pathStr, e);
+			throw new DeploymentException("error while reading attributes from file " + file, e);
 		}
 		UserPrincipalLookupService lookupService = FileSystems.getDefault().getUserPrincipalLookupService();
 		if (!attributes.owner().getName().equals(owner)) {
-			log.info("set owner " + owner + " on " + path);
+			log.info("set owner " + owner + " on " + file);
 			UserPrincipal userPrincipal;
 			try {
 				userPrincipal = lookupService.lookupPrincipalByName(owner);
 			} catch (IOException e) {
-				throw new DeploymentException("error while getting owner for file " + pathStr, e);
+				throw new DeploymentException("error while getting owner for file " + file, e);
 			}
 			try {
 				view.setOwner(userPrincipal);
 			} catch (IOException e) {
-				throw new DeploymentException("error while setting owner " + owner + " for file " + pathStr, e);
+				throw new DeploymentException("error while setting owner " + owner + " for file " + file, e);
 			}
 			changed = true;
 		}
 
 		if (!attributes.group().getName().equals(owner)) {
-			log.info("set group " + group + " on " + path);
+			log.info("set group {} on {}", group, file);
 			GroupPrincipal groupPrincipal;
 			try {
 				groupPrincipal = lookupService.lookupPrincipalByGroupName(group);
 			} catch (IOException e) {
-				throw new DeploymentException("error while getting group for file " + pathStr, e);
+				throw new DeploymentException("error while getting group for file " + file, e);
 			}
 			try {
 				view.setGroup(groupPrincipal);
 			} catch (IOException e) {
-				throw new DeploymentException("error while setting group " + group + " for file " + pathStr, e);
+				throw new DeploymentException("error while setting group " + group + " for file " + file, e);
 			}
 			changed = true;
-		}
-
-		return changed;
-	}
-
-	public static boolean chmod(String mode, String pathStr) throws DeploymentException {
-		boolean changed = false;
-
-		Path path = Paths.get(pathStr);
-		if (!path.toFile().exists())
-			throw new DeploymentException("cannot chmod path " + pathStr + " (not found)");
-
-		Set<PosixFilePermission> posixPermissions = PosixFilePermissions.fromString(mode);
-		try {
-			Files.setPosixFilePermissions(path, posixPermissions);
-		} catch (IOException e) {
-			throw new DeploymentException("failed to set permissions on " + pathStr + ": " + e.getMessage());
 		}
 
 		return changed;
