@@ -20,6 +20,7 @@
 package com.adenops.moustack.agent.client;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.commons.lang3.ArrayUtils;
@@ -35,9 +36,13 @@ public class DpkgClient extends AbstractPackagingClient {
 
 	private void apt(String action, String... packages) throws DeploymentException {
 		String[] command = ArrayUtils.addAll(new String[] { "apt-get", action, "--assume-yes", "--quiet" }, packages);
-		ProcessUtil.execute(command);
+		// Use RUNLEVEL=1 to prevent services from being automatically started.
+		ProcessUtil.execute(null, null, Collections.singletonMap("RUNLEVEL", "1"), false, command);
 	}
 
+	// TODO: I couldn't find a clean way (without pipe and with a proper exit code) to check that a package is not
+	// installed.
+	// With current implementation, if a package has been removed but not purged, it will be considered installed.
 	private String[] filterPackages(boolean filterInstalled, String... pkgs) throws DeploymentException {
 		if (pkgs.length == 0)
 			return pkgs;

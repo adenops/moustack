@@ -19,8 +19,11 @@
 
 package com.adenops.moustack.agent.util;
 
+import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.slf4j.Logger;
@@ -31,6 +34,7 @@ import com.adenops.moustack.agent.model.exec.ExecResult;
 
 public class SystemCtlUtil {
 	private static final Logger log = LoggerFactory.getLogger(SystemCtlUtil.class);
+	private static final Pattern FRAGMENTPATH_REGEX = Pattern.compile("^FragmentPath=/lib/systemd/system/(.*)\n");
 
 	/*
 	 * Global wrapper that assembles and executes a systemctl command.
@@ -61,12 +65,28 @@ public class SystemCtlUtil {
 		return result.getExitCode() == 0;
 	}
 
+	/*
+	 * We use FragmentPath to help detect if there has been a unit override in /etc, it seems systemd does
+	 * not provide a proper mechanism for that.
+	 */
 	public static boolean unitIsUpdated(String unit) throws DeploymentException {
-		ExecResult result = systemctlExec("show", unit, "--property=NeedDaemonReload");
+		ExecResult result = systemctlExec("show", unit, "--property=NeedDaemonReload", "--property=FragmentPath");
+
 		if (result.getExitCode() != 0)
 			throw new DeploymentException("systemctl command failed with exit code " + result.getExitCode());
+
 		String stdout = new String(result.getStdout().toByteArray(), StandardCharsets.UTF_8);
-		return stdout.contains("NeedDaemonReload=yes");
+
+		// If systemd has detected it needs a reload.
+		if (stdout.contains("NeedDaemonReload=yes"))
+			return true;
+
+		Matcher matcher = FRAGMENTPATH_REGEX.matcher(stdout);
+		if (!matcher.find())
+			return false;
+
+		// Check if the same service file exists in /etc
+		return new File(String.format("/etc/systemd/system/%s", matcher.group(1))).exists();
 	}
 
 	public static void daemonReload() throws DeploymentException {
