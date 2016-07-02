@@ -59,9 +59,6 @@ import com.github.dockerjava.api.model.Capability;
 public class Deployer {
 	public static final Logger log = LoggerFactory.getLogger(Deployer.class);
 
-	// XXX: debian!!!!
-	private static final boolean REPORT_YUM_PACKAGES = false;
-
 	// this is a global list of files to ensure there are no overrides
 	private final List<String> systemFiles = new ArrayList<>();
 
@@ -388,8 +385,11 @@ public class Deployer {
 		}
 
 		// packages installed
-		if (REPORT_YUM_PACKAGES) {
+		if (env.getOsFamily().equals(DeploymentEnvironment.OSFamily.REDHAT)) {
 			ExecResult result = ProcessUtil.execute("yum", "list", "installed", "--debuglevel=0");
+			report.put("packages", toBase64(new String(result.getStdout().toByteArray(), StandardCharsets.UTF_8)));
+		} else {
+			ExecResult result = ProcessUtil.execute("dpkg-query", "-f", "${binary:Package}-${Version}\n", "-W");
 			report.put("packages", toBase64(new String(result.getStdout().toByteArray(), StandardCharsets.UTF_8)));
 		}
 
