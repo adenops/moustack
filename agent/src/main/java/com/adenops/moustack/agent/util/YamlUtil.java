@@ -43,6 +43,7 @@ public class YamlUtil {
 		YamlReader reader = null;
 		try {
 			reader = new YamlReader(new FileReader(path));
+			@SuppressWarnings("unchecked")
 			Map<Object, Object> map = (Map<Object, Object>) reader.read();
 			if (map == null)
 				throw new DeploymentException("invalid yaml data from " + path);

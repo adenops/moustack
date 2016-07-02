@@ -40,6 +40,7 @@ import com.adenops.moustack.agent.DeploymentEnvironment.OSFamily;
 import com.adenops.moustack.agent.config.AgentConfig;
 import com.adenops.moustack.agent.config.StackConfig;
 import com.adenops.moustack.agent.log4j2.MemoryAppender;
+import com.adenops.moustack.agent.model.deployment.DeploymentFile;
 import com.adenops.moustack.agent.model.docker.Volume;
 import com.adenops.moustack.agent.model.exec.ExecResult;
 import com.adenops.moustack.agent.module.BaseModule;
@@ -138,22 +139,33 @@ public class Deployer {
 		systemFiles.add(fileTo);
 	}
 
+	private DeploymentFile toSystemDeploymentFile(String moduleName, String fileDefinition, boolean parse)
+			throws DeploymentException {
+		String from = PathUtil.getModuleSourceFilePath(AgentConfig.getInstance(), moduleName, fileDefinition);
+		String to = PathUtil.getSystemTargetFilePath(AgentConfig.getInstance(), fileDefinition);
+		validateFile(from, to);
+
+		return new DeploymentFile(from, to, parse);
+	}
+
 	private BaseModule loadSystemModule(String name, Map<Object, Object> moduleConfig) throws DeploymentException {
+		List<DeploymentFile> files = new ArrayList<>();
+
 		String register = (String) moduleConfig.get("register");
 		List<String> moduleFiles = YamlUtil.getList(moduleConfig.get("files"));
+		List<String> moduleRawFiles = YamlUtil.getList(moduleConfig.get("rawfiles"));
 		List<String> modulePackages = YamlUtil.getList(moduleConfig.get("packages"));
 		List<String> moduleServices = YamlUtil.getList(moduleConfig.get("services"));
 
-		// files validation
-		for (String file : moduleFiles) {
-			String from = PathUtil.getModuleSourceFilePath(AgentConfig.getInstance(), name, file);
-			String to = PathUtil.getSystemTargetFilePath(AgentConfig.getInstance(), file);
-			validateFile(from, to);
-		}
+		for (String file : moduleFiles)
+			files.add(toSystemDeploymentFile(name, file, true));
+
+		for (String file : moduleRawFiles)
+			files.add(toSystemDeploymentFile(name, file, false));
 
 		SystemModule module = null;
 		if (StringUtils.isEmpty(register)) {
-			module = new SystemModule(name, moduleFiles, modulePackages, moduleServices);
+			module = new SystemModule(name, files, modulePackages, moduleServices);
 		} else {
 			if (!(SystemModule.class.isAssignableFrom(ModuleRegistry.getRegistered(register))))
 				throw new DeploymentException("module " + name + " registration error");
@@ -162,7 +174,7 @@ public class Deployer {
 
 			try {
 				module = registeredClass.getConstructor(String.class, List.class, List.class, List.class).newInstance(
-						name, moduleFiles, modulePackages, moduleServices);
+						name, files, modulePackages, moduleServices);
 			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
 					| InvocationTargetException | NoSuchMethodException | SecurityException e) {
 				throw new DeploymentException("cannot register module " + name, e);
@@ -173,33 +185,45 @@ public class Deployer {
 		return module;
 	}
 
+	private DeploymentFile toContainerDeploymentFile(String moduleName, String fileDefinition, boolean parse)
+			throws DeploymentException {
+		String from = PathUtil.getModuleSourceFilePath(AgentConfig.getInstance(), moduleName, fileDefinition);
+		String to = PathUtil.getContainerTargetFilePath(env.getStack(), moduleName, fileDefinition);
+		validateFile(from, null);
+
+		return new DeploymentFile(from, to, parse);
+	}
+
 	private BaseModule loadContainerModule(String name, Map<Object, Object> moduleConfig) throws DeploymentException {
+		List<DeploymentFile> files = new ArrayList<>();
+
 		// TODO: better handling of default values
 		String register = (String) moduleConfig.get("register");
 		String image = (String) moduleConfig.get("image");
 		boolean privileged = Boolean.valueOf((String) moduleConfig.get("privileged"));
 		boolean syslog = Boolean.valueOf((String) moduleConfig.getOrDefault("syslog", "true"));
+		List<String> moduleFiles = YamlUtil.getList(moduleConfig.get("files"));
+		List<String> moduleRawFiles = YamlUtil.getList(moduleConfig.get("rawfiles"));
 		List<String> environments = YamlUtil.getList(moduleConfig.get("environments"));
 		List<String> devices = YamlUtil.getList(moduleConfig.get("devices"));
 
 		List<Volume> volumes = new ArrayList<Volume>();
-		List<String> files = new ArrayList<String>();
 		List<Capability> capabilities = new ArrayList<Capability>();
 
-		// we iterate through files entries and add each entry as:
-		// * file entry for the deployment
-		// * volume entry for availability in the containers
-		for (String file : YamlUtil.getList(moduleConfig.get("files"))) {
-			String from = PathUtil.getModuleSourceFilePath(AgentConfig.getInstance(), name, file);
-			String to = Paths.get("/", file).toString();
-			validateFile(from, null);
-			files.add(file);
-			// TODO: "ro" is ugly
-			volumes.add(new Volume(PathUtil.getContainerTargetFilePath(env.getStack(), name, file), to, "ro"));
+		for (String file : moduleFiles) {
+			files.add(toContainerDeploymentFile(name, file, true));
+			String toContainer = Paths.get("/", file).toString();
+			volumes.add(new Volume(PathUtil.getContainerTargetFilePath(env.getStack(), name, file), toContainer, "ro"));
 		}
 
-		// add environments to files for deployment
-		files.addAll(environments);
+		for (String file : moduleRawFiles) {
+			files.add(toContainerDeploymentFile(name, file, false));
+			String toContainer = Paths.get("/", file).toString();
+			volumes.add(new Volume(PathUtil.getContainerTargetFilePath(env.getStack(), name, file), toContainer, "ro"));
+		}
+
+		for (String file : environments)
+			files.add(toContainerDeploymentFile(name, file, true));
 
 		for (String entry : YamlUtil.getList(moduleConfig.get("volumes"))) {
 			String[] split = entry.split(":");
@@ -216,11 +240,6 @@ public class Deployer {
 			} catch (IllegalArgumentException e) {
 				throw new DeploymentException("invalid capability: " + entry);
 			}
-		}
-
-		for (String file : files) {
-			String from = PathUtil.getModuleSourceFilePath(AgentConfig.getInstance(), name, file);
-			validateFile(from, null);
 		}
 
 		ContainerModule module = null;

@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 
 import com.adenops.moustack.agent.DeploymentEnvironment;
 import com.adenops.moustack.agent.DeploymentException;
+import com.adenops.moustack.agent.model.deployment.DeploymentFile;
 import com.adenops.moustack.agent.model.docker.Volume;
 import com.adenops.moustack.agent.util.DeploymentUtil;
 import com.github.dockerjava.api.model.Capability;
@@ -35,7 +36,7 @@ public class ContainerModule extends BaseModule {
 	private static final Logger log = LoggerFactory.getLogger(ContainerModule.class);
 
 	private final String image;
-	private final List<String> files;
+	private final List<DeploymentFile> files;
 	private final List<String> environments;
 	private final List<Volume> volumes;
 	private final List<Capability> capabilities;
@@ -43,7 +44,7 @@ public class ContainerModule extends BaseModule {
 	private final List<String> devices;
 	private final boolean syslog;
 
-	public ContainerModule(String name, String image, List<String> files, List<String> environments,
+	public ContainerModule(String name, String image, List<DeploymentFile> files, List<String> environments,
 			List<Volume> volumes, List<Capability> capabilities, boolean privileged, List<String> devices,
 			boolean syslog) {
 		super(name);
@@ -87,7 +88,7 @@ public class ContainerModule extends BaseModule {
 	@Override
 	protected boolean deployConfig(DeploymentEnvironment env) throws DeploymentException {
 		boolean changed = false;
-		changed |= DeploymentUtil.deployContainerFiles(env.getStack(), name, getFiles());
+		changed |= DeploymentUtil.deployFiles(env.getStack(), name, files);
 		changed |= env.getDockerClient().containerCheckUpdate(this);
 		return changed;
 	}
@@ -127,7 +128,7 @@ public class ContainerModule extends BaseModule {
 		return environments;
 	}
 
-	public List<String> getFiles() {
+	public List<DeploymentFile> getFiles() {
 		return files;
 	}
 

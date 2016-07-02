@@ -30,18 +30,17 @@ import org.slf4j.LoggerFactory;
 
 import com.adenops.moustack.agent.DeploymentEnvironment;
 import com.adenops.moustack.agent.DeploymentException;
-import com.adenops.moustack.agent.config.AgentConfig;
+import com.adenops.moustack.agent.model.deployment.DeploymentFile;
 import com.adenops.moustack.agent.model.exec.ExecResult;
 import com.adenops.moustack.agent.module.SystemModule;
 import com.adenops.moustack.agent.util.DeploymentUtil;
-import com.adenops.moustack.agent.util.PathUtil;
 import com.adenops.moustack.agent.util.ProcessUtil;
 import com.adenops.moustack.agent.util.SystemCtlUtil;
 
 public class Shell extends SystemModule {
 	private static final Logger log = LoggerFactory.getLogger(Shell.class);
 
-	public Shell(String name, List<String> files, List<String> packages, List<String> services) {
+	public Shell(String name, List<DeploymentFile> files, List<String> packages, List<String> services) {
 		super(name, files, packages, services);
 	}
 
@@ -49,10 +48,10 @@ public class Shell extends SystemModule {
 	public boolean deploy(DeploymentEnvironment env) throws DeploymentException {
 		boolean changed = env.getPackagingClient().install(packages.toArray(new String[packages.size()]));
 
-		for (String file : files) {
-			boolean fileChanged = DeploymentUtil.deploySystemFiles(env.getStack(), name, files);
+		for (DeploymentFile file : files) {
+			boolean fileChanged = DeploymentUtil.deployFiles(env.getStack(), name, files);
 			if (fileChanged) {
-				String scriptPath = PathUtil.getSystemTargetFilePath(AgentConfig.getInstance(), file);
+				String scriptPath = file.getTarget();
 				log.info("executing {}", scriptPath);
 
 				ExecResult result = ProcessUtil.execute("/bin/sh", scriptPath);

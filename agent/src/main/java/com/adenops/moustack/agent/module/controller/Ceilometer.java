@@ -21,21 +21,18 @@ package com.adenops.moustack.agent.module.controller;
 
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.adenops.moustack.agent.DeploymentEnvironment;
 import com.adenops.moustack.agent.DeploymentException;
 import com.adenops.moustack.agent.config.StackProperty;
+import com.adenops.moustack.agent.model.deployment.DeploymentFile;
 import com.adenops.moustack.agent.model.docker.Volume;
 import com.adenops.moustack.agent.module.ContainerModule;
 import com.github.dockerjava.api.model.Capability;
 
 public class Ceilometer extends ContainerModule {
-	private static final Logger log = LoggerFactory.getLogger(Ceilometer.class);
-
-	public Ceilometer(String name, String image, List<String> files, List<String> environments, List<Volume> volumes,
-			List<Capability> capabilities, boolean privileged, List<String> devices, boolean syslog) {
+	public Ceilometer(String name, String image, List<DeploymentFile> files, List<String> environments,
+			List<Volume> volumes, List<Capability> capabilities, boolean privileged, List<String> devices,
+			boolean syslog) {
 		super(name, image, files, environments, volumes, capabilities, privileged, devices, syslog);
 	}
 

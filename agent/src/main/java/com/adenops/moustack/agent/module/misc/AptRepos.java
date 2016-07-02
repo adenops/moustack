@@ -22,11 +22,9 @@ package com.adenops.moustack.agent.module.misc;
 import java.io.File;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.adenops.moustack.agent.DeploymentEnvironment;
 import com.adenops.moustack.agent.DeploymentException;
+import com.adenops.moustack.agent.model.deployment.DeploymentFile;
 import com.adenops.moustack.agent.module.SystemModule;
 import com.adenops.moustack.agent.util.ProcessUtil;
 
@@ -37,9 +35,7 @@ import com.adenops.moustack.agent.util.ProcessUtil;
  * apt-key export 2C52609D > etc/pki/apt-gpg/docker.gpg
  */
 public class AptRepos extends SystemModule {
-	private static final Logger log = LoggerFactory.getLogger(AptRepos.class);
-
-	public AptRepos(String name, List<String> files, List<String> packages, List<String> services) {
+	public AptRepos(String name, List<DeploymentFile> files, List<String> packages, List<String> services) {
 		super(name, files, packages, services);
 	}
 

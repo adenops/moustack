@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 
 import com.adenops.moustack.agent.DeploymentEnvironment;
 import com.adenops.moustack.agent.DeploymentException;
+import com.adenops.moustack.agent.model.deployment.DeploymentFile;
 import com.adenops.moustack.agent.util.DeploymentUtil;
 import com.adenops.moustack.agent.util.SystemCtlUtil;
 
@@ -38,10 +39,10 @@ public class SystemModule extends BaseModule {
 	private static final Logger log = LoggerFactory.getLogger(SystemModule.class);
 
 	protected final List<String> packages;
-	protected final List<String> files;
+	protected final List<DeploymentFile> files;
 	protected final List<String> services;
 
-	public SystemModule(String name, List<String> files, List<String> packages, List<String> services) {
+	public SystemModule(String name, List<DeploymentFile> files, List<String> packages, List<String> services) {
 		super(name);
 		this.files = files;
 		this.packages = packages;
@@ -58,7 +59,7 @@ public class SystemModule extends BaseModule {
 	@Override
 	protected boolean deployConfig(DeploymentEnvironment env) throws DeploymentException {
 		boolean changed = env.getPackagingClient().install(packages.toArray(new String[packages.size()]));
-		changed |= DeploymentUtil.deploySystemFiles(env.getStack(), name, files);
+		changed |= DeploymentUtil.deployFiles(env.getStack(), name, files);
 		return changed;
 	}
 
@@ -75,7 +76,7 @@ public class SystemModule extends BaseModule {
 		return packages;
 	}
 
-	public List<String> getFiles() {
+	public List<DeploymentFile> getFiles() {
 		return files;
 	}
 

@@ -21,21 +21,17 @@ package com.adenops.moustack.agent.module.misc;
 
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.adenops.moustack.agent.DeploymentEnvironment;
 import com.adenops.moustack.agent.DeploymentException;
 import com.adenops.moustack.agent.config.StackProperty;
+import com.adenops.moustack.agent.model.deployment.DeploymentFile;
 import com.adenops.moustack.agent.module.SystemModule;
 import com.adenops.moustack.agent.util.DeploymentUtil;
 import com.adenops.moustack.agent.util.ProcessUtil;
 import com.adenops.moustack.agent.util.SystemCtlUtil;
 
 public class Network extends SystemModule {
-	private static final Logger log = LoggerFactory.getLogger(Network.class);
-
-	public Network(String name, List<String> files, List<String> packages, List<String> services) {
+	public Network(String name, List<DeploymentFile> files, List<String> packages, List<String> services) {
 		super(name, files, packages, services);
 	}
 
@@ -50,7 +46,7 @@ public class Network extends SystemModule {
 		changed |= env.getPackagingClient().remove("NetworkManager", "firewalld", "openvswitch");
 		changed |= env.getPackagingClient().install("iptables-services");
 
-		changed |= DeploymentUtil.deploySystemFiles(env.getStack(), name, files);
+		changed |= DeploymentUtil.deployFiles(env.getStack(), name, files);
 
 		changed |= SystemCtlUtil.stopService("NetworkManager");
 

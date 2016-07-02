@@ -22,18 +22,14 @@ package com.adenops.moustack.agent.module.misc;
 import java.io.File;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.adenops.moustack.agent.DeploymentEnvironment;
 import com.adenops.moustack.agent.DeploymentException;
+import com.adenops.moustack.agent.model.deployment.DeploymentFile;
 import com.adenops.moustack.agent.module.SystemModule;
 import com.adenops.moustack.agent.util.ProcessUtil;
 
 public class YumRepos extends SystemModule {
-	private static final Logger log = LoggerFactory.getLogger(YumRepos.class);
-
-	public YumRepos(String name, List<String> files, List<String> packages, List<String> services) {
+	public YumRepos(String name, List<DeploymentFile> files, List<String> packages, List<String> services) {
 		super(name, files, packages, services);
 	}
 

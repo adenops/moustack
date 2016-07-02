@@ -26,14 +26,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang.ArrayUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.adenops.moustack.agent.DeploymentException;
 import com.adenops.moustack.agent.model.exec.ExecResult;
 
 public class SystemCtlUtil {
-	private static final Logger log = LoggerFactory.getLogger(SystemCtlUtil.class);
 	private static final Pattern FRAGMENTPATH_REGEX = Pattern.compile("^FragmentPath=/lib/systemd/system/(.*)\n");
 
 	/*

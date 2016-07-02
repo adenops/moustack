@@ -17,16 +17,28 @@
  * limitations under the License.
  */
 
-package com.adenops.moustack.agent;
+package com.adenops.moustack.agent.model.deployment;
 
-public class DeploymentException extends Exception {
-	private static final long serialVersionUID = 1L;
+public class DeploymentFile {
+	private final String source;
+	private final String target;
+	private final boolean parse;
 
-	public DeploymentException(String message) {
-		super(message);
+	public DeploymentFile(String source, String target, boolean parse) {
+		this.source = source;
+		this.target = target;
+		this.parse = parse;
 	}
 
-	public DeploymentException(String message, Throwable exception) {
-		super(message, exception);
+	public String getSource() {
+		return source;
+	}
+
+	public String getTarget() {
+		return target;
+	}
+
+	public boolean isParse() {
+		return parse;
 	}
 }

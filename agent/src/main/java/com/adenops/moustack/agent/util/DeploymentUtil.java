@@ -20,6 +20,7 @@
 package com.adenops.moustack.agent.util;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.attribute.PosixFilePermission;
@@ -29,13 +30,16 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.adenops.moustack.agent.DeploymentException;
-import com.adenops.moustack.agent.config.AgentConfig;
 import com.adenops.moustack.agent.config.StackConfig;
+import com.adenops.moustack.agent.model.deployment.DeploymentFile;
 
 public class DeploymentUtil {
 	private static final Logger log = LoggerFactory.getLogger(DeploymentUtil.class);
@@ -66,22 +70,21 @@ public class DeploymentUtil {
 
 	}
 
-	// TODO: use something more efficient like MD5 comparison
-	private static boolean deployFile(StackConfig stack, String fileFromPath, String fileToPath)
-			throws DeploymentException {
+	private static boolean deployFile(StackConfig stack, DeploymentFile file) throws DeploymentException {
 		boolean changed = false;
-		File fileFrom = new File(fileFromPath);
-		File fileTo = new File(fileToPath);
+		File fileFrom = new File(file.getSource());
+		File fileTo = new File(file.getTarget());
 
 		// ensure the source file exists
 		if (!fileFrom.exists())
-			throw new DeploymentException("file " + fileFromPath + " not found");
+			throw new DeploymentException("file " + file.getSource() + " not found");
 
 		// load the new file and replace tokens
-		String fileFromContent = FilesUtils.fileToString(fileFromPath, false);
+		String fileFromContent = FilesUtils.fileToString(file.getSource(), false);
 		fileFromContent = replaceTokens(fileFromContent, stack.getProperties());
 
-		if (!fileTo.exists()) {
+		boolean alreadyExists = fileTo.exists();
+		if (!alreadyExists) {
 			// if the file did not exist, ensure parent directory exists
 			File parentFile = fileTo.getParentFile();
 			if (parentFile.mkdirs())
@@ -89,62 +92,101 @@ public class DeploymentUtil {
 		}
 
 		String fileToContent = null;
-		boolean alreadyExists = fileTo.exists();
 		if (alreadyExists)
 			// if the file already exists, load the content
-			fileToContent = FilesUtils.fileToString(fileToPath, false);
+			fileToContent = FilesUtils.fileToString(file.getTarget(), false);
 
 		if (!fileFromContent.equals(fileToContent)) {
 			// if content is different, update the file
-			log.info("{} file {}", alreadyExists ? "creating" : "updating", fileToPath);
+			log.info("{} file {}", alreadyExists ? "creating" : "updating", file.getTarget());
 			try {
 				Files.write(fileTo.toPath(), fileFromContent.getBytes());
 			} catch (IOException e) {
-				throw new DeploymentException("cannot write file " + fileToPath, e);
+				throw new DeploymentException("cannot write file " + file.getTarget(), e);
 			}
 			changed = true;
 		}
 
-		// now we check the permissions
-		Set<PosixFilePermission> permissionsFrom = FilesUtils.getPermissions(fileFrom);
-		Set<PosixFilePermission> permissionsTo = FilesUtils.getPermissions(fileTo);
+		changed |= updateFilePermissions(fileFrom, fileTo, alreadyExists);
 
-		// update permission if necessary
-		if (!CollectionUtils.isEqualCollection(permissionsFrom, permissionsTo)) {
-			if (alreadyExists)
-				log.info("updating file permissions {}", fileTo);
-			FilesUtils.updatePermissions(fileTo, permissionsFrom);
+		return changed;
+	}
+
+	private static String md5(String file) throws DeploymentException {
+		FileInputStream fis = null;
+		try {
+			fis = new FileInputStream(file);
+			return DigestUtils.md5Hex(fis);
+		} catch (Exception e) {
+			throw new DeploymentException("cannot compute MD5 sum for file " + file);
+		} finally {
+			IOUtils.closeQuietly(fis);
+		}
+	}
+
+	private static boolean deployRawFile(StackConfig stack, DeploymentFile file) throws DeploymentException {
+		boolean changed = false;
+		File fileFrom = new File(file.getSource());
+		File fileTo = new File(file.getTarget());
+
+		// ensure the source file exists
+		if (!fileFrom.exists())
+			throw new DeploymentException("file " + file.getSource() + " not found");
+
+		String md5Source = md5(file.getSource());
+
+		String md5Target = null;
+		boolean alreadyExists = fileTo.exists();
+		if (!alreadyExists) {
+			// if the file did not exist, ensure parent directory exists
+			File parentFile = fileTo.getParentFile();
+			if (parentFile.mkdirs())
+				log.debug("created directory {}", parentFile);
+		} else
+			md5Target = md5(file.getTarget());
+
+		if (!md5Source.equals(md5Target)) {
+			log.info("{} file {}", alreadyExists ? "creating" : "updating", file.getTarget());
+			try {
+				FileUtils.copyFile(fileFrom, fileTo);
+			} catch (IOException e) {
+				throw new DeploymentException("cannot write file " + file.getTarget(), e);
+			}
 			changed = true;
 		}
 
+		changed |= updateFilePermissions(fileFrom, fileTo, alreadyExists);
+
 		return changed;
 	}
 
-	public static boolean deploySystemFiles(StackConfig stack, String module, List<String> files)
+	private static boolean updateFilePermissions(File source, File target, boolean targetAlreadyExisted)
 			throws DeploymentException {
-		boolean changed = false;
-		log.debug("deploying module " + module + " host files");
+		// now we check the permissions
+		Set<PosixFilePermission> permissionsFrom = FilesUtils.getPermissions(source);
+		Set<PosixFilePermission> permissionsTo = FilesUtils.getPermissions(target);
 
-		for (String file : files) {
-			String from = PathUtil.getModuleSourceFilePath(AgentConfig.getInstance(), module, file);
-			String to = PathUtil.getSystemTargetFilePath(AgentConfig.getInstance(), file);
-
-			changed |= deployFile(stack, from, to);
+		// update permission if necessary
+		if (!CollectionUtils.isEqualCollection(permissionsFrom, permissionsTo)) {
+			if (targetAlreadyExisted)
+				log.info("updating file permissions {}", target);
+			FilesUtils.updatePermissions(target, permissionsFrom);
+			return true;
 		}
 
-		return changed;
+		return false;
 	}
 
-	public static boolean deployContainerFiles(StackConfig stack, String module, List<String> files)
+	public static boolean deployFiles(StackConfig stack, String module, List<DeploymentFile> files)
 			throws DeploymentException {
 		boolean changed = false;
-		log.debug("deploying module " + module + " containers files");
+		log.debug("deploying module " + module + " files");
 
-		for (String file : files) {
-			String from = PathUtil.getModuleSourceFilePath(AgentConfig.getInstance(), module, file);
-			String to = PathUtil.getContainerTargetFilePath(stack, module, file);
-
-			changed |= deployFile(stack, from, to);
+		for (DeploymentFile file : files) {
+			if (file.isParse())
+				changed |= deployFile(stack, file);
+			else
+				changed |= deployRawFile(stack, file);
 		}
 
 		return changed;

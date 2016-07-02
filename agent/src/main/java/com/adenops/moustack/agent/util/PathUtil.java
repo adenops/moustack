@@ -21,17 +21,12 @@ package com.adenops.moustack.agent.util;
 
 import java.io.File;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.adenops.moustack.agent.DeploymentException;
 import com.adenops.moustack.agent.config.AgentConfig;
 import com.adenops.moustack.agent.config.StackConfig;
 import com.adenops.moustack.agent.config.StackProperty;
 
 public class PathUtil {
-	private static final Logger log = LoggerFactory.getLogger(PathUtil.class);
-
 	private static StringBuffer getProfilePath(AgentConfig agentConfig) {
 		StringBuffer sb = new StringBuffer(agentConfig.getConfigDir());
 		sb.append(File.separator);
