@@ -410,6 +410,7 @@ public class DockerClient {
 			Map<String, String> logOptions = new HashMap<>();
 			logOptions.put("syslog-address", "udp://127.0.0.1:50014");
 			logOptions.put("syslog-tag", container.getName());
+			logOptions.put("syslog-format", "rfc3164");
 			createContainerCmd.withLogConfig(new LogConfig(LoggingType.SYSLOG, logOptions));
 		}
 
