@@ -317,7 +317,7 @@ public class DockerClient {
 
 		// pull image from docker registry
 		if (needPull) {
-			log.debug("pulling image " + container.getImage());
+			log.info("pulling image " + container.getImage());
 			try {
 				client.pullImageCmd(container.getImage()).exec(new PullImageResultCallback() {
 					// override awaitSuccess because the upstream one is not working
