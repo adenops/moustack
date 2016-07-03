@@ -52,24 +52,26 @@ if ! grep -q '^ceilometer:' /etc/passwd; then
 		--gid 108 ceilometer
 fi
 
-# fix /dev/kvm permissions
-kvm_host_group=kvm-host
-kvm_user=libvirt-qemu
-kvm_gid=`ls -ln /dev/kvm | awk '{ print $4; }'`
+if [ -c /dev/kvm ]; then
+	# fix /dev/kvm permissions
+	kvm_host_group=kvm-host
+	kvm_user=libvirt-qemu
+	kvm_gid=`ls -ln /dev/kvm | awk '{ print $4; }'`
 
-if [ ${kvm_gid} -eq 0 ]; then
-	kvm_gid=124
+	if [ ${kvm_gid} -eq 0 ]; then
+		kvm_gid=124
 
-	chgrp ${kvm_gid} /dev/kvm
-	chmod g+rw /dev/kvm
-fi
+		chgrp ${kvm_gid} /dev/kvm
+		chmod g+rw /dev/kvm
+	fi
 
-if ! grep -q "${kvm_host_group}:" /etc/group; then
-	groupadd --gid ${kvm_gid} ${kvm_host_group}
-fi
+	if ! grep -q "${kvm_host_group}:" /etc/group; then
+		groupadd --gid ${kvm_gid} ${kvm_host_group}
+	fi
 
-if ! grep -q "${kvm_host_group}:.*${kvm_user}" /etc/group; then
-	adduser ${kvm_user} ${kvm_host_group}
+	if ! grep -q "${kvm_host_group}:.*${kvm_user}" /etc/group; then
+		adduser ${kvm_user} ${kvm_host_group}
+	fi
 fi
 
 exec /usr/sbin/libvirtd --listen
