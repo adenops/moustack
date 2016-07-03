@@ -19,6 +19,9 @@
 
 package com.adenops.moustack.agent.model.docker;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 // TODO: we use a String for the mode, it would be better to use an enum
 public class Volume {
 	private final String hostPath;
@@ -41,5 +44,13 @@ public class Volume {
 
 	public String getMode() {
 		return mode;
+	}
+
+	public String asString() {
+		return String.format("%s:%s:%s", hostPath, guestPath, mode);
+	}
+
+	public static List<String> asStringList(List<Volume> volumes) {
+		return volumes.stream().map(v -> v.asString()).collect(Collectors.toList());
 	}
 }

@@ -208,7 +208,7 @@ public abstract class AbstractRestClient {
 				if (i == maxRetries)
 					throw new DeploymentException("connection error with [" + name + "] API");
 
-				log.debug("failed to connect to [{}], waiting {}s", name, retryWait);
+				log.debug("failed to connect to [{}], waiting {}s ({})", name, retryWait, e.getMessage());
 				try {
 					Thread.sleep(retryWait * 1000);
 				} catch (InterruptedException e1) {

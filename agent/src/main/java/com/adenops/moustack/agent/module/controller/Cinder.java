@@ -32,15 +32,13 @@ import com.adenops.moustack.agent.config.StackProperty;
 import com.adenops.moustack.agent.model.deployment.DeploymentFile;
 import com.adenops.moustack.agent.model.docker.Volume;
 import com.adenops.moustack.agent.module.ContainerModule;
-import com.github.dockerjava.api.model.Capability;
 
 public class Cinder extends ContainerModule {
 	private static final Logger log = LoggerFactory.getLogger(Cinder.class);
 
-	public Cinder(String name, String image, List<DeploymentFile> files, List<String> environments,
-			List<Volume> volumes, List<Capability> capabilities, boolean privileged, List<String> devices,
-			boolean syslog) {
-		super(name, image, files, environments, volumes, capabilities, privileged, devices, syslog);
+	public Cinder(String name, String image, String imageTag, List<DeploymentFile> files, List<String> environments,
+			List<Volume> volumes, List<String> capabilities, boolean privileged, List<String> devices, boolean syslog) {
+		super(name, image, imageTag, files, environments, volumes, capabilities, privileged, devices, syslog);
 	}
 
 	@Override
@@ -64,11 +62,12 @@ public class Cinder extends ContainerModule {
 		changed |= deployConfig(env);
 
 		if (changed) {
-			env.getDockerClient().stopContainer(this);
+			env.getDockerClient().discardContainer(this);
 			log.info("running cinder DB migration");
 			env.getDockerClient().startEphemeralContainer(this, "cinder", "cinder-manage", "db sync");
-			env.getDockerClient().startOrRestartContainer(this);
 		}
+
+		env.getDockerClient().startContainer(changed, this);
 
 		return changed;
 	}

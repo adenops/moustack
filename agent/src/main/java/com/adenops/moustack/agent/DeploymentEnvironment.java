@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory;
 
 import com.adenops.moustack.agent.client.AbstractPackagingClient;
 import com.adenops.moustack.agent.client.DesignateClient;
-import com.adenops.moustack.agent.client.DockerClient;
+import com.adenops.moustack.agent.client.DockerLocalClient;
 import com.adenops.moustack.agent.client.DpkgClient;
 import com.adenops.moustack.agent.client.KeystoneClient;
 import com.adenops.moustack.agent.client.MongoClient;
@@ -54,7 +54,7 @@ public class DeploymentEnvironment {
 
 	// clients
 	private final AbstractPackagingClient packagingClient;
-	private DockerClient dockerClient;
+	private DockerLocalClient dockerClient;
 	private KeystoneClient keystoneClient;
 	private DesignateClient designateClient;
 	private MongoClient mongoClient;
@@ -80,12 +80,12 @@ public class DeploymentEnvironment {
 		return stack;
 	}
 
-	public DockerClient getDockerClient() throws DeploymentException {
+	public DockerLocalClient getDockerClient() throws DeploymentException {
 		if (dockerClient == null) {
-			synchronized (DockerClient.class) {
+			synchronized (DockerLocalClient.class) {
 				if (dockerClient != null)
 					return dockerClient;
-				dockerClient = new DockerClient(stack);
+				dockerClient = new DockerLocalClient(stack);
 			}
 		}
 		return dockerClient;

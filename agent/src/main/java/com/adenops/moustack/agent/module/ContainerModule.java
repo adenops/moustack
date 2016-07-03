@@ -30,25 +30,26 @@ import com.adenops.moustack.agent.DeploymentException;
 import com.adenops.moustack.agent.model.deployment.DeploymentFile;
 import com.adenops.moustack.agent.model.docker.Volume;
 import com.adenops.moustack.agent.util.DeploymentUtil;
-import com.github.dockerjava.api.model.Capability;
 
 public class ContainerModule extends BaseModule {
 	private static final Logger log = LoggerFactory.getLogger(ContainerModule.class);
 
 	private final String image;
+	private final String imageTag;
 	private final List<DeploymentFile> files;
 	private final List<String> environments;
 	private final List<Volume> volumes;
-	private final List<Capability> capabilities;
+	private final List<String> capabilities;
 	private final boolean privileged;
 	private final List<String> devices;
 	private final boolean syslog;
 
-	public ContainerModule(String name, String image, List<DeploymentFile> files, List<String> environments,
-			List<Volume> volumes, List<Capability> capabilities, boolean privileged, List<String> devices,
-			boolean syslog) {
+	public ContainerModule(String name, String image, String imageTag, List<DeploymentFile> files,
+			List<String> environments, List<Volume> volumes, List<String> capabilities, boolean privileged,
+			List<String> devices, boolean syslog) {
 		super(name);
 		this.image = image;
+		this.imageTag = imageTag;
 		this.files = files;
 		this.environments = environments;
 		this.volumes = volumes;
@@ -58,16 +59,10 @@ public class ContainerModule extends BaseModule {
 		this.syslog = syslog;
 	}
 
-	/*
-	 * we use unmodifiable lists because we only use this constructor for
-	 * temporary containers
-	 *
-	 * TODO: this has been migrated from the old container logic, we need to re-evaluate if the module muste be used in this case.
-	 *
-	 */
 	public ContainerModule(String name, ContainerModule container) {
 		super(name);
 		this.image = container.image;
+		this.imageTag = container.imageTag;
 		this.environments = Collections.unmodifiableList(container.environments);
 		this.files = Collections.unmodifiableList(container.files);
 		this.volumes = Collections.unmodifiableList(container.volumes);
@@ -80,17 +75,13 @@ public class ContainerModule extends BaseModule {
 	@Override
 	public boolean deploy(DeploymentEnvironment env) throws DeploymentException {
 		boolean changed = deployConfig(env);
-		if (changed)
-			env.getDockerClient().startOrRestartContainer(this);
+		env.getDockerClient().startContainer(changed, this);
 		return changed;
 	}
 
 	@Override
 	protected boolean deployConfig(DeploymentEnvironment env) throws DeploymentException {
-		boolean changed = false;
-		changed |= DeploymentUtil.deployFiles(env.getStack(), name, files);
-		changed |= env.getDockerClient().containerCheckUpdate(this);
-		return changed;
+		return DeploymentUtil.deployFiles(env.getStack(), name, files);
 	}
 
 	@Override
@@ -104,11 +95,15 @@ public class ContainerModule extends BaseModule {
 		return image;
 	}
 
+	public String getImageTag() {
+		return imageTag;
+	}
+
 	public List<Volume> getVolumes() {
 		return volumes;
 	}
 
-	public List<Capability> getCapabilities() {
+	public List<String> getCapabilities() {
 		return capabilities;
 	}
 

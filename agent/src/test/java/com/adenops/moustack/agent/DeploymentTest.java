@@ -29,7 +29,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.adenops.moustack.agent.client.DockerClient;
+import com.adenops.moustack.agent.client.DockerLocalClient;
 import com.adenops.moustack.agent.config.AgentConfig;
 import com.adenops.moustack.agent.config.LogLevel;
 import com.adenops.moustack.agent.config.StackConfig;
@@ -38,7 +38,7 @@ import com.adenops.moustack.agent.module.ContainerModule;
 public class DeploymentTest {
 	private static final File TMP_DIR = new File("/tmp/moustack-test");
 	private static StackConfig stack;
-	private static DockerClient docker;
+	private static DockerLocalClient docker;
 	private static ContainerModule container;
 
 	@BeforeClass
@@ -68,13 +68,13 @@ public class DeploymentTest {
 		stack.setGitRepo(profilesDir.toURI().toString());
 		stack.setGitBranch("master");
 
-		docker = new DockerClient(stack);
-		container = new ContainerModule("container", "test", null, null, null, null, false, null, false);
+		docker = new DockerLocalClient(stack);
+		container = new ContainerModule("container", "test", "latest", null, null, null, null, false, null, false);
 	}
 
 	@AfterClass
 	public static void tearDown() throws Exception {
-		docker.stopContainer(container);
+		docker.discardContainer(container);
 		FileUtils.forceDelete(TMP_DIR);
 	}
 

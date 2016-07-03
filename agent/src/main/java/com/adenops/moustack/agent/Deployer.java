@@ -31,6 +31,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -53,12 +55,12 @@ import com.adenops.moustack.agent.util.PropertiesUtil;
 import com.adenops.moustack.agent.util.YamlUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.dockerjava.api.model.Capability;
 
 // TODO: review files/volumes declarations & deployment logic
 // TODO: factorise "files: section from container/system modules if possible
 public class Deployer {
 	public static final Logger log = LoggerFactory.getLogger(Deployer.class);
+	private static final Pattern DOCKER_IMAGE_REGEX = Pattern.compile("^(.+):([^:]+)$");
 
 	// this is a global list of files to ensure there are no overrides
 	private final List<String> systemFiles = new ArrayList<>();
@@ -157,6 +159,8 @@ public class Deployer {
 		List<String> modulePackages = YamlUtil.getList(moduleConfig.get("packages"));
 		List<String> moduleServices = YamlUtil.getList(moduleConfig.get("services"));
 
+		// TODO: validation (mandatory fields)
+
 		for (String file : moduleFiles)
 			files.add(toSystemDeploymentFile(name, file, true));
 
@@ -206,9 +210,17 @@ public class Deployer {
 		List<String> moduleRawFiles = YamlUtil.getList(moduleConfig.get("rawfiles"));
 		List<String> environments = YamlUtil.getList(moduleConfig.get("environments"));
 		List<String> devices = YamlUtil.getList(moduleConfig.get("devices"));
+		List<String> capabilities = YamlUtil.getList(moduleConfig.get("capabilities"));
 
-		List<Volume> volumes = new ArrayList<Volume>();
-		List<Capability> capabilities = new ArrayList<Capability>();
+		List<Volume> volumes = new ArrayList<>();
+
+		// TODO: validation (mandatory fields)
+
+		Matcher matcher = DOCKER_IMAGE_REGEX.matcher(image);
+		if (!matcher.find())
+			throw new DeploymentException("could not extract tag for image " + image);
+		image = matcher.group(1);
+		String imageTag = matcher.group(2);
 
 		for (String file : moduleFiles) {
 			files.add(toContainerDeploymentFile(name, file, true));
@@ -234,18 +246,10 @@ public class Deployer {
 			volumes.add(new Volume(split[0], split[1], mode));
 		}
 
-		for (String entry : YamlUtil.getList(moduleConfig.get("capabilities"))) {
-			try {
-				capabilities.add(Capability.valueOf(entry));
-			} catch (IllegalArgumentException e) {
-				throw new DeploymentException("invalid capability: " + entry);
-			}
-		}
-
 		ContainerModule module = null;
 		if (StringUtils.isEmpty(register)) {
-			module = new ContainerModule(name, image, files, environments, volumes, capabilities, privileged, devices,
-					syslog);
+			module = new ContainerModule(name, image, imageTag, files, environments, volumes, capabilities, privileged,
+					devices, syslog);
 		} else {
 			if (!(ContainerModule.class.isAssignableFrom(ModuleRegistry.getRegistered(register))))
 				throw new DeploymentException("module " + name + " registration error");
@@ -253,9 +257,9 @@ public class Deployer {
 			Class<ContainerModule> registeredClass = (Class<ContainerModule>) ModuleRegistry.getRegistered(register);
 
 			try {
-				module = registeredClass.getConstructor(String.class, String.class, List.class, List.class, List.class,
-						List.class, boolean.class, List.class, boolean.class).newInstance(name, image, files,
-						environments, volumes, capabilities, privileged, devices, syslog);
+				module = registeredClass.getConstructor(String.class, String.class, String.class, List.class,
+						List.class, List.class, List.class, boolean.class, List.class, boolean.class).newInstance(name,
+						image, imageTag, files, environments, volumes, capabilities, privileged, devices, syslog);
 			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
 					| InvocationTargetException | NoSuchMethodException | SecurityException e) {
 				throw new DeploymentException("cannot register module " + name, e);
@@ -311,10 +315,10 @@ public class Deployer {
 		if (!log.isDebugEnabled())
 			return;
 		StringBuffer sb = new StringBuffer("loaded ");
-		if (StringUtils.isEmpty(register)) {
+		if (!StringUtils.isEmpty(register)) {
 			sb.append("registered (");
 			sb.append(register);
-			sb.append(")");
+			sb.append(") ");
 		} else
 			sb.append("anonymous ");
 		sb.append(type);

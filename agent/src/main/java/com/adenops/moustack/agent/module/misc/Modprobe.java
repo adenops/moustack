@@ -24,6 +24,8 @@ import java.io.IOException;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.adenops.moustack.agent.DeploymentEnvironment;
 import com.adenops.moustack.agent.DeploymentException;
@@ -32,6 +34,8 @@ import com.adenops.moustack.agent.module.SystemModule;
 import com.adenops.moustack.agent.util.ProcessUtil;
 
 public class Modprobe extends SystemModule {
+	private static final Logger log = LoggerFactory.getLogger(Modprobe.class);
+
 	public Modprobe(String name, List<DeploymentFile> files, List<String> packages, List<String> services) {
 		super(name, files, packages, services);
 	}
@@ -46,8 +50,10 @@ public class Modprobe extends SystemModule {
 		for (DeploymentFile file : files) {
 			String path = file.getSource();
 			try {
-				for (String entry : FileUtils.readLines(new File(path)))
-					ProcessUtil.execute("modprobe", entry);
+				for (String module : FileUtils.readLines(new File(path))) {
+					log.debug("loading module {}", module);
+					ProcessUtil.execute("modprobe", module);
+				}
 			} catch (IOException e) {
 				throw new DeploymentException("error while reading modprobe file " + path, e);
 			}
