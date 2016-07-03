@@ -21,6 +21,9 @@ package com.adenops.moustack.agent.module.misc;
 
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.adenops.moustack.agent.DeploymentEnvironment;
 import com.adenops.moustack.agent.DeploymentException;
 import com.adenops.moustack.agent.model.deployment.DeploymentFile;
@@ -28,6 +31,8 @@ import com.adenops.moustack.agent.module.SystemModule;
 import com.adenops.moustack.agent.util.ProcessUtil;
 
 public class Sysctl extends SystemModule {
+	private static final Logger log = LoggerFactory.getLogger(Sysctl.class);
+
 	public Sysctl(String name, List<DeploymentFile> files, List<String> packages, List<String> services) {
 		super(name, files, packages, services);
 	}
@@ -35,8 +40,10 @@ public class Sysctl extends SystemModule {
 	@Override
 	public boolean deploy(DeploymentEnvironment env) throws DeploymentException {
 		boolean changed = super.deploy(env);
-		if (changed)
-			ProcessUtil.execute("sysctl", "-p");
+		if (changed) {
+			log.debug("reloading sysctl");
+			ProcessUtil.execute("sysctl", "--system");
+		}
 		return changed;
 	}
 }
