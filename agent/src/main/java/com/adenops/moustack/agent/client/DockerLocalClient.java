@@ -171,9 +171,6 @@ public class DockerLocalClient {
 			}
 
 		}
-		Map<String, String> logOptions = new HashMap<>();
-		logOptions.put("syslog-address", String.format("udp://%s:%s", stack.get(StackProperty.SYSLOG_HOST),
-				stack.get(StackProperty.SYSLOG_PORT)));
 
 		// compare volumes
 		if (!listsEquals(hostConfig.binds(), Volume.asStringList(container.getVolumes()))) {
