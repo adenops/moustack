@@ -40,12 +40,7 @@ public class StackConfig {
 	public String get(StackProperty variable) throws DeploymentException {
 		if (variable == null)
 			return null;
-
-		String value = properties.getProperty(variable.getName());
-		if (value == null)
-			throw new DeploymentException("cannot find property value for " + variable.getName());
-
-		return value;
+		return properties.getProperty(variable.getName());
 	}
 
 	/**

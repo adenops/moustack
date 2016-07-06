@@ -41,6 +41,7 @@ import org.slf4j.LoggerFactory;
 import com.adenops.moustack.agent.DeploymentEnvironment.OSFamily;
 import com.adenops.moustack.agent.config.AgentConfig;
 import com.adenops.moustack.agent.config.StackConfig;
+import com.adenops.moustack.agent.config.StackProperty;
 import com.adenops.moustack.agent.log4j2.MemoryAppender;
 import com.adenops.moustack.agent.model.deployment.DeploymentFile;
 import com.adenops.moustack.agent.model.docker.Volume;
@@ -87,6 +88,11 @@ public class Deployer {
 
 		// load node properties hierarchy
 		stack.setProperties(PropertiesUtil.loadHostProperties(AgentConfig.getInstance()));
+
+		// validate mandatory properties are set
+		for (StackProperty property : StackProperty.values())
+			if (stack.get(property) == null)
+				throw new DeploymentException("mandatory property " + property.getName() + " is not set");
 
 		// load deployment environment
 		env = new DeploymentEnvironment(stack, osFamily);
