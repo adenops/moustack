@@ -20,8 +20,9 @@
 package com.adenops.moustack.agent.client;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
@@ -34,10 +35,19 @@ import com.adenops.moustack.agent.util.ProcessUtil;
 public class DpkgClient extends AbstractPackagingClient {
 	private static final Logger log = LoggerFactory.getLogger(DpkgClient.class);
 
+	private static final Map<String, String> APT_ENV = new HashMap<String, String>() {
+		private static final long serialVersionUID = 1L;
+		{
+			// prevent services from being automatically started.
+			put("RUNLEVEL", "1");
+			// prevent interactive package configuration DEBIAN_FRONTEND=noninteractive
+			put("DEBIAN_FRONTEND", "noninteractive");
+		}
+	};
+
 	private void apt(String action, String... packages) throws DeploymentException {
 		String[] command = ArrayUtils.addAll(new String[] { "apt-get", action, "--assume-yes", "--quiet" }, packages);
-		// Use RUNLEVEL=1 to prevent services from being automatically started.
-		ProcessUtil.execute(null, null, Collections.singletonMap("RUNLEVEL", "1"), false, command);
+		ProcessUtil.execute(null, null, APT_ENV, false, command);
 	}
 
 	// TODO: I couldn't find a clean way (without pipe and with a proper exit code) to check that a package is not
