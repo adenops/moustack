@@ -34,6 +34,7 @@ import org.slf4j.LoggerFactory;
 
 import com.adenops.moustack.agent.DeploymentException;
 import com.adenops.moustack.agent.config.StackConfig;
+import com.adenops.moustack.agent.config.StackProperty;
 import com.adenops.moustack.agent.model.docker.Volume;
 import com.adenops.moustack.agent.module.ContainerModule;
 import com.adenops.moustack.agent.util.PathUtil;
@@ -155,11 +156,24 @@ public class DockerLocalClient {
 
 		// compare log driver
 		LogConfig logConfig = hostConfig.logConfig();
-		// right now we just check the log driver as we only support syslog or default
 		if (logConfig.logType().equals("syslog") != container.isSyslog()) {
 			log.info("container {} log driver changed", container.getName());
 			return true;
 		}
+		// compare syslog-address
+		if (container.isSyslog()) {
+			Map<String, String> logOptions = logConfig.logOptions();
+			String syslogAddress = String.format("udp://%s:%s", stack.get(StackProperty.SYSLOG_HOST),
+					stack.get(StackProperty.SYSLOG_PORT));
+			if (!syslogAddress.equals(logOptions.get("syslog-address"))) {
+				log.info("container {} syslog address changed", container.getName());
+				return true;
+			}
+
+		}
+		Map<String, String> logOptions = new HashMap<>();
+		logOptions.put("syslog-address", String.format("udp://%s:%s", stack.get(StackProperty.SYSLOG_HOST),
+				stack.get(StackProperty.SYSLOG_PORT)));
 
 		// compare volumes
 		if (!listsEquals(hostConfig.binds(), Volume.asStringList(container.getVolumes()))) {
@@ -333,7 +347,10 @@ public class DockerLocalClient {
 		// enable syslog logging driver
 		if (!ephemeral && container.isSyslog()) {
 			Map<String, String> logOptions = new HashMap<>();
-			logOptions.put("syslog-address", "udp://127.0.0.1:50014");
+			logOptions.put(
+					"syslog-address",
+					String.format("udp://%s:%s", stack.get(StackProperty.SYSLOG_HOST),
+							stack.get(StackProperty.SYSLOG_PORT)));
 			logOptions.put("syslog-tag", container.getName());
 			logOptions.put("syslog-format", "rfc3164");
 			hostConfigBuilder.logConfig(LogConfig.create("syslog", logOptions));
