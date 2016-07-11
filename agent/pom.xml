@@ -9,11 +9,15 @@
 	</parent>
 
 	<artifactId>moustack-agent</artifactId>
-	<packaging>jar</packaging>
-
-	<name>moustack agent</name>
 
 	<properties>
+		<jersey.version>2.23.1</jersey.version>
+		<jackson.version>2.8.0</jackson.version>
+		<yamlbeans.version>1.09</yamlbeans.version>
+		<docker-client.version>5.0.2</docker-client.version>
+		<mysql-driver.version>6.0.3</mysql-driver.version>
+		<mongodb-driver.version>3.2.2</mongodb-driver.version>
+
 		<main.class>com.adenops.moustack.agent.MoustackAgent</main.class>
 	</properties>
 
@@ -21,164 +25,60 @@
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-jar-plugin</artifactId>
-				<version>2.4</version>
-				<configuration>
-					<archive>
-						<manifest>
-							<addClasspath>true</addClasspath>
-							<mainClass>${main.class}</mainClass>
-						</manifest>
-					</archive>
-				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-shade-plugin</artifactId>
-				<version>2.4</version>
-				<executions>
-					<execution>
-						<phase>package</phase>
-						<goals>
-							<goal>shade</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
-					<filters>
-						<filter>
-							<artifact>*:*</artifact>
-							<excludes>
-								<exclude>META-INF/*.SF</exclude>
-								<exclude>META-INF/*.DSA</exclude>
-								<exclude>META-INF/*.RSA</exclude>
-							</excludes>
-						</filter>
-					</filters>
-					<transformers>
-						<!-- https://issues.apache.org/jira/browse/LOG4J2-673 -->
-						<transformer
-							implementation="com.github.edwgiz.mavenShadePlugin.log4j2CacheTransformer.PluginsCacheFileTransformer" />
-					</transformers>
-				</configuration>
-				<dependencies>
-					<dependency>
-						<groupId>com.github.edwgiz</groupId>
-						<artifactId>maven-shade-plugin.log4j2-cachefile-transformer</artifactId>
-						<version>2.1</version>
-					</dependency>
-				</dependencies>
 			</plugin>
 		</plugins>
 	</build>
 
 	<dependencies>
 		<dependency>
-			<groupId>${project.groupId}</groupId>
+			<groupId>com.adenops.moustack</groupId>
 			<artifactId>moustack-lib</artifactId>
-			<version>${project.version}</version>
 		</dependency>
+
+		<!-- Jersey client -->
 		<dependency>
 			<groupId>org.glassfish.jersey.core</groupId>
 			<artifactId>jersey-client</artifactId>
-			<version>2.22.2</version>
-		</dependency>
-		<dependency>
-			<groupId>org.glassfish.jersey.media</groupId>
-			<artifactId>jersey-media-json-jackson</artifactId>
-			<version>2.22.2</version>
-			<exclusions>
-				<exclusion>
-					<artifactId>jackson-jaxrs-json-provider</artifactId>
-					<groupId>com.fasterxml.jackson.jaxrs</groupId>
-				</exclusion>
-				<exclusion>
-					<artifactId>jackson-jaxrs-base</artifactId>
-					<groupId>com.fasterxml.jackson.jaxrs</groupId>
-				</exclusion>
-				<exclusion>
-					<artifactId>jackson-annotations</artifactId>
-					<groupId>com.fasterxml.jackson.core</groupId>
-				</exclusion>
-			</exclusions>
+			<version>${jersey.version}</version>
 		</dependency>
 
+		<!-- JSON -->
 		<dependency>
-			<groupId>mysql</groupId>
-			<artifactId>mysql-connector-java</artifactId>
-			<version>5.1.38</version>
-		</dependency>
-		<dependency>
-			<groupId>org.mongodb</groupId>
-			<artifactId>mongo-java-driver</artifactId>
-			<version>3.2.2</version>
-		</dependency>
-
-		<dependency>
-			<groupId>com.esotericsoftware.yamlbeans</groupId>
-			<artifactId>yamlbeans</artifactId>
-			<version>1.09</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.commons</groupId>
-			<artifactId>commons-lang3</artifactId>
-			<version>3.4</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.commons</groupId>
-			<artifactId>commons-collections4</artifactId>
-			<version>4.1</version>
-		</dependency>
-		<dependency>
-			<groupId>com.spotify</groupId>
-			<artifactId>docker-client</artifactId>
-			<version>5.0.2</version>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-core</artifactId>
+			<version>${jackson.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-annotations</artifactId>
-			<version>2.6.4</version>
-		</dependency>
-		<dependency>
-			<groupId>org.eclipse.jgit</groupId>
-			<artifactId>org.eclipse.jgit</artifactId>
-			<version>4.4.0.201605250940-rc1</version>
+			<version>${jackson.version}</version>
 		</dependency>
 
+		<!-- Yaml -->
 		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>4.12</version>
-			<scope>test</scope>
+			<groupId>com.esotericsoftware.yamlbeans</groupId>
+			<artifactId>yamlbeans</artifactId>
+			<version>${yamlbeans.version}</version>
+		</dependency>
+
+		<!-- Docker -->
+		<dependency>
+			<groupId>com.spotify</groupId>
+			<artifactId>docker-client</artifactId>
+			<version>${docker-client.version}</version>
+		</dependency>
+
+		<!-- Database drivers -->
+		<dependency>
+			<groupId>mysql</groupId>
+			<artifactId>mysql-connector-java</artifactId>
+			<version>${mysql-driver.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>com.adenops.moustack</groupId>
-			<artifactId>moustack-server</artifactId>
-			<version>1.0-SNAPSHOT</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.assertj</groupId>
-			<artifactId>assertj-core</artifactId>
-			<version>3.4.1</version>
-			<scope>test</scope>
+			<groupId>org.mongodb</groupId>
+			<artifactId>mongo-java-driver</artifactId>
+			<version>${mongodb-driver.version}</version>
 		</dependency>
 	</dependencies>
-	<repositories>
-		<repository>
-			<id>sonatype-release</id>
-			<name>Sonatype Repository</name>
-			<url>http://oss.sonatype.org/content/groups/public</url>
-			<releases>
-				<enabled>false</enabled>
-			</releases>
-			<snapshots>
-				<enabled>true</enabled>
-			</snapshots>
-		</repository>
-		<repository>
-			<id>jbonjean-github</id>
-			<url>https://github.com/jbonjean/maven-repository/raw/master</url>
-		</repository>
-	</repositories>
 </project>

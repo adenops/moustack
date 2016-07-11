@@ -32,8 +32,8 @@ import java.util.Map;
 import java.util.Properties;
 
 import com.adenops.moustack.lib.argsparser.annotation.Argument;
-import com.adenops.moustack.lib.argsparser.annotation.PositionalArgument;
 import com.adenops.moustack.lib.argsparser.annotation.Argument.Type;
+import com.adenops.moustack.lib.argsparser.annotation.PositionalArgument;
 import com.adenops.moustack.lib.argsparser.exception.ParserException;
 import com.adenops.moustack.lib.argsparser.exception.ParserInternalException;
 

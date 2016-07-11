@@ -21,6 +21,7 @@ package com.adenops.moustack.agent.module.misc;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
@@ -50,7 +51,7 @@ public class Modprobe extends SystemModule {
 		for (DeploymentFile file : files) {
 			String path = file.getSource();
 			try {
-				for (String module : FileUtils.readLines(new File(path))) {
+				for (String module : FileUtils.readLines(new File(path), Charset.defaultCharset())) {
 					log.debug("loading module {}", module);
 					ProcessUtil.execute("modprobe", module);
 				}

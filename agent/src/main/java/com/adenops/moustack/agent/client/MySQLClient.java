@@ -42,7 +42,7 @@ public class MySQLClient {
 	public MySQLClient(StackConfig stack) throws DeploymentException {
 		log.debug("initializing MySQL client");
 		try {
-			Class.forName("com.mysql.jdbc.Driver");
+			Class.forName("com.mysql.cj.jdbc.Driver");
 		} catch (ClassNotFoundException e) {
 			log.error("MySQL driver cannot be loaded");
 			throw new DeploymentException("cannot load MySQL driver");

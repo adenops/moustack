@@ -18,13 +18,14 @@
 
 	<Loggers>
 		<Logger name="com.adenops.moustack" level="${sys:log.level}">
-			<AppenderRef ref='Console'/>
+			<AppenderRef ref='Console' />
 		</Logger>
 
 		<logger name="com.zaxxer.hikari.HikariConfig" level="debug" />
 
 		<Root level="info">
-			<AppenderRef ref='AsyncLogFile'/>
+			<AppenderRef level="info" ref='AsyncLogFile' />
+			<AppenderRef level="warn" ref='Console' />
 		</Root>
 	</Loggers>
 </Configuration>

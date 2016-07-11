@@ -234,6 +234,16 @@ public class MoustackServer {
 			public String getName() {
 				return "Authentication needed";
 			}
+
+			@Override
+			protected String[] loadRoleInfo(KnownUser user) {
+				return null;
+			}
+
+			@Override
+			protected KnownUser loadUserInfo(String username) {
+				return null;
+			}
 		};
 
 		ConstraintSecurityHandler security = new ConstraintSecurityHandler();

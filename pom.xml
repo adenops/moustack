@@ -7,13 +7,87 @@
 	<version>1.0-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
-	<url>http://maven.apache.org</url>
-
 	<properties>
+		<jgit.version>4.4.0.201606070830-r</jgit.version>
+		<slf4j.version>1.7.21</slf4j.version>
+		<log4j.version>2.6.1</log4j.version>
+		<commons-lang.version>3.4</commons-lang.version>
+		<commons-collections.version>4.1</commons-collections.version>
+		<commons-io.version>2.5</commons-io.version>
+		<commons-codec.version>1.10</commons-codec.version>
+		<httpclient.version>4.4.1</httpclient.version>
+
+		<junit.version>4.12</junit.version>
+		<assertj.version>3.5.1</assertj.version>
+
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 
 	<build>
+		<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+				<filtering>true</filtering>
+			</resource>
+		</resources>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-jar-plugin</artifactId>
+					<version>2.4</version>
+					<configuration>
+						<archive>
+							<manifest>
+								<addClasspath>true</addClasspath>
+								<mainClass>${main.class}</mainClass>
+							</manifest>
+						</archive>
+					</configuration>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-shade-plugin</artifactId>
+					<version>2.4</version>
+					<executions>
+						<execution>
+							<phase>package</phase>
+							<goals>
+								<goal>shade</goal>
+							</goals>
+						</execution>
+					</executions>
+					<configuration>
+						<filters>
+							<filter>
+								<artifact>*:*</artifact>
+								<excludes>
+									<exclude>META-INF/*.SF</exclude>
+									<exclude>META-INF/*.DSA</exclude>
+									<exclude>META-INF/*.RSA</exclude>
+								</excludes>
+							</filter>
+						</filters>
+						<transformers>
+							<!-- <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+								<mainClass>com.example.YourApp</mainClass> </transformer> -->
+							<transformer
+								implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
+							<!-- https://issues.apache.org/jira/browse/LOG4J2-673 -->
+							<transformer
+								implementation="com.github.edwgiz.mavenShadePlugin.log4j2CacheTransformer.PluginsCacheFileTransformer" />
+						</transformers>
+					</configuration>
+					<dependencies>
+						<dependency>
+							<groupId>com.github.edwgiz</groupId>
+							<artifactId>maven-shade-plugin.log4j2-cachefile-transformer</artifactId>
+							<version>2.1</version>
+						</dependency>
+					</dependencies>
+				</plugin>
+			</plugins>
+		</pluginManagement>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -32,23 +106,117 @@
 					<skipTests>true</skipTests>
 				</configuration>
 			</plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>versions-maven-plugin</artifactId>
+				<version>2.2</version>
+				<executions>
+					<execution>
+						<id>display-dependency-updates</id>
+						<goals>
+							<goal>display-dependency-updates</goal>
+						</goals>
+						<phase>verify</phase>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-resources-plugin</artifactId>
+				<version>3.0.1</version>
+			</plugin>
 		</plugins>
 	</build>
 
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>com.adenops.moustack</groupId>
+				<artifactId>moustack-lib</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+
+			<!-- JGit server -->
+			<dependency>
+				<groupId>org.eclipse.jgit</groupId>
+				<artifactId>org.eclipse.jgit.http.server</artifactId>
+				<version>${jgit.version}</version>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+
 	<dependencies>
+		<!-- Logging -->
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+			<version>${slf4j.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-core</artifactId>
+			<version>${log4j.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-slf4j-impl</artifactId>
+			<version>${log4j.version}</version>
+		</dependency>
+
+		<!-- Commons libraries -->
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+			<version>${commons-lang.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-collections4</artifactId>
+			<version>${commons-collections.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>commons-io</groupId>
+			<artifactId>commons-io</artifactId>
+			<version>${commons-io.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>commons-codec</groupId>
+			<artifactId>commons-codec</artifactId>
+			<version>${commons-codec.version}</version>
+		</dependency>
+
+		<!-- Needed to fix weird classpath issue, needs to be debugged... -->
+		<dependency>
+			<artifactId>httpclient</artifactId>
+			<groupId>org.apache.httpcomponents</groupId>
+			<version>${httpclient.version}</version>
+		</dependency>
+
+		<!-- JGit client -->
+		<dependency>
+			<groupId>org.eclipse.jgit</groupId>
+			<artifactId>org.eclipse.jgit</artifactId>
+			<version>${jgit.version}</version>
+		</dependency>
+
+		<!-- Testing -->
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
-			<version>3.8.1</version>
+			<version>${junit.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.assertj</groupId>
+			<artifactId>assertj-core</artifactId>
+			<version>${assertj.version}</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
+
 	<modules>
 		<module>lib</module>
 		<module>server</module>
 		<module>agent</module>
-		<!-- <module>misc</module> -->
-		<!-- <module>boot</module> -->
 	</modules>
-	<name>moustack</name>
 </project>

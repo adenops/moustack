@@ -150,8 +150,8 @@ public class PersistenceClient {
 
 	public List<AgentStatus> getAgentsStatuses() {
 		EntityManager entityManager = entityManagerFactory.createEntityManager();
-		List<AgentStatus> results = entityManager.createQuery("from AgentStatus").setMaxResults(MAX_RESULTS)
-				.getResultList();
+		List<AgentStatus> results = entityManager.createQuery("from AgentStatus", AgentStatus.class)
+				.setMaxResults(MAX_RESULTS).getResultList();
 		entityManager.close();
 		return results;
 	}

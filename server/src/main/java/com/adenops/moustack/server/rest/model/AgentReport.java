@@ -37,6 +37,8 @@ import org.hibernate.annotations.Type;
 @Entity
 @Table(name = "report")
 public class AgentReport implements Serializable {
+	private static final long serialVersionUID = 1L;
+
 	public enum Reason {
 		UPDATE_SUCCESS, UPDATE_NOCHANGE, UPDATE_FAILURE, SYSTEM_STATUS;
 	}

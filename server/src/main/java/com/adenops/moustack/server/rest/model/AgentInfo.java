@@ -26,6 +26,7 @@ import java.util.Date;
  * Composite object to get all the information in one request
  */
 public class AgentInfo implements Serializable {
+	private static final long serialVersionUID = 1L;
 	private String hostname;
 	private boolean isConnected;
 	private AgentStatus.Status lastStatus;

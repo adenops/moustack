@@ -35,6 +35,8 @@ import org.hibernate.annotations.Type;
 @Entity
 @Table(name = "status")
 public class AgentStatus implements Serializable {
+	private static final long serialVersionUID = 1L;
+
 	public enum Status {
 		STANDBY, UPDATING, SHUTDOWN;
 	}

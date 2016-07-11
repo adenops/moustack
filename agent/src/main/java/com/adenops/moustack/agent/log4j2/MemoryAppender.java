@@ -38,7 +38,6 @@ import org.apache.logging.log4j.core.layout.PatternLayout;
 // XXX: this may be a temporary solution but it's fun
 @Plugin(name = "MemoryAppender", category = "Core", elementType = "appender", printObject = true)
 public class MemoryAppender extends AbstractAppender {
-	private static final long serialVersionUID = 1L;
 	private final ReadWriteLock rwLock = new ReentrantReadWriteLock();
 	private final Lock readLock = rwLock.readLock();
 

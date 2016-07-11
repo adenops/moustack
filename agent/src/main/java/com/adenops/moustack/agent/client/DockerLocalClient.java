@@ -21,6 +21,7 @@ package com.adenops.moustack.agent.client;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -111,7 +112,7 @@ public class DockerLocalClient {
 		for (String envFile : container.getEnvironments()) {
 			File file = new File(PathUtil.getContainerTargetFilePath(stack, container.getName(), envFile));
 			try {
-				environment.addAll(FileUtils.readLines(file));
+				environment.addAll(FileUtils.readLines(file, Charset.defaultCharset()));
 			} catch (IOException e) {
 				throw new DeploymentException("error while reading envfile " + file, e);
 			}
