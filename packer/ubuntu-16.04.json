@@ -1,0 +1,115 @@
+{
+  "variables": {
+    "disk_size": "2520",
+    "iso_url": "http://releases.ubuntu.com/16.04/ubuntu-16.04-server-amd64.iso",
+    "iso_checksum": "23e97cd5d4145d4105fbf29878534049",
+    "iso_checksum_type": "md5",
+    "hostname": "moustack-ci-ubuntu-1604",
+    "domain": "cloud.local",
+    "retry_timeout": "1m",
+    "ssh_username": "ubuntu",
+    "ssh_password": "ubuntu",
+    "output_directory": "{{ template_dir }}/output",
+    "http_proxy": "",
+    "headless": "true"
+  },
+  "builders": [
+    {
+      "type": "qemu",
+      "format": "qcow2",
+      "accelerator": "kvm",
+      "headless": "{{ user `headless` }}",
+      "disk_size": "{{ user `disk_size` }}",
+      "iso_url": "{{ user `iso_url` }}",
+      "iso_checksum": "{{ user `iso_checksum` }}",
+      "iso_checksum_type": "{{ user `iso_checksum_type` }}",
+      "http_directory": "{{ template_dir }}",
+      "disk_compression": true,
+      "output_directory": "{{ user `output_directory` }}",
+      "ssh_port": 22,
+      "ssh_username": "{{ user `ssh_username` }}",
+      "ssh_password": "{{ user `ssh_password` }}",
+      "ssh_wait_timeout": "10m",
+      "shutdown_command": "echo '{{ user `ssh_password` }}' | sudo -S shutdown -P now",
+      "machine_type": "pc",
+      "name": "qemu",
+      "net_device": "virtio-net",
+      "boot_wait": "2s",
+      "vm_name": "{{ user `hostname` }}",
+      "communicator": "ssh",
+      "qemu_binary": "qemu-system-x86_64",
+      "boot_command": [
+        "<esc><f6><esc>",
+        "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
+        "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
+        "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
+        "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
+        "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
+        "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
+        "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
+        "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
+        "<bs><bs><bs>",
+        "/install/vmlinuz initrd=/install/initrd.gz ",
+        "auto=true noprompt=true ",
+        "url=http://{{ .HTTPIP }}:{{ .HTTPPort }}/ubuntu-16.04.preseed ",
+        "hostname={{ user `hostname` }} domain={{ user `domain` }} ",
+        "--<enter>"
+      ],
+      "qemuargs": [
+        [
+          "-m",
+          "512M"
+        ],
+        [
+          "-smp",
+          "1"
+        ]
+      ]
+    }
+  ],
+  "post-processors": [],
+  "provisioners": [
+    {
+      "type": "shell",
+      "environment_vars": [
+        "DEBIAN_FRONTEND=noninteractive",
+        "RUNLEVEL=1"
+      ],
+      "execute_command": "echo '{{ user `ssh_password` }}' | {{ .Vars }} sudo -E -S sh '{{ .Path }}'",
+      "inline": [
+        "test -n \"${{ user `http_proxy` }}\" && echo 'Acquire::http::Proxy \"${{ user `http_proxy` }}\";' >/etc/apt/apt.conf.d/99proxy",
+        "apt-get update",
+        "apt-get dist-upgrade -y",
+        "apt-get clean -y",
+        "sync",
+        "reboot"
+      ]
+    },
+    {
+      "type": "shell",
+      "environment_vars": [
+        "DEBIAN_FRONTEND=noninteractive",
+        "RUNLEVEL=1"
+      ],
+      "execute_command": "echo '{{ user `ssh_password` }}' | {{ .Vars }} sudo -E -S sh '{{ .Path }}'",
+      "pause_before": "5s",
+      "inline": [
+        "echo '# disable predictable network interfaces names' >/etc/udev/rules.d/80-net-setup-link.rules",
+        "chmod a+x /etc/udev/rules.d/80-net-setup-link.rules",
+        "echo 'source /etc/network/interfaces.d/*' >/etc/network/interfaces",
+        "find /etc/network/interfaces.d -type f -delete",
+        "update-initramfs -k all -u",
+        "dpkg --get-selections | awk '/^linux-(image|headers)-.*-[0-9]/ { print $1; }' | grep -v `uname -r` | xargs apt-get purge -y",
+        "apt-get install -y default-jre-headless vim cloud-init cloud-initramfs-growroot",
+        "apt-get autoremove -y",
+        "apt-get clean -y",
+        "sed -ri 's/^(GRUB_CMDLINE_LINUX_DEFAULT=.*)\"/\\1 net.ifnames=0 biosdevname=0\"/' /etc/default/grub",
+        "update-grub",
+        "rm -f /etc/apt/apt.conf.d/99proxy",
+        "dd if=/dev/zero of=/FILL_WITH_ZEROS bs=10M",
+        "rm -vf /FILL_WITH_ZEROS",
+        "sync"
+      ]
+    }
+  ]
+}
