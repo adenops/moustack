@@ -45,7 +45,7 @@ public class ProcessUtil {
 
 	public static ExecResult execute(String user, File cwd, Map<String, String> env, boolean allowFailure,
 			String... command) throws DeploymentException {
-		log.debug("executing [" + String.join(" ", command) + "]");
+		log.debug("executing [{}]", String.join(" ", command));
 
 		ExecResult result = new ExecResult();
 		ProcessBuilder processBuilder = new ProcessBuilder(command);
@@ -75,8 +75,8 @@ public class ProcessUtil {
 			process.waitFor(EXEC_TIMEOUT, TimeUnit.SECONDS);
 		} catch (InterruptedException e) {
 			process.destroy();
-			throw new DeploymentException(String.format("command [%s] timed out or was interrupted",
-					String.join(" ", command)), e);
+			throw new DeploymentException(
+					String.format("command [%s] timed out or was interrupted", String.join(" ", command)), e);
 		}
 		result.setExitCode(process.exitValue());
 
@@ -84,7 +84,7 @@ public class ProcessUtil {
 		try {
 			IOUtils.copyLarge(process.getInputStream(), result.getStdout(), 0, MAX_CAPTURE_LENGTH);
 		} catch (IOException e) {
-			log.error("error while reading command stdout: " + e.getMessage());
+			log.error("error while reading command stdout: {}", e.getMessage());
 		}
 
 		// display stderr if relevant
@@ -97,7 +97,7 @@ public class ProcessUtil {
 					log.error(line);
 				}
 			} catch (IOException e) {
-				log.error("error while reading command stderr: " + e.getMessage());
+				log.error("error while reading command stderr: {}", e.getMessage());
 			}
 		}
 
