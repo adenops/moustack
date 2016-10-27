@@ -44,6 +44,7 @@ import com.spotify.docker.client.DockerClient;
 import com.spotify.docker.client.exceptions.ContainerNotFoundException;
 import com.spotify.docker.client.exceptions.DockerCertificateException;
 import com.spotify.docker.client.exceptions.DockerException;
+import com.spotify.docker.client.exceptions.DockerRequestException;
 import com.spotify.docker.client.exceptions.ImageNotFoundException;
 import com.spotify.docker.client.messages.ContainerConfig;
 import com.spotify.docker.client.messages.ContainerCreation;
@@ -63,6 +64,14 @@ public class DockerLocalClient {
 	private final DockerClient client;
 	private final StackConfig stack;
 
+	private void wrapDockerException(String message, DockerException e) throws DeploymentException {
+		if (e == null)
+			throw new DeploymentException(message);
+		if (e instanceof DockerRequestException)
+			throw new DeploymentException(String.format("%s: %s", message, ((DockerRequestException) e).message()));
+		throw new DeploymentException(message, e);
+	}
+
 	public DockerLocalClient(StackConfig stack) throws DeploymentException {
 		log.debug("initializing Docker client");
 
@@ -79,7 +88,7 @@ public class DockerLocalClient {
 			log.debug("images: " + info.images());
 			log.debug("containers: " + info.containersRunning());
 		} catch (DockerException e) {
-			throw new DeploymentException("could not get Docker client info", e);
+			wrapDockerException("could not get Docker client info", e);
 		} catch (InterruptedException e) {
 			interrupt(e);
 		}
@@ -127,7 +136,7 @@ public class DockerLocalClient {
 		} catch (ContainerNotFoundException e) {
 			return false;
 		} catch (DockerException e) {
-			throw new DeploymentException("error while checking if container " + container.getName() + " is running", e);
+			wrapDockerException("error while checking if container " + container.getName() + " is running", e);
 		} catch (InterruptedException e) {
 			interrupt(e);
 		}
@@ -141,7 +150,7 @@ public class DockerLocalClient {
 		} catch (ContainerNotFoundException e) {
 			return true;
 		} catch (DockerException e) {
-			throw new DeploymentException("error while checking if container " + container.getName() + " is running", e);
+			wrapDockerException("error while checking if container " + container.getName() + " is running", e);
 		} catch (InterruptedException e) {
 			interrupt(e);
 		}
@@ -222,7 +231,7 @@ public class DockerLocalClient {
 				log.info("image {} is not present, pulling...", container.getImage());
 				needPull = true;
 			} catch (DockerException e) {
-				throw new DeploymentException("error while inspecting image " + container.getImage(), e);
+				wrapDockerException("error while inspecting image " + container.getImage(), e);
 			} catch (InterruptedException e) {
 				interrupt(e);
 			}
@@ -232,7 +241,7 @@ public class DockerLocalClient {
 			try {
 				client.pull(imageFullName);
 			} catch (DockerException e) {
-				throw new DeploymentException("error while pulling image " + imageFullName, e);
+				wrapDockerException("error while pulling image " + imageFullName, e);
 			} catch (InterruptedException e) {
 				interrupt(e);
 			}
@@ -250,7 +259,7 @@ public class DockerLocalClient {
 			} catch (ContainerNotFoundException e) {
 				// ignore
 			} catch (DockerException e) {
-				throw new DeploymentException("error while checking pulled image " + imageFullName, e);
+				wrapDockerException("error while checking pulled image " + imageFullName, e);
 			} catch (InterruptedException e) {
 				interrupt(e);
 			}
@@ -265,7 +274,7 @@ public class DockerLocalClient {
 		} catch (ContainerNotFoundException e) {
 			// ignore
 		} catch (DockerException e) {
-			throw new DeploymentException("error while stopping container " + container.getName(), e);
+			wrapDockerException("error while stopping container " + container.getName(), e);
 		} catch (InterruptedException e) {
 			interrupt(e);
 		}
@@ -275,7 +284,7 @@ public class DockerLocalClient {
 		} catch (ContainerNotFoundException e) {
 			// ignore
 		} catch (DockerException e) {
-			throw new DeploymentException("error while removing container " + container.getName(), e);
+			wrapDockerException("error while removing container " + container.getName(), e);
 		} catch (InterruptedException e) {
 			interrupt(e);
 		}
@@ -318,7 +327,7 @@ public class DockerLocalClient {
 			throw new DeploymentException("ephemeral container " + name + " execution returned " + code
 					+ " for command " + String.join(" ", suCommand));
 		} catch (DockerException e) {
-			throw new DeploymentException("error while waiting for container " + name, e);
+			wrapDockerException("error while waiting for container " + name, e);
 		} catch (InterruptedException e) {
 			interrupt(e);
 		}
@@ -345,10 +354,8 @@ public class DockerLocalClient {
 		// enable syslog logging driver
 		if (!ephemeral && container.isSyslog()) {
 			Map<String, String> logOptions = new HashMap<>();
-			logOptions.put(
-					"syslog-address",
-					String.format("udp://%s:%s", stack.get(StackProperty.SYSLOG_HOST),
-							stack.get(StackProperty.SYSLOG_PORT)));
+			logOptions.put("syslog-address", String.format("udp://%s:%s", stack.get(StackProperty.SYSLOG_HOST),
+					stack.get(StackProperty.SYSLOG_PORT)));
 			logOptions.put("syslog-tag", container.getName());
 			logOptions.put("syslog-format", "rfc3164");
 			hostConfigBuilder.logConfig(LogConfig.create("syslog", logOptions));
@@ -380,7 +387,7 @@ public class DockerLocalClient {
 			ContainerCreation creation = client.createContainer(containerConfigBuilder.build(), container.getName());
 			containerId = creation.id();
 		} catch (DockerException e) {
-			throw new DeploymentException("could not create container " + container.getName(), e);
+			wrapDockerException("could not create container " + container.getName(), e);
 		} catch (InterruptedException e) {
 			interrupt(e);
 		}
@@ -388,7 +395,7 @@ public class DockerLocalClient {
 		try {
 			client.startContainer(containerId);
 		} catch (DockerException e) {
-			throw new DeploymentException("could not start container " + container.getName(), e);
+			wrapDockerException("could not start container " + container.getName(), e);
 		} catch (InterruptedException e) {
 			interrupt(e);
 		}
@@ -405,7 +412,7 @@ public class DockerLocalClient {
 		} catch (ContainerNotFoundException e) {
 			return "container " + container.getName() + " not found\n";
 		} catch (DockerException e) {
-			throw new DeploymentException("error while inspecting container " + container.getName(), e);
+			wrapDockerException("error while inspecting container " + container.getName(), e);
 		} catch (InterruptedException e) {
 			interrupt(e);
 		}

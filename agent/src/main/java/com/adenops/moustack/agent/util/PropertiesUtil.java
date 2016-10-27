@@ -55,7 +55,11 @@ public class PropertiesUtil {
 		// even if it's the most specific config we need to load it first to get the role so we store it in a different
 		// map, that we will merge later
 		Properties hostConfig = new Properties();
-		loadPropertiesFile(hostConfig, PathUtil.getNodePropertiesPath(agentConfig));
+		try {
+			loadPropertiesFile(hostConfig, PathUtil.getNodePropertiesPath(agentConfig));
+		} catch (DeploymentException e) {
+			throw new DeploymentException("unknown host: " + agentConfig.getId(), e);
+		}
 
 		// load profile properties
 		loadPropertiesFile(variables, PathUtil.getProfilePropertiesPath(agentConfig));

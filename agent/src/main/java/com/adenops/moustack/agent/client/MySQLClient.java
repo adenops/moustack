@@ -97,7 +97,6 @@ public class MySQLClient {
 		}
 	}
 
-	@SuppressWarnings("resource")
 	private boolean checkDBExist(Connection connection, String name) throws DeploymentException {
 		ResultSet resultSet = null;
 		try {
