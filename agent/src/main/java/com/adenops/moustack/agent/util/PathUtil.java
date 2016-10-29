@@ -57,10 +57,11 @@ public class PathUtil {
 		return sb.toString();
 	}
 
-	public static String getModuleConfigPath(AgentConfig agentConfig, String module) {
+	public static String getModuleConfigPath(AgentConfig agentConfig, String module, String name) {
 		StringBuffer sb = new StringBuffer(getModulePath(agentConfig, module));
 		sb.append(File.separator);
-		sb.append("module.yaml");
+		sb.append(name);
+		sb.append(".yaml");
 		return sb.toString();
 	}
 

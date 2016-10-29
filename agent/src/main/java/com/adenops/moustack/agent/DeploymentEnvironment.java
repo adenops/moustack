@@ -47,7 +47,10 @@ public class DeploymentEnvironment {
 		DEBIAN, REDHAT;
 	}
 
+	// OS information
 	private final OSFamily osFamily;
+	private final String osId;
+	private final String osVersion;
 
 	// stack configuration
 	private final StackConfig stack;
@@ -61,9 +64,12 @@ public class DeploymentEnvironment {
 	private MySQLClient mySQLClient;
 	private ValidationClient validationClient;
 
-	public DeploymentEnvironment(StackConfig stack, OSFamily osFamily) throws DeploymentException {
+	public DeploymentEnvironment(StackConfig stack, OSFamily osFamily, String osId, String osVersion)
+			throws DeploymentException {
 		this.stack = stack;
 		this.osFamily = osFamily;
+		this.osId = osId;
+		this.osVersion = osVersion;
 		switch (osFamily) {
 		case DEBIAN:
 			packagingClient = new DpkgClient();
@@ -152,5 +158,13 @@ public class DeploymentEnvironment {
 
 	public OSFamily getOsFamily() {
 		return osFamily;
+	}
+
+	public String getOsId() {
+		return osId;
+	}
+
+	public String getOsVersion() {
+		return osVersion;
 	}
 }

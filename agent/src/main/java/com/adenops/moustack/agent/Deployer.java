@@ -20,7 +20,10 @@
 package com.adenops.moustack.agent;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FilenameFilter;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
@@ -31,6 +34,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -73,7 +77,7 @@ public class Deployer {
 	private final DeploymentEnvironment env;
 
 	public Deployer(StackConfig stack) throws DeploymentException {
-		// detect the OS (for the packaging)
+		// detect OS information
 		DeploymentEnvironment.OSFamily osFamily = null;
 		if (new File("/etc/debian_version").exists())
 			osFamily = OSFamily.DEBIAN;
@@ -81,7 +85,31 @@ public class Deployer {
 			osFamily = OSFamily.REDHAT;
 		else
 			throw new DeploymentException("could no detect OS family");
-		log.info("detected OS family: {}", osFamily.name().toLowerCase());
+
+		String osId = null;
+		String osVersion = null;
+
+		try (InputStream is = new FileInputStream(new File("/etc/os-release"))) {
+			Properties osRelease = new Properties();
+			osRelease.load(is);
+
+			// retrieve OS information we may need
+			osId = osRelease.getProperty("ID");
+			osVersion = osRelease.getProperty("VERSION_ID");
+
+			// sanitize
+			if (osId != null)
+				osId = osId.replaceAll("\"", "");
+			if (osVersion != null)
+				osVersion = osVersion.replaceAll("\"", "");
+
+		} catch (IOException e) {
+			log.warn("unknown OS, could not parse /etc/os-release found");
+		}
+
+		log.info("OS family: {}", osFamily.name().toLowerCase());
+		log.info("OS id: {}", osId != null ? osId : "unknown");
+		log.info("OS version: {}", osVersion != null ? osVersion : "unknown");
 
 		// synchronize git repo locally
 		GitUtil.synchronizeConfiguration(stack);
@@ -95,7 +123,7 @@ public class Deployer {
 				throw new DeploymentException("mandatory property " + property.getName() + " is not set");
 
 		// load deployment environment
-		env = new DeploymentEnvironment(stack, osFamily);
+		env = new DeploymentEnvironment(stack, osFamily, osId, osVersion);
 
 		// load the global modules list
 		Map<String, BaseModule> modules = loadModules();
@@ -111,8 +139,8 @@ public class Deployer {
 		for (String role : env.getStack().getRoles()) {
 			log.debug("loading deployment plan for role [{}]", role);
 
-			Map<Object, Object> planConfig = YamlUtil.loadYaml(PathUtil.getRoleModulesConfigPath(
-					AgentConfig.getInstance(), role));
+			Map<Object, Object> planConfig = YamlUtil
+					.loadYaml(PathUtil.getRoleModulesConfigPath(AgentConfig.getInstance(), role));
 
 			List<String> planModules = YamlUtil.getList(planConfig.get("modules"));
 
@@ -120,8 +148,8 @@ public class Deployer {
 				log.debug("adding module [{}] to the role [{}] deployment plan", moduleName, role);
 				BaseModule module = modules.get(moduleName);
 				if (module == null)
-					throw new DeploymentException("module " + moduleName + " not defined but declared by the role "
-							+ role);
+					throw new DeploymentException(
+							"module " + moduleName + " not defined but declared by the role " + role);
 				plan.add(module);
 			}
 
@@ -183,8 +211,8 @@ public class Deployer {
 			Class<SystemModule> registeredClass = (Class<SystemModule>) ModuleRegistry.getRegistered(register);
 
 			try {
-				module = registeredClass.getConstructor(String.class, List.class, List.class, List.class).newInstance(
-						name, files, modulePackages, moduleServices);
+				module = registeredClass.getConstructor(String.class, List.class, List.class, List.class)
+						.newInstance(name, files, modulePackages, moduleServices);
 			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
 					| InvocationTargetException | NoSuchMethodException | SecurityException e) {
 				throw new DeploymentException("cannot register module " + name, e);
@@ -265,7 +293,8 @@ public class Deployer {
 			try {
 				module = registeredClass.getConstructor(String.class, String.class, String.class, List.class,
 						List.class, List.class, List.class, boolean.class, List.class, boolean.class).newInstance(name,
-						image, imageTag, files, environments, volumes, capabilities, privileged, devices, syslog);
+								image, imageTag, files, environments, volumes, capabilities, privileged, devices,
+								syslog);
 			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
 					| InvocationTargetException | NoSuchMethodException | SecurityException e) {
 				throw new DeploymentException("cannot register module " + name, e);
@@ -277,8 +306,26 @@ public class Deployer {
 	}
 
 	private BaseModule loadModule(String module) throws DeploymentException {
-		Map<Object, Object> moduleConfig = YamlUtil.loadYaml(PathUtil.getModuleConfigPath(AgentConfig.getInstance(),
-				module));
+		Map<Object, Object> moduleConfig = null;
+
+		String fileName = null;
+
+		// first try MODULE-OS_ID-OS_VERSION
+		fileName = String.format("module-%s-%s", env.getOsId(), env.getOsVersion());
+		try {
+			moduleConfig = YamlUtil.loadYaml(PathUtil.getModuleConfigPath(AgentConfig.getInstance(), module, fileName));
+		} catch (Exception e) {
+			log.trace("module file {} not found", fileName);
+		}
+		// second try MODULE-OS_ID
+		fileName = String.format("module-%s", module, env.getOsId());
+		try {
+			moduleConfig = YamlUtil.loadYaml(PathUtil.getModuleConfigPath(AgentConfig.getInstance(), module, fileName));
+		} catch (Exception e) {
+			log.trace("module file {} not found", fileName);
+		}
+		// last try MODULE only
+		moduleConfig = YamlUtil.loadYaml(PathUtil.getModuleConfigPath(AgentConfig.getInstance(), module, "module"));
 
 		String type = (String) moduleConfig.get("type");
 		String name = (String) moduleConfig.get("name");
