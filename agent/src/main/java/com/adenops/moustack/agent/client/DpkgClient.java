@@ -61,9 +61,8 @@ public class DpkgClient extends AbstractPackagingClient {
 
 		for (String pkg : pkgs) {
 			// split before = to exclude possible version
-			pkg = pkg.split("=")[0];
-
-			ExecResult execResult = ProcessUtil.execute(null, null, null, true, "dpkg", "-s", pkg);
+			String pkgName = pkg.split("=")[0];
+			ExecResult execResult = ProcessUtil.execute(null, null, null, true, "dpkg", "-s", pkgName);
 
 			// if the package is installed and we filter packages installed, add it to the results
 			if (execResult.getExitCode() == 0 && filterInstalled)
