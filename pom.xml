@@ -10,7 +10,7 @@
 	<properties>
 		<jgit.version>4.4.0.201606070830-r</jgit.version>
 		<slf4j.version>1.7.21</slf4j.version>
-		<log4j.version>2.6.1</log4j.version>
+		<log4j.version>2.7</log4j.version>
 		<commons-lang.version>3.4</commons-lang.version>
 		<commons-collections.version>4.1</commons-collections.version>
 		<commons-io.version>2.5</commons-io.version>

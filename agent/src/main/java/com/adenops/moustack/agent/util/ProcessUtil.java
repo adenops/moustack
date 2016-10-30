@@ -27,7 +27,6 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -94,7 +93,7 @@ public class ProcessUtil {
 			BufferedReader stderr = new BufferedReader(new InputStreamReader(process.getErrorStream()));
 			String line = null;
 			try {
-				while (!StringUtils.isBlank(line = stderr.readLine()))
+				while ((line = stderr.readLine()) != null)
 					log.error(line);
 			} catch (IOException e) {
 				log.error("error while reading command stderr: {}", e.getMessage());
