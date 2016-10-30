@@ -61,7 +61,7 @@
       "execute_command": "echo '{{ user `ssh_password` }}' | {{ .Vars }} sudo -E -S sh '{{ .Path }}'",
       "inline": [
         "set -ex",
-        "test -n \"${{ user `http_proxy` }}\" && echo 'proxy={{ user `http_proxy` }}' >>/etc/yum.conf",
+        "test -n \"{{ user `http_proxy` }}\" && echo 'proxy={{ user `http_proxy` }}' >>/etc/yum.conf",
         "yum install -y deltarpm",
         "yum update -y",
         "sync",
