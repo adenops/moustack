@@ -1,0 +1,91 @@
+{
+  "variables": {
+    "disk_size": "3000",
+    "iso_url": "http://centos.mirror.iweb.ca/7/isos/x86_64/CentOS-7-x86_64-Minimal-1511.iso",
+    "iso_checksum": "88c0437f0a14c6e2c94426df9d43cd67",
+    "iso_checksum_type": "md5",
+    "hostname": "moustack-ci-centos-7",
+    "domain": "cloud.local",
+    "retry_timeout": "1m",
+    "ssh_username": "centos",
+    "ssh_password": "centos",
+    "output_directory": "{{ template_dir }}/output",
+    "http_proxy": "",
+    "headless": "true"
+  },
+  "builders": [
+    {
+      "type": "qemu",
+      "format": "qcow2",
+      "accelerator": "kvm",
+      "headless": "{{ user `headless` }}",
+      "disk_size": "{{ user `disk_size` }}",
+      "iso_url": "{{ user `iso_url` }}",
+      "iso_checksum": "{{ user `iso_checksum` }}",
+      "iso_checksum_type": "{{ user `iso_checksum_type` }}",
+      "http_directory": "{{ template_dir }}",
+      "disk_compression": true,
+      "output_directory": "{{ user `output_directory` }}",
+      "ssh_port": 22,
+      "ssh_username": "{{ user `ssh_username` }}",
+      "ssh_password": "{{ user `ssh_password` }}",
+      "ssh_wait_timeout": "10m",
+      "shutdown_command": "echo '{{ user `ssh_password` }}' | sudo -S shutdown -P now",
+      "machine_type": "pc",
+      "name": "qemu",
+      "net_device": "virtio-net",
+      "boot_wait": "2s",
+      "vm_name": "{{ user `hostname` }}",
+      "communicator": "ssh",
+      "qemu_binary": "qemu-system-x86_64",
+      "boot_command": [
+        "<tab> ",
+        "text ks=http://{{ .HTTPIP }}:{{ .HTTPPort }}/centos-7.ks<enter><wait>"
+      ],
+      "qemuargs": [
+        [
+          "-m",
+          "1024M"
+        ],
+        [
+          "-smp",
+          "1"
+        ]
+      ]
+    }
+  ],
+  "post-processors": [],
+  "provisioners": [
+    {
+      "type": "shell",
+      "execute_command": "echo '{{ user `ssh_password` }}' | {{ .Vars }} sudo -E -S sh '{{ .Path }}'",
+      "inline": [
+        "test -n \"${{ user `http_proxy` }}\" && echo 'proxy={{ user `http_proxy` }}' >>/etc/yum.conf",
+        "yum install -y deltarpm",
+        "yum update -y",
+        "sync",
+        "reboot"
+      ]
+    },
+    {
+      "type": "shell",
+      "execute_command": "echo '{{ user `ssh_password` }}' | {{ .Vars }} sudo -E -S sh '{{ .Path }}'",
+      "pause_before": "5s",
+      "inline": [
+        "echo '# disable predictable network interfaces names' >/etc/udev/rules.d/80-net-setup-link.rules",
+        "chmod a+x /etc/udev/rules.d/80-net-setup-link.rules",
+        "yum install -y yum-utils java-1.8.0-openjdk-headless cloud-init cloud-utils-growpart",
+        "systemctl disable cloud-init",
+        "package-cleanup -y --oldkernels --count=1",
+        "dracut -f",
+        "sed -ri 's/^GRUB_TIMEOUT=.*/GRUB_TIMEOUT=0/; s/^GRUB_CMDLINE_LINUX=.*/GRUB_CMDLINE_LINUX=\"crashkernel=auto rhgb net.ifnames=0 biosdevname=0\"/' /etc/default/grub",
+        "grub2-mkconfig -o /boot/grub2/grub.cfg",
+        "yum clean all",
+        "sed -ri '/^proxy=/d' /etc/yum.conf",
+        "dd if=/dev/zero of=/FILL_WITH_ZEROS bs=10M",
+        "rm -vf /FILL_WITH_ZEROS",
+        "sync"
+      ]
+    }
+  ]
+}

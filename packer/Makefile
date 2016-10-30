@@ -5,11 +5,14 @@ PACKER_PARAMS    ?=
 all: usage
 
 usage:
-	@echo "make [usage|build|build-ubuntu-1604]"
+	@echo "make [usage|build|build-ubuntu-1604|build-centos-7]"
 
-build: build-ubuntu-1604
+build: build-ubuntu-1604 build-centos-7
 
 build-ubuntu-1604:
 	packer build $(PACKER_PARAMS) ubuntu-16.04.json
 
-.PHONY: all usage build build-ubuntu-1604 clean
+build-centos-7:
+	packer build $(PACKER_PARAMS) centos-7.json
+
+.PHONY: all usage build build-ubuntu-1604 build-centos-7 clean
