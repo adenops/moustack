@@ -26,7 +26,6 @@ import java.util.Properties;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
-import javax.persistence.Query;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,16 +47,19 @@ public class PersistenceClient {
 	private static final PersistenceClient instance = new PersistenceClient();
 
 	private PersistenceClient() {
+		log.info("using database backend: {}", ServerConfig.getInstance().getDbType());
 		try {
+			// load the default properties
 			Properties persistenceProperties = new Properties();
-			persistenceProperties.load(PersistenceClient.class.getResourceAsStream("/database.properties"));
-			String jdbUrl = String.format(persistenceProperties.getProperty("hibernate.connection.url"), ServerConfig
-					.getInstance().getDbHost(), ServerConfig.getInstance().getDbName());
+			persistenceProperties.load(PersistenceClient.class.getResourceAsStream(
+					String.format("/database-%s.properties", ServerConfig.getInstance().getDbType())));
+			String jdbUrl = String.format(persistenceProperties.getProperty("hibernate.connection.url"),
+					ServerConfig.getInstance().getDbHost(), ServerConfig.getInstance().getDbName());
 			persistenceProperties.put("hibernate.connection.url", jdbUrl);
 			persistenceProperties.put("hibernate.connection.username", ServerConfig.getInstance().getDbUser());
 			persistenceProperties.put("hibernate.connection.password", ServerConfig.getInstance().getDbPassword());
-			entityManagerFactory = Persistence
-					.createEntityManagerFactory("com.adenops.moustack", persistenceProperties);
+			entityManagerFactory = Persistence.createEntityManagerFactory("com.adenops.moustack",
+					persistenceProperties);
 		} catch (Throwable e) {
 			// TODO: exceptions seem to be hidden here (because of the static instantiation?
 			throw new RuntimeException("error while connection to the database", e);
@@ -88,29 +90,40 @@ public class PersistenceClient {
 		entityManager.close();
 	}
 
-	// TODO: this is not efficient, but should be enough for some time
-	// XXX 1: native query because of the limit in the subquery
-	// XXX 2: sub-sub query because of MySQL limitations
-	// (http://dev.mysql.com/doc/refman/5.0/en/subquery-restrictions.html)
-	public void purgeReports(String hostname) {
+	// TODO: this should be done in a separate scheduled thread.
+	public synchronized void purgeReports(String hostname) {
 		EntityManager entityManager = entityManagerFactory.createEntityManager();
+
+		// check if we need to cleanup.
+		long count = entityManager
+				.createQuery("SELECT count(*) FROM AgentReport AS r WHERE r.hostname = :hostname", Long.class)
+				.setParameter("hostname", hostname).getSingleResult();
+		// if we don't have to delete old reports, stop here.
+		// an offset is used to avoid cleaning reports every times.
+		if (count <= MAX_AGENT_REPORTS + 5)
+			return;
+
+		// remove old reports.
 		entityManager.getTransaction().begin();
-		Query query = entityManager
-				.createNativeQuery("delete from report where id not in (select * from (select id from report where hostname = :hostname order by date desc limit :max) as t)");
-		int deletedCount = query.setParameter("hostname", hostname).setParameter("max", MAX_AGENT_REPORTS)
-				.executeUpdate();
-		if (deletedCount > 0)
-			log.debug("deleted " + deletedCount + " old reports");
+		// XXX 1: native query because of the limit in the subquery
+		// XXX 2: sub-sub query because of MySQL limitations
+		// (http://dev.mysql.com/doc/refman/5.0/en/subquery-restrictions.html)
+		int deletedCount = entityManager
+				.createNativeQuery(
+						"DELETE FROM report WHERE id NOT IN (SELECT * FROM (SELECT id FROM report WHERE hostname = :hostname ORDER BY date DESC LIMIT :max) AS t)")
+				.setParameter("hostname", hostname).setParameter("max", MAX_AGENT_REPORTS).executeUpdate();
 		entityManager.getTransaction().commit();
 		entityManager.close();
+		log.debug("deleted " + deletedCount + " old reports");
 	}
 
 	public AgentReport getLastReport(String hostname) {
 		EntityManager entityManager = entityManagerFactory.createEntityManager();
 
 		List<AgentReport> reports = entityManager
-				.createQuery("from AgentReport as r where r.hostname = :hostname order by r.date desc",
-						AgentReport.class).setParameter("hostname", hostname).setMaxResults(1).getResultList();
+				.createQuery("FROM AgentReport AS r WHERE r.hostname = :hostname ORDER BY r.date DESC",
+						AgentReport.class)
+				.setParameter("hostname", hostname).setMaxResults(1).getResultList();
 
 		entityManager.close();
 
@@ -133,8 +146,9 @@ public class PersistenceClient {
 		// custom request to prevent content from being included
 		// TODO: content should be on a different table
 		List<AgentReport> reports = entityManager
-				.createQuery("select new AgentReport(r.id,r.hostname,r.date,r.reason) from AgentReport r",
-						AgentReport.class).setMaxResults(MAX_RESULTS).getResultList();
+				.createQuery("SELECT new AgentReport(r.id,r.hostname,r.date,r.reason) FROM AgentReport r",
+						AgentReport.class)
+				.setMaxResults(MAX_RESULTS).getResultList();
 
 		entityManager.close();
 

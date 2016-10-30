@@ -29,6 +29,7 @@ public class ServerConfig {
 	private String user;
 	private String password;
 	private String repoUri;
+	private String dbType;
 	private String dbHost;
 	private String dbName;
 	private String dbUser;
@@ -62,22 +63,27 @@ public class ServerConfig {
 		this.repoUri = repoUri;
 	}
 
-	@Argument(property = "database.host", defaultvalue = "localhost")
+	@Argument(property = "database.type", defaultvalue = "hsql", description = "Database type, mysql or hsql")
+	public void setDbType(String dbType) {
+		this.dbType = dbType;
+	}
+
+	@Argument(property = "database.host", defaultvalue = "127.0.0.1", description = "Database port")
 	public void setDbHost(String dbHost) {
 		this.dbHost = dbHost;
 	}
 
-	@Argument(property = "database.name", defaultvalue = "moustack")
+	@Argument(property = "database.name", defaultvalue = "moustack", description = "Database name")
 	public void setDbName(String dbName) {
 		this.dbName = dbName;
 	}
 
-	@Argument(property = "database.user", defaultvalue = "root")
+	@Argument(property = "database.user", defaultvalue = "root", description = "Database user")
 	public void setDbUser(String dbUser) {
 		this.dbUser = dbUser;
 	}
 
-	@Argument(property = "database.password", defaultvalue = "")
+	@Argument(property = "database.password", defaultvalue = "", description = "Database password")
 	public void setDbPassword(String dbPassword) {
 		this.dbPassword = dbPassword;
 	}
@@ -117,6 +123,10 @@ public class ServerConfig {
 
 	public String getRepoUri() {
 		return repoUri;
+	}
+
+	public String getDbType() {
+		return dbType;
 	}
 
 	public String getDbHost() {
