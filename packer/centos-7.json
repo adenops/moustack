@@ -25,7 +25,7 @@
       "iso_checksum_type": "{{ user `iso_checksum_type` }}",
       "http_directory": "{{ template_dir }}",
       "disk_compression": true,
-      "output_directory": "{{ user `output_directory` }}",
+      "output_directory": "{{ user `output_directory` }}/centos-7",
       "ssh_port": 22,
       "ssh_username": "{{ user `ssh_username` }}",
       "ssh_password": "{{ user `ssh_password` }}",
