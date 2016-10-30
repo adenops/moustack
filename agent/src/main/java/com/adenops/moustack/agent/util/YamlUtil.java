@@ -26,7 +26,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import com.adenops.moustack.agent.DeploymentException;
+import org.apache.commons.io.IOUtils;
+
 import com.esotericsoftware.yamlbeans.YamlException;
 import com.esotericsoftware.yamlbeans.YamlReader;
 
@@ -39,24 +40,19 @@ public class YamlUtil {
 		return (List<String>) obj;
 	}
 
-	public static Map<Object, Object> loadYaml(String path) throws DeploymentException {
-		YamlReader reader = null;
+	@SuppressWarnings("unchecked")
+	public static Map<Object, Object> loadYaml(String path) throws FileNotFoundException, YamlException {
+		FileReader fileReader = null;
+		YamlReader yamlReader = null;
 		try {
-			reader = new YamlReader(new FileReader(path));
-			@SuppressWarnings("unchecked")
-			Map<Object, Object> map = (Map<Object, Object>) reader.read();
-			if (map == null)
-				throw new DeploymentException("invalid yaml data from " + path);
-
-			return map;
-		} catch (FileNotFoundException e) {
-			throw new DeploymentException("cannot load yaml file " + path, e);
-		} catch (YamlException e) {
-			throw new DeploymentException("error while parsing module definition from " + path, e);
+			fileReader = new FileReader(path);
+			yamlReader = new YamlReader(fileReader);
+			return (Map<Object, Object>) yamlReader.read();
 		} finally {
-			if (reader != null) {
+			IOUtils.closeQuietly(fileReader);
+			if (yamlReader != null) {
 				try {
-					reader.close();
+					yamlReader.close();
 				} catch (IOException e) {
 					// ignored
 				}

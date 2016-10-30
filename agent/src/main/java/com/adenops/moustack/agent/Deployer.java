@@ -21,6 +21,7 @@ package com.adenops.moustack.agent;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -58,6 +59,7 @@ import com.adenops.moustack.agent.util.PathUtil;
 import com.adenops.moustack.agent.util.ProcessUtil;
 import com.adenops.moustack.agent.util.PropertiesUtil;
 import com.adenops.moustack.agent.util.YamlUtil;
+import com.esotericsoftware.yamlbeans.YamlException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -139,8 +141,14 @@ public class Deployer {
 		for (String role : env.getStack().getRoles()) {
 			log.debug("loading deployment plan for role [{}]", role);
 
-			Map<Object, Object> planConfig = YamlUtil
-					.loadYaml(PathUtil.getRoleModulesConfigPath(AgentConfig.getInstance(), role));
+			Map<Object, Object> planConfig = null;
+			try {
+				planConfig = YamlUtil.loadYaml(PathUtil.getRoleModulesConfigPath(AgentConfig.getInstance(), role));
+			} catch (FileNotFoundException e) {
+				throw new DeploymentException("cannot load deployment plan for role " + role, e);
+			} catch (YamlException e) {
+				throw new DeploymentException("error while parsing deployment plan for role " + role, e);
+			}
 
 			List<String> planModules = YamlUtil.getList(planConfig.get("modules"));
 
@@ -305,27 +313,35 @@ public class Deployer {
 		return module;
 	}
 
+	private Map<Object, Object> tryLoadModule(String module, String fileName) throws DeploymentException {
+		String path = PathUtil.getModuleConfigPath(AgentConfig.getInstance(), module, fileName);
+		try {
+			return YamlUtil.loadYaml(path);
+		} catch (FileNotFoundException e) {
+			log.trace("cannot load module file {} for module {}", fileName, module);
+		} catch (YamlException e) {
+			throw new DeploymentException("error while parsing module definition from " + path, e);
+		}
+		return null;
+	}
+
 	private BaseModule loadModule(String module) throws DeploymentException {
 		Map<Object, Object> moduleConfig = null;
 
-		String fileName = null;
+		if (!StringUtils.isBlank(env.getOsId()) && !StringUtils.isBlank(env.getOsVersion()))
+			// first try module-OS_ID-OS_VERSION
+			moduleConfig = tryLoadModule(module, String.format("module-%s-%s", env.getOsId(), env.getOsVersion()));
 
-		// first try MODULE-OS_ID-OS_VERSION
-		fileName = String.format("module-%s-%s", env.getOsId(), env.getOsVersion());
-		try {
-			moduleConfig = YamlUtil.loadYaml(PathUtil.getModuleConfigPath(AgentConfig.getInstance(), module, fileName));
-		} catch (Exception e) {
-			log.trace("module file {} not found", fileName);
-		}
-		// second try MODULE-OS_ID
-		fileName = String.format("module-%s", module, env.getOsId());
-		try {
-			moduleConfig = YamlUtil.loadYaml(PathUtil.getModuleConfigPath(AgentConfig.getInstance(), module, fileName));
-		} catch (Exception e) {
-			log.trace("module file {} not found", fileName);
-		}
-		// last try MODULE only
-		moduleConfig = YamlUtil.loadYaml(PathUtil.getModuleConfigPath(AgentConfig.getInstance(), module, "module"));
+		if (moduleConfig == null && !StringUtils.isBlank(env.getOsId()))
+			// second try module-OS_ID
+			moduleConfig = tryLoadModule(module, String.format("module-%s", env.getOsId()));
+
+		if (moduleConfig == null)
+			// last try module
+			moduleConfig = tryLoadModule(module, "module");
+
+		if (moduleConfig == null)
+			throw new DeploymentException("could not load module definition for " + module);
 
 		String type = (String) moduleConfig.get("type");
 		String name = (String) moduleConfig.get("name");
