@@ -130,8 +130,8 @@ public class MoustackServer {
 		GitServlet gs = new GitServlet();
 		gs.setRepositoryResolver(new RepositoryResolver<HttpServletRequest>() {
 			@Override
-			public Repository open(HttpServletRequest req, String name) throws RepositoryNotFoundException,
-					ServiceNotEnabledException {
+			public Repository open(HttpServletRequest req, String name)
+					throws RepositoryNotFoundException, ServiceNotEnabledException {
 
 				if (!name.equals(REPOSITORY_NAME))
 					throw new RepositoryNotFoundException(name);

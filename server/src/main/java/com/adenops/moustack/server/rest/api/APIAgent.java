@@ -132,7 +132,8 @@ public class APIAgent extends APIBase {
 
 	@GET
 	@Path("/{hostname}")
-	public AgentInfo getAgent(@PathParam("hostname") @NotNull(message = "you must specify a hostname") String hostname) {
+	public AgentInfo getAgent(
+			@PathParam("hostname") @NotNull(message = "you must specify a hostname") String hostname) {
 		AgentInfo info = null;
 
 		AgentReport lastReport = PersistenceClient.getInstance().getLastReport(hostname);
