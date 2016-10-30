@@ -20,3 +20,7 @@ rebel.xml
 # make
 .cache/
 .local.mk
+
+# packer
+/packer/output
+/packer/packer_cache
