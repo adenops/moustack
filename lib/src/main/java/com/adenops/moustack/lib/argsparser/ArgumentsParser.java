@@ -582,11 +582,11 @@ public class ArgumentsParser {
 		case GENERIC:
 			validateClass(argument.clazz());
 			if (isNull(argument.shortarg()) && isNull(argument.shortarg()) && isNull(argument.property()))
-				throw new ParserInternalException("argument of type " + argument.type()
-						+ " must have shortarg, longarg or property defined");
+				throw new ParserInternalException(
+						"argument of type " + argument.type() + " must have shortarg, longarg or property defined");
 			if (!isNull(argument.defaultvalue()) && argument.mandatory())
-				throw new ParserInternalException("argument of type " + argument.type()
-						+ " cannot have a default value and be mandatory");
+				throw new ParserInternalException(
+						"argument of type " + argument.type() + " cannot have a default value and be mandatory");
 			break;
 		case CONFIGURATION:
 			if (isNull(argument.shortarg()) && isNull(argument.shortarg()))
@@ -598,8 +598,8 @@ public class ArgumentsParser {
 		case HELP:
 		case VERSION:
 			if (!isNull(argument.defaultvalue()))
-				throw new ParserInternalException("argument of type " + argument.type()
-						+ " should not have a default value");
+				throw new ParserInternalException(
+						"argument of type " + argument.type() + " should not have a default value");
 			if (argument.mandatory())
 				throw new ParserInternalException("argument of type " + argument.type() + " should not be required");
 			break;
