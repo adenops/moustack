@@ -122,8 +122,8 @@ public class MoustackAgent {
 
 		// TODO: convert to regex in argparser
 		if (!validString(AgentConfig.getInstance().getServer())
-				|| !(AgentConfig.getInstance().getServer().startsWith("http://") || AgentConfig.getInstance()
-						.getServer().startsWith("https://")))
+				|| !(AgentConfig.getInstance().getServer().startsWith("http://")
+						|| AgentConfig.getInstance().getServer().startsWith("https://")))
 			error("need a valid server url");
 
 		MoustackClient.getInstance().postStatus(AgentStatus.StatusEnum.STANDBY);

@@ -86,8 +86,8 @@ public abstract class AbstractRestClient {
 		}
 
 		// add our Jackson customizations
-		JacksonJsonProvider jacksonJsonProvider = new JacksonJaxbJsonProvider().configure(
-				DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+		JacksonJsonProvider jacksonJsonProvider = new JacksonJaxbJsonProvider()
+				.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
 		// build the client and register Jackson
 		client = clientBuilder.build();

@@ -188,7 +188,8 @@ public class MySQLClient {
 		}
 	}
 
-	private void grantUser(Connection connection, String host, String database, String name) throws DeploymentException {
+	private void grantUser(Connection connection, String host, String database, String name)
+			throws DeploymentException {
 		log.info("granting user " + name + " on database " + database + " (" + host + ")");
 		PreparedStatement stmt = null;
 		try {

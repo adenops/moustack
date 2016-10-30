@@ -23,90 +23,79 @@ import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 
-
-
-
 // Generated class, DO NOT MODIFY
-public class ServerCommand   {
+public class ServerCommand {
 
+	public enum CommandEnum {
+		RUN("RUN"), REPORT("REPORT"), SHUTDOWN("SHUTDOWN");
 
+		private String value;
 
-  public enum CommandEnum {
-    RUN("RUN"),
-    REPORT("REPORT"),
-    SHUTDOWN("SHUTDOWN");
+		CommandEnum(String value) {
+			this.value = value;
+		}
 
-    private String value;
+		@Override
+		@JsonValue
+		public String toString() {
+			return value;
+		}
+	}
 
-    CommandEnum(String value) {
-      this.value = value;
-    }
+	private CommandEnum command = null;
 
-    @Override
-    @JsonValue
-    public String toString() {
-      return value;
-    }
-  }
+	/**
+	 **/
+	public ServerCommand command(CommandEnum command) {
+		this.command = command;
+		return this;
+	}
 
-  private CommandEnum command = null;
+	@JsonProperty("command")
+	public CommandEnum getCommand() {
+		return command;
+	}
 
+	public void setCommand(CommandEnum command) {
+		this.command = command;
+	}
 
-  /**
-   **/
-  public ServerCommand command(CommandEnum command) {
-    this.command = command;
-    return this;
-  }
+	@Override
+	public boolean equals(java.lang.Object o) {
+		if (this == o) {
+			return true;
+		}
+		if (o == null || getClass() != o.getClass()) {
+			return false;
+		}
+		ServerCommand serverCommand = (ServerCommand) o;
 
+		return true && Objects.equals(command, serverCommand.command);
+	}
 
-  @JsonProperty("command")
-  public CommandEnum getCommand() {
-    return command;
-  }
-  public void setCommand(CommandEnum command) {
-    this.command = command;
-  }
+	@Override
+	public int hashCode() {
+		return Objects.hash(command);
+	}
 
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		sb.append("class ServerCommand {\n");
 
+		sb.append("    command: ").append(toIndentedString(command)).append("\n");
+		sb.append("}");
+		return sb.toString();
+	}
 
-  @Override
-  public boolean equals(java.lang.Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    ServerCommand serverCommand = (ServerCommand) o;
-
-    return true && Objects.equals(command, serverCommand.command)
-    ;
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(command);
-  }
-
-  @Override
-  public String toString() {
-    StringBuilder sb = new StringBuilder();
-    sb.append("class ServerCommand {\n");
-
-    sb.append("    command: ").append(toIndentedString(command)).append("\n");
-    sb.append("}");
-    return sb.toString();
-  }
-
-  /**
-   * Convert the given object to string with each line indented by 4 spaces
-   * (except the first line).
-   */
-  private String toIndentedString(java.lang.Object o) {
-    if (o == null) {
-      return "null";
-    }
-    return o.toString().replace("\n", "\n    ");
-  }
+	/**
+	 * Convert the given object to string with each line indented by 4 spaces
+	 * (except the first line).
+	 */
+	private String toIndentedString(java.lang.Object o) {
+		if (o == null) {
+			return "null";
+		}
+		return o.toString().replace("\n", "\n    ");
+	}
 }

@@ -47,9 +47,9 @@ public class Heat extends ContainerModule {
 		changed |= env.getKeystoneClient().createService(env.getStack(), "heat", "OpenStack Orchestration service",
 				"orchestration", "http://%s:8004/v1/%%(tenant_id)s", "http://%s:8004/v1/%%(tenant_id)s",
 				"http://%s:8004/v1/%%(tenant_id)s");
-		changed |= env.getKeystoneClient()
-				.createService(env.getStack(), "heat-cfn", "OpenStack Orchestration service", "cloudformation",
-						"http://%s:8774/v2/8000/v1", "http://%s:8774/v2/8000/v1", "http://%s:8774/v2/8000/v1");
+		changed |= env.getKeystoneClient().createService(env.getStack(), "heat-cfn", "OpenStack Orchestration service",
+				"cloudformation", "http://%s:8774/v2/8000/v1", "http://%s:8774/v2/8000/v1",
+				"http://%s:8774/v2/8000/v1");
 		changed |= env.getKeystoneClient().createProjectUser(env.getStack(), StackProperty.KS_HEAT_USER, "Heat user",
 				"heat@localhost", StackProperty.KS_HEAT_PASSWORD, StackProperty.KEYSTONE_SERVICES_PROJECT);
 		changed |= env.getKeystoneClient().grantProjectRole(env.getStack(), StackProperty.KS_HEAT_USER,
@@ -88,7 +88,7 @@ public class Heat extends ContainerModule {
 	@Override
 	public void validate(DeploymentEnvironment env) throws DeploymentException {
 		super.validate(env);
-		env.getValidationClient()
-				.validateEndpoint(env.getStack(), "heat", "http://%s:8774/", Status.OK.getStatusCode());
+		env.getValidationClient().validateEndpoint(env.getStack(), "heat", "http://%s:8774/",
+				Status.OK.getStatusCode());
 	}
 }

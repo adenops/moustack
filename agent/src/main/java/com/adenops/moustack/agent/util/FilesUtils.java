@@ -43,8 +43,8 @@ public class FilesUtils {
 
 	public static String fileToString(String path, boolean isResource) throws DeploymentException {
 		try {
-			return IOUtils.toString(isResource ? DeploymentUtil.class.getResourceAsStream(path) : new FileInputStream(
-					path), "UTF-8");
+			return IOUtils.toString(
+					isResource ? DeploymentUtil.class.getResourceAsStream(path) : new FileInputStream(path), "UTF-8");
 		} catch (IOException e) {
 			throw new DeploymentException("error while reading file " + path, e);
 		}

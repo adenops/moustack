@@ -116,8 +116,8 @@ public class KeystoneClient extends AbstractOpenStackClient {
 				// if attributes changed but not password, we can just update
 				// them
 				log.info("updating user " + name);
-				patch(stack, String.format("users/%s", user.getId()), "user", new User(name, description, email,
-						password, projectId, domainId));
+				patch(stack, String.format("users/%s", user.getId()), "user",
+						new User(name, description, email, password, projectId, domainId));
 				return true;
 			}
 
@@ -187,14 +187,14 @@ public class KeystoneClient extends AbstractOpenStackClient {
 
 			if (!stringsEqual(description, service.getDescription()) || !stringsEqual(type, service.getType())) {
 				log.info("updating service " + name);
-				patch(stack, String.format("services/%s", service.getId()), "service", new Service(name, description,
-						type));
+				patch(stack, String.format("services/%s", service.getId()), "service",
+						new Service(name, description, type));
 				changed = true;
 			}
 		} else {
 			log.info("creating service " + name + " of type " + type);
-			ServiceResponse response = post(ServiceResponse.class, "services", "service", new Service(name,
-					description, type));
+			ServiceResponse response = post(ServiceResponse.class, "services", "service",
+					new Service(name, description, type));
 			changed = true;
 			service = response.getService();
 		}
@@ -219,8 +219,8 @@ public class KeystoneClient extends AbstractOpenStackClient {
 				return false;
 
 			log.info("updating endpoint " + url);
-			patch(stack, String.format("endpoints/%s", endpoint.getId()), "endpoint", new Endpoint(serviceId,
-					_interface, stack.get(StackProperty.REGION), url));
+			patch(stack, String.format("endpoints/%s", endpoint.getId()), "endpoint",
+					new Endpoint(serviceId, _interface, stack.get(StackProperty.REGION), url));
 
 			return true;
 		}
@@ -331,8 +331,7 @@ public class KeystoneClient extends AbstractOpenStackClient {
 	}
 
 	public TokenResponse getAdminToken(StackConfig stack) throws DeploymentException {
-		return post(TokenResponse.class, "auth/tokens", "auth", new OSAuth(
-				stack.get(StackProperty.KEYSTONE_ADMIN_USER), stack.get(StackProperty.KEYSTONE_ADMIN_PASSWORD),
-				User.DEFAULT_DOMAIN_ID));
+		return post(TokenResponse.class, "auth/tokens", "auth", new OSAuth(stack.get(StackProperty.KEYSTONE_ADMIN_USER),
+				stack.get(StackProperty.KEYSTONE_ADMIN_PASSWORD), User.DEFAULT_DOMAIN_ID));
 	}
 }

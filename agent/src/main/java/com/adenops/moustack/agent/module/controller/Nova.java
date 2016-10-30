@@ -44,8 +44,8 @@ public class Nova extends ContainerModule {
 	@Override
 	public boolean deploy(DeploymentEnvironment env) throws DeploymentException {
 		boolean changed = false;
-		changed |= env.getKeystoneClient().createService(env.getStack(), "nova", "OpenStack Compute service",
-				"compute", "http://%s:8774/v2/%%(tenant_id)s", "http://%s:8774/v2/%%(tenant_id)s",
+		changed |= env.getKeystoneClient().createService(env.getStack(), "nova", "OpenStack Compute service", "compute",
+				"http://%s:8774/v2/%%(tenant_id)s", "http://%s:8774/v2/%%(tenant_id)s",
 				"http://%s:8774/v2/%%(tenant_id)s");
 		changed |= env.getKeystoneClient().createProjectUser(env.getStack(), StackProperty.KS_NOVA_USER, "Nova user",
 				"nova@localhost", StackProperty.KS_NOVA_PASSWORD, StackProperty.KEYSTONE_SERVICES_PROJECT);
@@ -71,7 +71,7 @@ public class Nova extends ContainerModule {
 	@Override
 	public void validate(DeploymentEnvironment env) throws DeploymentException {
 		super.validate(env);
-		env.getValidationClient()
-				.validateEndpoint(env.getStack(), "nova", "http://%s:8774/", Status.OK.getStatusCode());
+		env.getValidationClient().validateEndpoint(env.getStack(), "nova", "http://%s:8774/",
+				Status.OK.getStatusCode());
 	}
 }

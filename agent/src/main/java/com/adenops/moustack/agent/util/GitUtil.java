@@ -68,8 +68,8 @@ public class GitUtil {
 	public static void synchronizeConfiguration(StackConfig stack) throws DeploymentException {
 		File repoDir = new File(AgentConfig.getInstance().getConfigDir());
 
-		CredentialsProvider credentialsProvider = new UsernamePasswordCredentialsProvider(AgentConfig.getInstance()
-				.getUser(), AgentConfig.getInstance().getPassword());
+		CredentialsProvider credentialsProvider = new UsernamePasswordCredentialsProvider(
+				AgentConfig.getInstance().getUser(), AgentConfig.getInstance().getPassword());
 
 		if (!AgentConfig.getInstance().isSslVerify())
 			HttpUtil.disableSSLVerification();
@@ -121,11 +121,10 @@ public class GitUtil {
 
 		log.debug("fetching configuration");
 		try {
-			git.fetch()
-					.setCredentialsProvider(credentialsProvider)
-					.setRefSpecs(
-							new RefSpec("+refs/heads/" + stack.getGitBranch() + ":refs/remotes/origin/"
-									+ stack.getGitBranch())).call();
+			git.fetch().setCredentialsProvider(credentialsProvider)
+					.setRefSpecs(new RefSpec(
+							"+refs/heads/" + stack.getGitBranch() + ":refs/remotes/origin/" + stack.getGitBranch()))
+					.call();
 		} catch (GitAPIException e) {
 			throw new DeploymentException("error while fetching from remote git repository", e);
 		}

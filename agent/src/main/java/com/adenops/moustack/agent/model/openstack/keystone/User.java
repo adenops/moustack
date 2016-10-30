@@ -35,7 +35,8 @@ public class User extends OSEntity {
 	public User() {
 	}
 
-	public User(String name, String description, String email, String password, String default_project_id, String domain_id) {
+	public User(String name, String description, String email, String password, String default_project_id,
+			String domain_id) {
 		this.name = name;
 		this.description = description;
 		this.email = email;

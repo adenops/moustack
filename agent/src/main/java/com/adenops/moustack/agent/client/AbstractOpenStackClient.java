@@ -77,8 +77,8 @@ public abstract class AbstractOpenStackClient extends AbstractRestClient {
 
 		if (log.isDebugEnabled()) {
 			try {
-				log.debug("received error from the API: \n{}", mapper.writerWithDefaultPrettyPrinter()
-						.writeValueAsString(error));
+				log.debug("received error from the API: \n{}",
+						mapper.writerWithDefaultPrettyPrinter().writeValueAsString(error));
 			} catch (JsonProcessingException e) {
 			}
 		}

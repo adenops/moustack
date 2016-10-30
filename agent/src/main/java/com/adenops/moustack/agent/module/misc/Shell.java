@@ -58,8 +58,8 @@ public class Shell extends SystemModule {
 
 				// TODO: this is a temporary solution to display stdout, we should be able to find a better solution and
 				// try to log live
-				BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(
-						result.getStdout().toByteArray())));
+				BufferedReader bufferedReader = new BufferedReader(
+						new InputStreamReader(new ByteArrayInputStream(result.getStdout().toByteArray())));
 				String line;
 				try {
 					while ((line = bufferedReader.readLine()) != null) {

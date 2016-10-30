@@ -34,8 +34,8 @@ public class YumClient extends AbstractPackagingClient {
 	private static final Logger log = LoggerFactory.getLogger(YumClient.class);
 
 	private void yum(String action, String... packages) throws DeploymentException {
-		String[] command = ArrayUtils.addAll(new String[] { "yum", action, "--assumeyes", "--debuglevel=0",
-				"--errorlevel=0" }, packages);
+		String[] command = ArrayUtils
+				.addAll(new String[] { "yum", action, "--assumeyes", "--debuglevel=0", "--errorlevel=0" }, packages);
 		ProcessUtil.execute(command);
 	}
 
