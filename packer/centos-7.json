@@ -60,6 +60,7 @@
       "type": "shell",
       "execute_command": "echo '{{ user `ssh_password` }}' | {{ .Vars }} sudo -E -S sh '{{ .Path }}'",
       "inline": [
+        "set -ex",
         "test -n \"${{ user `http_proxy` }}\" && echo 'proxy={{ user `http_proxy` }}' >>/etc/yum.conf",
         "yum install -y deltarpm",
         "yum update -y",
@@ -72,6 +73,7 @@
       "execute_command": "echo '{{ user `ssh_password` }}' | {{ .Vars }} sudo -E -S sh '{{ .Path }}'",
       "pause_before": "5s",
       "inline": [
+        "set -ex",
         "echo '# disable predictable network interfaces names' >/etc/udev/rules.d/80-net-setup-link.rules",
         "chmod a+x /etc/udev/rules.d/80-net-setup-link.rules",
         "yum install -y yum-utils java-1.8.0-openjdk-headless cloud-init cloud-utils-growpart",
@@ -82,7 +84,7 @@
         "grub2-mkconfig -o /boot/grub2/grub.cfg",
         "yum clean all",
         "sed -ri '/^proxy=/d' /etc/yum.conf",
-        "dd if=/dev/zero of=/FILL_WITH_ZEROS bs=10M",
+        "dd if=/dev/zero of=/FILL_WITH_ZEROS bs=10M || true",
         "rm -vf /FILL_WITH_ZEROS",
         "sync"
       ]

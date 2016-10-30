@@ -77,6 +77,7 @@
       ],
       "execute_command": "echo '{{ user `ssh_password` }}' | {{ .Vars }} sudo -E -S sh '{{ .Path }}'",
       "inline": [
+        "set -ex",
         "test -n \"${{ user `http_proxy` }}\" && echo 'Acquire::http::Proxy \"${{ user `http_proxy` }}\";' >/etc/apt/apt.conf.d/99proxy",
         "apt-get update",
         "apt-get dist-upgrade -y",
@@ -94,6 +95,7 @@
       "execute_command": "echo '{{ user `ssh_password` }}' | {{ .Vars }} sudo -E -S sh '{{ .Path }}'",
       "pause_before": "5s",
       "inline": [
+        "set -ex",
         "echo '# disable predictable network interfaces names' >/etc/udev/rules.d/80-net-setup-link.rules",
         "chmod a+x /etc/udev/rules.d/80-net-setup-link.rules",
         "echo 'source /etc/network/interfaces.d/*' >/etc/network/interfaces",
@@ -106,7 +108,7 @@
         "sed -ri 's/^(GRUB_CMDLINE_LINUX_DEFAULT=.*)\"/\\1 net.ifnames=0 biosdevname=0\"/' /etc/default/grub",
         "update-grub",
         "rm -f /etc/apt/apt.conf.d/99proxy",
-        "dd if=/dev/zero of=/FILL_WITH_ZEROS bs=10M",
+        "dd if=/dev/zero of=/FILL_WITH_ZEROS bs=10M || true",
         "rm -vf /FILL_WITH_ZEROS",
         "sync"
       ]
