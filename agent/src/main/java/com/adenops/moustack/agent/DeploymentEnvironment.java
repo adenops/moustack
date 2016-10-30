@@ -97,6 +97,10 @@ public class DeploymentEnvironment {
 		return dockerClient;
 	}
 
+	public boolean isDockerClientInitialized() {
+		return dockerClient == null;
+	}
+
 	public KeystoneClient getKeystoneClient() throws DeploymentException {
 		if (keystoneClient == null) {
 			synchronized (KeystoneClient.class) {

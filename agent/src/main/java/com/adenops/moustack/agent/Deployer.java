@@ -462,19 +462,22 @@ public class Deployer {
 		}
 
 		// containers
-		try {
-			sb = new StringBuffer();
-			for (BaseModule module : deploymentPlan) {
-				if (module instanceof ContainerModule) {
-					sb.append(env.getDockerClient().getContainerInfo((ContainerModule) module));
-					appendLine(sb);
+		if (env.isDockerClientInitialized()) {
+			try {
+				sb = new StringBuffer();
+				for (BaseModule module : deploymentPlan) {
+					if (module instanceof ContainerModule) {
+						sb.append(env.getDockerClient().getContainerInfo((ContainerModule) module));
+						appendLine(sb);
+					}
 				}
+				report.put("containers", toBase64(sb.toString()));
+			} catch (Throwable e) {
+				// docker may not yet be present/ready
+				log.warn("could not retrieve containers information");
 			}
-			report.put("containers", toBase64(sb.toString()));
-		} catch (Throwable e) {
-			// docker may not yet be present/ready
-			log.warn("could not retrieve containers information");
-		}
+		} else
+			log.trace("docker client not initialized, containers information will not be reported");
 
 		// packages installed
 		if (env.getOsFamily().equals(DeploymentEnvironment.OSFamily.REDHAT)) {
