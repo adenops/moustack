@@ -57,7 +57,7 @@
 				<groupId>info.bonjean.maven.plugins</groupId>
 				<artifactId>binary-maven-plugin</artifactId>
 				<configuration>
-					<javaOptions>-Xms64m -Xmx64m</javaOptions>
+					<javaOptions>-Xms64m -Xmx64m -Duser.timezone=UTC -Dfile.encoding=UTF-8</javaOptions>
 				</configuration>
 			</plugin>
 		</plugins>
