@@ -58,12 +58,12 @@ public class AgentConfig {
 		this.password = password;
 	}
 
-	@Argument(type = Type.FLAG, property = "server.ssl.verify", shortarg = "-r", longarg = "--sslverify", description = "Verify SSL certificate")
+	@Argument(type = Type.FLAG, property = "server.ssl.verify", shortarg = "-r", longarg = "--ssl-verify", description = "Verify SSL certificate")
 	public void setSslVerify(boolean sslVerify) {
 		this.sslVerify = sslVerify;
 	}
 
-	@Argument(property = "stack.dir", placeholder = "STACK_DIR", shortarg = "-c", longarg = "--stackdir", defaultvalue = "/var/lib/moustack/stack", description = "Stack directory (where GIT will maintain stack configuration)")
+	@Argument(property = "stack.dir", placeholder = "STACK_DIR", shortarg = "-c", longarg = "--stack-dir", defaultvalue = "/var/lib/moustack/stack", description = "Stack directory (where GIT will maintain stack configuration)")
 	public void setConfigDir(String configDir) {
 		this.configDir = configDir;
 	}
@@ -73,17 +73,17 @@ public class AgentConfig {
 		this.server = server;
 	}
 
-	@Argument(property = "stack.profile", placeholder = "STACK_PROFILE", shortarg = "-P", longarg = "--stackprofile", mandatory = true, description = "Stack profile")
+	@Argument(property = "stack.profile", placeholder = "STACK_PROFILE", shortarg = "-P", longarg = "--stack-profile", mandatory = true, description = "Stack profile")
 	public void setProfile(String profile) {
 		this.profile = profile;
 	}
 
-	@Argument(type = Type.FLAG, property = "long.polling", shortarg = "-l", longarg = "--longpolling", description = "Enable long polling")
+	@Argument(type = Type.FLAG, property = "long.polling", shortarg = "-l", longarg = "--long-polling", description = "Enable long polling")
 	public void setLongPolling(boolean longPolling) {
 		this.longPolling = longPolling;
 	}
 
-	@Argument(clazz = LogLevel.class, property = "log.level", placeholder = "LEVEL", shortarg = "-L", longarg = "--loglevel", defaultvalue = "INFO", description = "Log level")
+	@Argument(clazz = LogLevel.class, property = "log.level", placeholder = "LEVEL", shortarg = "-L", longarg = "--log-level", defaultvalue = "INFO", description = "Log level")
 	public void setLevel(LogLevel level) {
 		this.level = level;
 	}
