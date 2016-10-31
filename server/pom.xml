@@ -53,6 +53,13 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-shade-plugin</artifactId>
 			</plugin>
+			<plugin>
+				<groupId>info.bonjean.maven.plugins</groupId>
+				<artifactId>binary-maven-plugin</artifactId>
+				<configuration>
+					<javaOptions>-Xms64m -Xmx64m</javaOptions>
+				</configuration>
+			</plugin>
 		</plugins>
 	</build>
 
