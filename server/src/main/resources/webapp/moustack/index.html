@@ -110,14 +110,14 @@ function createReportsDatatable() {
 			},
 			{
 				"render": function ( data, type, row ) {
-				return '<a href="#" onClick = "showReportContent(\''+data+'\');">View</a>';
+					return '<a href="#" onClick = "showReportContent(\''+data+'\');">View</a>';
 				},
 				"targets": -1
 			}
 		]
 	});
 }
-
+var toto;
 function createAgentsDatatable() {
 	return $('#agents').DataTable( {
 		"ajax": function (data, callback, settings) {
@@ -151,8 +151,11 @@ function createAgentsDatatable() {
 			},
 			{
 				"render": function ( data, type, row ) {
-					return '<a href="#" onClick = "agentCommand(\''+data+'\', \'RUN\');">Run</a>' +
-						' / <a href="#" onClick = "agentCommand(\''+data+'\', \'REPORT\');">Report</a>';
+					if (row.connected)
+						return '<a href="#" onClick = "agentCommand(\''+data+'\', \'RUN\');">Run</a>' +
+							' / <a href="#" onClick = "agentCommand(\''+data+'\', \'REPORT\');">Report</a>';
+					else
+						return '';
 				},
 				"targets": -1
 			}
