@@ -48,12 +48,12 @@ public class ServerConfig {
 		this.port = port;
 	}
 
-	@Argument(property = "server.user", placeholder = "USER", shortarg = "-u", longarg = "--user", defaultvalue = "moustack", description = "Server user")
+	@Argument(property = "server.user", placeholder = "USER", shortarg = "-u", longarg = "--user", description = "Server user")
 	public void setUser(String user) {
 		this.user = user;
 	}
 
-	@Argument(property = "server.password", placeholder = "PASSWORD", shortarg = "-p", longarg = "--password", defaultvalue = "password", description = "Server password")
+	@Argument(property = "server.password", placeholder = "PASSWORD", shortarg = "-p", longarg = "--password", description = "Server password")
 	public void setPassword(String password) {
 		this.password = password;
 	}

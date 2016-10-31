@@ -19,8 +19,6 @@
 
 package com.adenops.moustack.server;
 
-import io.swagger.jaxrs.config.BeanConfig;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.channels.FileLock;
@@ -36,6 +34,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
 import org.eclipse.jetty.security.MappedLoginService;
@@ -67,6 +66,8 @@ import org.slf4j.LoggerFactory;
 import com.adenops.moustack.lib.argsparser.ArgumentsParser;
 import com.adenops.moustack.lib.util.LockUtil;
 import com.adenops.moustack.server.client.PersistenceClient;
+
+import io.swagger.jaxrs.config.BeanConfig;
 
 public class MoustackServer {
 	public static final Logger log = LoggerFactory.getLogger(MoustackServer.class);
@@ -215,10 +216,7 @@ public class MoustackServer {
 		return swaggerContext;
 	}
 
-	public Server start(ServerConfig config) throws Exception {
-		long startTime = System.currentTimeMillis();
-		Server server = new Server(config.getPort());
-
+	private static ConstraintSecurityHandler setupSecurityHandler(String username, String password) {
 		MappedLoginService users = new MappedLoginService() {
 			@Override
 			protected UserIdentity loadUser(String who) {
@@ -227,7 +225,7 @@ public class MoustackServer {
 
 			@Override
 			protected void loadUsers() throws IOException {
-				putUser(config.getUser(), new Password(config.getPassword()), new String[] { "user" });
+				putUser(username, new Password(password), new String[] { "user" });
 			}
 
 			@Override
@@ -247,7 +245,6 @@ public class MoustackServer {
 		};
 
 		ConstraintSecurityHandler security = new ConstraintSecurityHandler();
-		server.setHandler(security);
 
 		Constraint constraint = new Constraint();
 		constraint.setName("auth");
@@ -261,6 +258,13 @@ public class MoustackServer {
 		security.setConstraintMappings(Collections.singletonList(mapping));
 		security.setAuthenticator(new BasicAuthenticator());
 		security.setLoginService(users);
+
+		return security;
+	}
+
+	public Server start(ServerConfig config) throws Exception {
+		long startTime = System.currentTimeMillis();
+		Server server = new Server(config.getPort());
 
 		// prepare the context handler for the servlets
 		ServletContextHandler servletsContext = new ServletContextHandler(ServletContextHandler.SESSIONS);
@@ -284,10 +288,17 @@ public class MoustackServer {
 		// Swagger context
 		ServletContextHandler swaggerContext = setupSwaggerContextHandler();
 
-		// finally add the context to the security handler
+		// prepare the contexts collection
 		ContextHandlerCollection contexts = new ContextHandlerCollection();
 		contexts.setHandlers(new Handler[] { servletsContext, swaggerContext });
-		security.setHandler(contexts);
+
+		// finally, wrap into a security context if necessary
+		if (!StringUtils.isBlank(config.getUser()) && !StringUtils.isBlank(config.getPassword())) {
+			ConstraintSecurityHandler security = setupSecurityHandler(config.getUser(), config.getPassword());
+			security.setHandler(contexts);
+			server.setHandler(security);
+		} else
+			server.setHandler(contexts);
 
 		server.start();
 		System.out.println("server listening on port " + config.getPort());
