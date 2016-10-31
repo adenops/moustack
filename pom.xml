@@ -86,6 +86,19 @@
 						</dependency>
 					</dependencies>
 				</plugin>
+				<plugin>
+					<groupId>info.bonjean.maven.plugins</groupId>
+					<artifactId>binary-maven-plugin</artifactId>
+					<version>0.0.1-SNAPSHOT</version>
+					<executions>
+						<execution>
+							<phase>package</phase>
+							<goals>
+								<goal>binary</goal>
+							</goals>
+						</execution>
+					</executions>
+				</plugin>
 			</plugins>
 		</pluginManagement>
 		<plugins>
@@ -213,6 +226,14 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
+
+	<pluginRepositories>
+		<pluginRepository>
+			<snapshots />
+			<id>jbonjean</id>
+			<url>https://github.com/jbonjean/maven-repository/raw/master</url>
+		</pluginRepository>
+	</pluginRepositories>
 
 	<modules>
 		<module>lib</module>
