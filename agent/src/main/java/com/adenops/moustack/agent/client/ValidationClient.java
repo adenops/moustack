@@ -46,7 +46,7 @@ public class ValidationClient {
 
 	public void validateEndpoint(StackConfig stack, String name, String url, int expectedStatus)
 			throws DeploymentException {
-		WebTarget webTarget = client.target(String.format(url, stack.get(StackProperty.SERVICES_INTERNAL_IP)));
+		WebTarget webTarget = client.target(String.format(url, stack.get(StackProperty.CONTROLLER_MANAGEMENT_IP)));
 		Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON_TYPE);
 
 		for (int i = 0; i <= MAX_RETRIES; i++) {
