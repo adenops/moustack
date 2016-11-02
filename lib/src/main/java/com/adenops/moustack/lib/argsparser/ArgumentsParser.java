@@ -321,17 +321,8 @@ public class ArgumentsParser {
 		}
 	}
 
-	private List<ParsedArgument> parseArguments(String[] args) throws ParserException, ParserInternalException {
-
-		// track required arguments
-		List<Object> requiredArguments = new ArrayList<>();
-		for (Argument argument : nonPositionalArguments) {
-			if (argument.mandatory())
-				requiredArguments.add(argument);
-		}
-		if (positionalArgument != null && positionalArgument.mandatory())
-			requiredArguments.add(positionalArgument);
-
+	private List<ParsedArgument> parseArguments(String[] args, List<Object> requiredArguments)
+			throws ParserException, ParserInternalException {
 		// where we store everything we need to set values after the arguments parsing
 		List<ParsedArgument> parsedArguments = new ArrayList();
 
@@ -401,25 +392,6 @@ public class ArgumentsParser {
 			}
 		}
 
-		// check if required arguments are present
-		if (!requiredArguments.isEmpty()) {
-			StringBuffer sb = new StringBuffer();
-			for (Object object : requiredArguments) {
-				if (sb.length() > 0)
-					sb.append(", ");
-				if (object instanceof Argument) {
-					Argument argument = (Argument) object;
-					sb.append(join("/", argument.shortarg(), argument.longarg()));
-
-				} else if (object instanceof PositionalArgument)
-					sb.append(((PositionalArgument) object).placeholder());
-				else
-					throw new ParserInternalException("should not happen");
-			}
-			sb.insert(0, "some mandatory arguments are missing: ");
-			throw new ParserException(sb.toString());
-		}
-
 		return parsedArguments;
 	}
 
@@ -442,7 +414,8 @@ public class ArgumentsParser {
 		}
 	}
 
-	private void setConfigurationValues(Object pojo) throws ParserException, ParserInternalException {
+	private void setConfigurationValues(Object pojo, List<Object> requiredArguments)
+			throws ParserException, ParserInternalException {
 		if (configurationFile == null)
 			throw new ParserInternalException("configuration file is null, this should not happen");
 
@@ -459,8 +432,10 @@ public class ArgumentsParser {
 					continue;
 
 				String configValue = properties.getProperty(annotation.property());
-				if (configValue != null)
+				if (configValue != null) {
 					invoke(method, pojo, cast(annotation.clazz(), configValue));
+					requiredArguments.remove(annotation);
+				}
 			}
 
 		} catch (IOException e) {
@@ -536,12 +511,21 @@ public class ArgumentsParser {
 		// first parse annotation to extract the information we need
 		parseAnnotations();
 
+		// track required arguments
+		List<Object> requiredArguments = new ArrayList<>();
+		for (Argument argument : nonPositionalArguments) {
+			if (argument.mandatory())
+				requiredArguments.add(argument);
+		}
+		if (positionalArgument != null && positionalArgument.mandatory())
+			requiredArguments.add(positionalArgument);
+
 		// instantiate the target object
 		Object pojo = instantiate(clazz);
 
 		try {
 			// parse command line arguments
-			List<ParsedArgument> parsedArguments = parseArguments(args);
+			List<ParsedArgument> parsedArguments = parseArguments(args, requiredArguments);
 
 			// if we didn't received parsed arguments, this means a display action has been triggered
 			// (version, help, ...)
@@ -552,12 +536,31 @@ public class ArgumentsParser {
 			setDefaultValues(pojo);
 
 			// set values from configuration file
-			setConfigurationValues(pojo);
+			setConfigurationValues(pojo, requiredArguments);
 
 			// set values from arguments
 			for (ParsedArgument parsedArgument : parsedArguments)
 				invoke(parsedArgument.getPojoMethod(), pojo,
 						cast(parsedArgument.getArgumentClass(), parsedArgument.getValue()));
+
+			// check if required arguments are present
+			if (!requiredArguments.isEmpty()) {
+				StringBuffer sb = new StringBuffer();
+				for (Object object : requiredArguments) {
+					if (sb.length() > 0)
+						sb.append(", ");
+					if (object instanceof Argument) {
+						Argument argument = (Argument) object;
+						sb.append(join("/", argument.shortarg(), argument.longarg()));
+
+					} else if (object instanceof PositionalArgument)
+						sb.append(((PositionalArgument) object).placeholder());
+					else
+						throw new ParserInternalException("should not happen");
+				}
+				sb.insert(0, "some mandatory arguments are missing: ");
+				throw new ParserException(sb.toString());
+			}
 
 			return pojo;
 
