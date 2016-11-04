@@ -31,7 +31,7 @@ public class AgentConfig {
 	private String user;
 	private String password;
 	private boolean sslVerify;
-	private boolean longPolling;
+	private boolean runOnce;
 	private String configDir;
 	private LogLevel level;
 	private boolean dryRun;
@@ -78,9 +78,9 @@ public class AgentConfig {
 		this.profile = profile;
 	}
 
-	@Argument(type = Type.FLAG, property = "long.polling", shortarg = "-l", longarg = "--long-polling", description = "Enable long polling")
-	public void setLongPolling(boolean longPolling) {
-		this.longPolling = longPolling;
+	@Argument(type = Type.FLAG, longarg = "--run-once", description = "Run once and exit")
+	public void setRunOnce(boolean runOnce) {
+		this.runOnce = runOnce;
 	}
 
 	@Argument(clazz = LogLevel.class, property = "log.level", placeholder = "LEVEL", shortarg = "-L", longarg = "--log-level", defaultvalue = "INFO", description = "Log level")
@@ -121,8 +121,8 @@ public class AgentConfig {
 		return server;
 	}
 
-	public boolean isLongPolling() {
-		return longPolling;
+	public boolean isRunOnce() {
+		return runOnce;
 	}
 
 	public String getProfile() {

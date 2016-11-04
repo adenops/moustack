@@ -128,13 +128,13 @@ public class MoustackAgent {
 
 		MoustackClient.getInstance().postStatus(AgentStatus.StatusEnum.STANDBY);
 
-		if (!AgentConfig.getInstance().isLongPolling()) {
+		if (AgentConfig.getInstance().isRunOnce()) {
 			int code = deploy();
 			MoustackClient.getInstance().postStatus(AgentStatus.StatusEnum.SHUTDOWN);
 			return code;
 		}
 
-		log.info("starting long polling");
+		log.info("connecting to the server and waiting for command");
 		Response response = null;
 		while (true) {
 			try {
