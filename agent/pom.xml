@@ -9,6 +9,9 @@
 	</parent>
 
 	<artifactId>moustack-agent</artifactId>
+	<name>Moustack Agent</name>
+	<description>Moustack Agent</description>
+	<url>https://github.com/adenops/moustack</url>
 
 	<properties>
 		<jersey.version>2.24</jersey.version>
@@ -33,6 +36,14 @@
 				<configuration>
 					<javaOptions>-Xms64m -Xmx64m -Duser.timezone=UTC -Dfile.encoding=UTF-8</javaOptions>
 				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.vafer</groupId>
+				<artifactId>jdeb</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>rpm-maven-plugin</artifactId>
 			</plugin>
 		</plugins>
 	</build>

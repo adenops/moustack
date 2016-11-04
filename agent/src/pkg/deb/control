@@ -1,0 +1,9 @@
+Package: ${project.artifactId}
+Version: ${project.version}-${package.release}
+Description: ${project.description}
+Homepage: ${project.url}
+Maintainer: Adenops Consultants Informatique Inc. <contact@adenops.com>
+Section: java
+Priority: optional
+Architecture: all
+Depends: openjdk-8-jre-headless

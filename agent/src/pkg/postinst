@@ -1,0 +1,28 @@
+#!/bin/sh
+UNIT='moustack-agent.service'
+CONFIG='/etc/moustack-agent'
+
+if [ -f "$CONFIG" -a -x /bin/systemctl ]; then
+	if systemctl show "$UNIT" --property=NeedDaemonReload | grep -q 'NeedDaemonReload=yes'; then
+		echo "Reloading systemd configuration"
+		systemctl daemon-reload
+	fi
+
+	if systemctl is-active "$UNIT" > /dev/null; then
+		echo "Restarting $UNIT"
+		systemctl restart "$UNIT"
+	fi
+
+	exit 0
+fi
+[ -f "$CONFIG" ] && exit 0
+
+echo
+echo '${project.name} ${project.version}'
+echo
+echo "You need to create the file $CONFIG"
+echo 'Use the command moustack-agent --help-config or go to ${project.url} for more information.'
+echo 'Then you can enable and start the service with the following commands:'
+echo '# systemctl enable moustack-agent'
+echo '# systemctl start moustack-agent'
+echo
