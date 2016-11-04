@@ -1,0 +1,9 @@
+[Unit]
+Description=${project.name}
+Documentation=${project.url}
+
+[Service]
+ExecStart=/usr/bin/moustack-server
+
+[Install]
+WantedBy=multi-user.target

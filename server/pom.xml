@@ -9,6 +9,9 @@
 	</parent>
 
 	<artifactId>moustack-server</artifactId>
+	<name>Moustack Server</name>
+	<description>Moustack Server</description>
+	<url>https://github.com/adenops/moustack</url>
 
 	<properties>
 		<jetty-server.version>9.3.13.v20161014</jetty-server.version>
@@ -46,6 +49,11 @@
 					<exclude>webapp/moustack/index.html</exclude>
 				</excludes>
 			</resource>
+			<resource>
+				<directory>src/pkg</directory>
+				<filtering>true</filtering>
+				<targetPath>${project.build.directory}/pkg</targetPath>
+			</resource>
 		</resources>
 
 		<plugins>
@@ -59,6 +67,14 @@
 				<configuration>
 					<javaOptions>-Xms64m -Xmx64m -Duser.timezone=UTC -Dfile.encoding=UTF-8</javaOptions>
 				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.vafer</groupId>
+				<artifactId>jdeb</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>rpm-maven-plugin</artifactId>
 			</plugin>
 		</plugins>
 	</build>
