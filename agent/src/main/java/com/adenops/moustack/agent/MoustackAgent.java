@@ -117,7 +117,7 @@ public class MoustackAgent {
 		LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
 		Configuration config = ctx.getConfiguration();
 		LoggerConfig loggerConfig = config.getLoggerConfig("com.adenops.moustack");
-		loggerConfig.setLevel(AgentConfig.getInstance().getLevel().getLog4jLevel());
+		loggerConfig.setLevel(AgentConfig.getInstance().getLogLevel().getLog4jLevel());
 		ctx.updateLoggers();
 
 		// TODO: convert to regex in argparser

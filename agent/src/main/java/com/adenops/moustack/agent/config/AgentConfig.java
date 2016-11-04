@@ -33,8 +33,7 @@ public class AgentConfig {
 	private boolean sslVerify;
 	private boolean runOnce;
 	private String configDir;
-	private LogLevel level;
-	private boolean dryRun;
+	private LogLevel logLevel;
 
 	private AgentConfig() {
 	}
@@ -84,13 +83,8 @@ public class AgentConfig {
 	}
 
 	@Argument(clazz = LogLevel.class, property = "log.level", placeholder = "LEVEL", shortarg = "-L", longarg = "--log-level", defaultvalue = "INFO", description = "Log level")
-	public void setLevel(LogLevel level) {
-		this.level = level;
-	}
-
-	@Argument(type = Type.FLAG, shortarg = "-d", longarg = "--dryrun", description = "Dry run")
-	public void setDryRun(boolean dryRun) {
-		this.dryRun = dryRun;
+	public void setLogLevel(LogLevel logLevel) {
+		this.logLevel = logLevel;
 	}
 
 	@Argument(type = Type.CONFIGURATION, shortarg = "-c", longarg = "--config", defaultvalue = "/etc/moustack-agent", description = "Configuration file")
@@ -129,12 +123,8 @@ public class AgentConfig {
 		return profile;
 	}
 
-	public LogLevel getLevel() {
-		return level;
-	}
-
-	public boolean isDryRun() {
-		return dryRun;
+	public LogLevel getLogLevel() {
+		return logLevel;
 	}
 
 	public String getUser() {
