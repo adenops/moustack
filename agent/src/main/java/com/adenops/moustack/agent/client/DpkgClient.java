@@ -190,4 +190,8 @@ public class DpkgClient extends AbstractPackagingClient {
 
 		return true;
 	}
+
+	@Override
+	public void init() throws DeploymentException {
+	}
 }

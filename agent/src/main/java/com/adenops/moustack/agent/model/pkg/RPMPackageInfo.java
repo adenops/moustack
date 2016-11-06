@@ -17,14 +17,15 @@
  * limitations under the License.
  */
 
-package com.adenops.moustack.agent.client;
+package com.adenops.moustack.agent.model.pkg;
 
-import com.adenops.moustack.agent.DeploymentException;
+public class RPMPackageInfo extends PackageInfo {
+	public RPMPackageInfo(String name, String requiredVersion) {
+		super(name, requiredVersion);
+	}
 
-public abstract class AbstractPackagingClient {
-	public abstract void init() throws DeploymentException;
-
-	public abstract boolean install(String... packages) throws DeploymentException;
-
-	public abstract boolean remove(String... packages) throws DeploymentException;
+	@Override
+	public String getFullName() {
+		return requiredVersion == null ? name : String.format("%s-%s", name, requiredVersion);
+	}
 }

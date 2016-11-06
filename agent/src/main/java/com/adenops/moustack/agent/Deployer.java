@@ -404,6 +404,8 @@ public class Deployer {
 		log.info("starting deployment of " + AgentConfig.getInstance().getId() + " (roles: "
 				+ String.join(",", env.getStack().getRoles()) + ")");
 
+		env.getPackagingClient().init();
+
 		for (BaseModule module : deploymentPlan) {
 			log.info("deploying {} module [{}]", module.getType(), module.getName());
 			changed |= module.deploy(env);
