@@ -23,6 +23,7 @@ import org.apache.commons.io.output.ByteArrayOutputStream;
 
 public class ExecResult {
 	private int exitCode = -1;
+	private String command;
 	private final ByteArrayOutputStream stdout = new ByteArrayOutputStream();
 
 	public int getExitCode() {
@@ -35,5 +36,13 @@ public class ExecResult {
 
 	public ByteArrayOutputStream getStdout() {
 		return stdout;
+	}
+
+	public String getCommand() {
+		return command;
+	}
+
+	public void setCommand(String command) {
+		this.command = command;
 	}
 }

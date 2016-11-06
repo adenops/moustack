@@ -48,6 +48,7 @@ public class ProcessUtil {
 		log.debug("executing [{}]", String.join(" ", command));
 
 		ExecResult result = new ExecResult();
+		result.setCommand(String.join(" ", command));
 		ProcessBuilder processBuilder = new ProcessBuilder(command);
 
 		// is the command has to be executed with a specific user, wrap it with su

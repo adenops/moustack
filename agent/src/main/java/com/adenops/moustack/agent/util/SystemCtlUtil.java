@@ -51,7 +51,8 @@ public class SystemCtlUtil {
 	private static void systemctlCmd(String command, String services) throws DeploymentException {
 		ExecResult result = systemctlExec(command, services);
 		if (result.getExitCode() != 0)
-			throw new DeploymentException("systemctl command failed with exit code " + result.getExitCode());
+			throw new DeploymentException(String.format("systemctl command failed with exit code %d: %s",
+					result.getExitCode(), result.getCommand()));
 	}
 
 	/*
