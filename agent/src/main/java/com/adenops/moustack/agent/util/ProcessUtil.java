@@ -106,7 +106,8 @@ public class ProcessUtil {
 
 		// throw an exception if process failed
 		if (!allowFailure && process.exitValue() != 0)
-			throw new DeploymentException("process exited with value " + process.exitValue());
+			throw new DeploymentException(
+					String.format("command exited with value %d: %s", process.exitValue(), result.getCommand()));
 
 		return result;
 	}
