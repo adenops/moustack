@@ -64,19 +64,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.adenops.moustack.lib.argsparser.ArgumentsParser;
+import com.adenops.moustack.lib.model.ApplicationInfo;
 import com.adenops.moustack.lib.util.LockUtil;
+import com.adenops.moustack.lib.util.MiscUtil;
 import com.adenops.moustack.server.client.PersistenceClient;
 
 import io.swagger.jaxrs.config.BeanConfig;
 
 public class MoustackServer {
 	public static final Logger log = LoggerFactory.getLogger(MoustackServer.class);
-
-	private static final String PROG_NAME = "Moustack Server";
-	private static final String PROG_CMD = "moustack-server";
-	private static final String PROG_VERSION = "0.1";
-	private static final String HELP_HEADER = "OpenStack configuration management system";
-	private static final String HELP_FOOTER = "https://github.com/adenops/moustack";
+	public static ApplicationInfo applicationInfo;
 
 	public static final String GIT_CONTEXT = "/git";
 	private static final String REST_CONTEXT = "/rest";
@@ -309,9 +306,13 @@ public class MoustackServer {
 
 	// TODO: handle exceptions
 	public static void main(String[] args) throws Exception {
+		applicationInfo = MiscUtil.loadApplicationInfo("moustack-server");
+		System.out.println(String.format("%s %s (build %s)", applicationInfo.getDisplayName(),
+				applicationInfo.getVersion(), applicationInfo.getBuild()));
 
-		ServerConfig config = (ServerConfig) new ArgumentsParser(PROG_NAME, PROG_CMD, PROG_VERSION, HELP_HEADER,
-				HELP_FOOTER, ServerConfig.class).parse(args);
+		ServerConfig config = (ServerConfig) new ArgumentsParser(applicationInfo.getDisplayName(),
+				applicationInfo.getApplicationName(), applicationInfo.getVersion(), applicationInfo.getDescription(),
+				applicationInfo.getUrl(), ServerConfig.class).parse(args);
 
 		if (config == null)
 			return;

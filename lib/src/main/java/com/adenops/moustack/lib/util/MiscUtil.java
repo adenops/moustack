@@ -19,8 +19,36 @@
 
 package com.adenops.moustack.lib.util;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Date;
+import java.util.Properties;
+
+import org.apache.commons.io.IOUtils;
+
+import com.adenops.moustack.lib.model.ApplicationInfo;
+
 public class MiscUtil {
-	public static String getUnixUser() {
-		return System.getProperty("user.name");
+	public static ApplicationInfo loadApplicationInfo(String defaultName) {
+		ApplicationInfo info = new ApplicationInfo();
+
+		Properties buildProperties = new Properties();
+		InputStream is = null;
+		try {
+			is = MiscUtil.class.getClassLoader().getResourceAsStream("build.properties");
+			if (is != null)
+				buildProperties.load(is);
+		} catch (IOException e) {
+			IOUtils.closeQuietly(is);
+		}
+
+		info.setApplicationName(buildProperties.getProperty("application", defaultName));
+		info.setDisplayName(buildProperties.getProperty("name", defaultName));
+		info.setDescription(buildProperties.getProperty("description", "No description"));
+		info.setVersion(buildProperties.getProperty("version", "0.1-SNAPSHOT"));
+		info.setUrl(buildProperties.getProperty("url", "http://adenops.com/"));
+		info.setBuild(buildProperties.getProperty("build", String.valueOf(new Date().getTime())));
+
+		return info;
 	}
 }

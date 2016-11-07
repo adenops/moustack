@@ -10,7 +10,7 @@
 
 	<artifactId>moustack-server</artifactId>
 	<name>Moustack Server</name>
-	<description>Moustack Server</description>
+	<description>Server for Moustack, an OpenStack installer and configuration management system</description>
 	<url>https://github.com/adenops/moustack</url>
 
 	<properties>
@@ -37,6 +37,7 @@
 				<filtering>true</filtering>
 				<includes>
 					<include>**/index.html</include>
+					<include>build.properties</include>
 				</includes>
 			</resource>
 			<resource>

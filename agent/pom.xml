@@ -10,7 +10,7 @@
 
 	<artifactId>moustack-agent</artifactId>
 	<name>Moustack Agent</name>
-	<description>Moustack Agent</description>
+	<description>Agent for Moustack, an OpenStack installer and configuration management system</description>
 	<url>https://github.com/adenops/moustack</url>
 
 	<properties>

@@ -22,6 +22,8 @@
 		<assertj.version>3.5.2</assertj.version>
 
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<build.timestamp>${maven.build.timestamp}</build.timestamp>
+		<maven.build.timestamp.format>yyyyMMddHHmm</maven.build.timestamp.format>
 
 		<package.release>1</package.release>
 	</properties>

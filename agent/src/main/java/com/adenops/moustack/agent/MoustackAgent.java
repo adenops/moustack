@@ -41,16 +41,13 @@ import com.adenops.moustack.agent.model.moustack.AgentStatus;
 import com.adenops.moustack.agent.model.moustack.ServerCommand;
 import com.adenops.moustack.lib.argsparser.ArgumentsParser;
 import com.adenops.moustack.lib.argsparser.exception.ParserInternalException;
+import com.adenops.moustack.lib.model.ApplicationInfo;
 import com.adenops.moustack.lib.util.LockUtil;
+import com.adenops.moustack.lib.util.MiscUtil;
 
 public class MoustackAgent {
 	public static final Logger log = LoggerFactory.getLogger(MoustackAgent.class);
-
-	private static final String PROG_NAME = "Moustack Agent";
-	private static final String PROG_CMD = "moustack-agent";
-	private static final String PROG_VERSION = "0.1";
-	private static final String HELP_HEADER = "OpenStack configuration management system";
-	private static final String HELP_FOOTER = "https://github.com/adenops/moustack";
+	public static ApplicationInfo applicationInfo;
 
 	// for locking (prevent multiple parallel runs)
 	private final File lockFile = new File("/var/run/moustack-agent.lock");
@@ -61,15 +58,20 @@ public class MoustackAgent {
 	private Deployer deployer;
 
 	private static void error(String message) {
-		System.err.println(PROG_NAME + ": error: " + message);
+		System.err.println(applicationInfo.getApplicationName() + ": error: " + message);
 		System.exit(1);
 	}
 
 	// XXX: we need to be able to post status and/or report updates here
 	// and in the shutdown hook
 	public static void main(String[] args) throws ParserInternalException {
-		AgentConfig agentConfig = (AgentConfig) new ArgumentsParser(PROG_NAME, PROG_CMD, PROG_VERSION, HELP_HEADER,
-				HELP_FOOTER, AgentConfig.class).parse(args);
+		applicationInfo = MiscUtil.loadApplicationInfo("moustack-agent");
+		System.out.println(String.format("%s %s (build %s)", applicationInfo.getDisplayName(),
+				applicationInfo.getVersion(), applicationInfo.getBuild()));
+
+		AgentConfig agentConfig = (AgentConfig) new ArgumentsParser(applicationInfo.getDisplayName(),
+				applicationInfo.getApplicationName(), applicationInfo.getVersion(), applicationInfo.getDescription(),
+				applicationInfo.getUrl(), AgentConfig.class).parse(args);
 
 		// if config is null but no exception, help has been triggered
 		if (agentConfig == null)
