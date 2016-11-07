@@ -35,6 +35,8 @@ public class ServerConfig {
 	private String dbUser;
 	private String dbPassword;
 	private boolean devMode;
+	private String dockerRegistryURL;
+	private String dockerMoustackTag;
 
 	private ServerConfig() {
 	}
@@ -86,6 +88,16 @@ public class ServerConfig {
 	@Argument(property = "database.password", defaultvalue = "", description = "Database password")
 	public void setDbPassword(String dbPassword) {
 		this.dbPassword = dbPassword;
+	}
+
+	@Argument(property = "docker.registry.url", longarg = "--docker-registry", description = "Custom Docker registry url, example: myregistry.local:5000")
+	public void setDockerRegistryURL(String dockerRegistryURL) {
+		this.dockerRegistryURL = dockerRegistryURL;
+	}
+
+	@Argument(property = "docker.moustack.tag", longarg = "--moustack-tag", description = "Override Docker tag for Moustack images (for development only)")
+	public void setDockerMoustackTag(String dockerMoustackTag) {
+		this.dockerMoustackTag = dockerMoustackTag;
 	}
 
 	@Argument(type = Type.FLAG, shortarg = "-D", longarg = "--dev", description = "Start in dev mode")
@@ -147,5 +159,13 @@ public class ServerConfig {
 
 	public boolean getDevMode() {
 		return devMode;
+	}
+
+	public String getDockerRegistryURL() {
+		return dockerRegistryURL;
+	}
+
+	public String getDockerMoustackTag() {
+		return dockerMoustackTag;
 	}
 }

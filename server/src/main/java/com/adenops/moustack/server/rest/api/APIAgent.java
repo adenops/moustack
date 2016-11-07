@@ -41,6 +41,7 @@ import javax.ws.rs.container.TimeoutHandler;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -164,8 +165,12 @@ public class APIAgent extends APIBase {
 	public Map<String, String> info(
 			@PathParam("hostname") @NotNull(message = "you must specify a hostname") String hostname) {
 		Map<String, String> map = new HashMap<>();
-		map.put("config_git_url", getRepositoryURL());
-		map.put("config_git_branch", getRepositoryBranch());
+		map.put("gitUrl", getRepositoryURL());
+		map.put("gitBranch", getRepositoryBranch());
+		if (!StringUtils.isBlank(ServerConfig.getInstance().getDockerRegistryURL()))
+			map.put("dockerRegistry", ServerConfig.getInstance().getDockerRegistryURL());
+		if (!StringUtils.isBlank(ServerConfig.getInstance().getDockerMoustackTag()))
+			map.put("dockerMoustackTag", ServerConfig.getInstance().getDockerMoustackTag());
 		return map;
 	}
 }
