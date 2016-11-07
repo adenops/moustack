@@ -69,7 +69,8 @@ public class DeploymentTest {
 		stack.setGitBranch("master");
 
 		docker = new DockerLocalClient(stack);
-		container = new ContainerModule("container", "test", "latest", null, null, null, null, false, null, false);
+		container = new ContainerModule("container", "test", "latest", null, null, null, null, null, false, null,
+				false);
 	}
 
 	@AfterClass

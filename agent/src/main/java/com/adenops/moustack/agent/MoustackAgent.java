@@ -26,6 +26,7 @@ import java.util.Map;
 
 import javax.ws.rs.core.Response;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.Configuration;
@@ -194,10 +195,22 @@ public class MoustackAgent {
 
 			// retrieve repository information from the server
 			Map<String, String> json = MoustackClient.getInstance().getRepositoryInfo();
-			stack.setGitRepo(json.get("config_git_url"));
-			stack.setGitBranch(json.get("config_git_branch"));
-			log.info("config git repo: " + stack.getGitRepo());
-			log.info("config git branch: " + stack.getGitBranch());
+
+			stack.setGitRepo(json.get("gitUrl"));
+			stack.setGitBranch(json.get("gitBranch"));
+			if (StringUtils.isBlank(stack.getGitRepo()))
+				throw new DeploymentException("invalid git repo url");
+			if (StringUtils.isBlank(stack.getGitBranch()))
+				throw new DeploymentException("invalid git branch");
+			stack.setDockerRegistry(json.get("dockerRegistry"));
+			stack.setDockerMoustackTag(json.get("dockerMoustackTag"));
+
+			log.info("git repo: " + stack.getGitRepo());
+			log.info("git branch: " + stack.getGitBranch());
+			if (!StringUtils.isBlank(stack.getDockerRegistry()))
+				log.info("docker registry: " + stack.getDockerRegistry());
+			if (!StringUtils.isBlank(stack.getDockerMoustackTag()))
+				log.info("docker moustack tag: " + stack.getDockerMoustackTag());
 
 			deployer = new Deployer(stack);
 

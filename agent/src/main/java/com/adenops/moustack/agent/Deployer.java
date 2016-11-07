@@ -67,6 +67,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 // TODO: factorise "files: section from container/system modules if possible
 public class Deployer {
 	public static final Logger log = LoggerFactory.getLogger(Deployer.class);
+	private static final Pattern DOCKER_IMAGE_WITH_REGISTRY_REGEX = Pattern.compile("^([^:/]+:\\d+)/(.+):([^:]+)$");
 	private static final Pattern DOCKER_IMAGE_REGEX = Pattern.compile("^(.+):([^:]+)$");
 
 	// this is a global list of files to ensure there are no overrides
@@ -258,11 +259,32 @@ public class Deployer {
 
 		// TODO: validation (mandatory fields)
 
-		Matcher matcher = DOCKER_IMAGE_REGEX.matcher(image);
-		if (!matcher.find())
-			throw new DeploymentException("could not extract tag for image " + image);
-		image = matcher.group(1);
-		String imageTag = matcher.group(2);
+		String imageName = null;
+		String imageTag = null;
+		String imageRegistry = null;
+
+		Matcher matcher = DOCKER_IMAGE_WITH_REGISTRY_REGEX.matcher(image);
+		if (matcher.find()) {
+			imageRegistry = matcher.group(1);
+			imageName = matcher.group(2);
+			imageTag = matcher.group(3);
+		} else {
+			matcher = DOCKER_IMAGE_REGEX.matcher(image);
+			if (!matcher.find())
+				throw new DeploymentException("could not extract image information: " + image);
+			imageName = matcher.group(1);
+			imageTag = matcher.group(2);
+		}
+
+		// overrides from config
+		if (!StringUtils.isBlank(env.getStack().getDockerRegistry())) {
+			log.trace("overriding image {} registry with {}", imageName, env.getStack().getDockerRegistry());
+			imageRegistry = env.getStack().getDockerRegistry();
+		}
+		if (!StringUtils.isBlank(env.getStack().getDockerMoustackTag()) && imageName.startsWith("openstack/")) {
+			log.trace("overriding image {} tag with {}", imageName, env.getStack().getDockerMoustackTag());
+			imageTag = env.getStack().getDockerMoustackTag();
+		}
 
 		for (String file : moduleFiles) {
 			files.add(toContainerDeploymentFile(name, file, true));
@@ -290,8 +312,8 @@ public class Deployer {
 
 		ContainerModule module = null;
 		if (StringUtils.isEmpty(register)) {
-			module = new ContainerModule(name, image, imageTag, files, environments, volumes, capabilities, privileged,
-					devices, syslog);
+			module = new ContainerModule(name, imageName, imageTag, imageRegistry, files, environments, volumes,
+					capabilities, privileged, devices, syslog);
 		} else {
 			if (!(ContainerModule.class.isAssignableFrom(ModuleRegistry.getRegistered(register))))
 				throw new DeploymentException("module " + name + " registration error");
@@ -299,10 +321,10 @@ public class Deployer {
 			Class<ContainerModule> registeredClass = (Class<ContainerModule>) ModuleRegistry.getRegistered(register);
 
 			try {
-				module = registeredClass.getConstructor(String.class, String.class, String.class, List.class,
-						List.class, List.class, List.class, boolean.class, List.class, boolean.class).newInstance(name,
-								image, imageTag, files, environments, volumes, capabilities, privileged, devices,
-								syslog);
+				module = registeredClass.getConstructor(String.class, String.class, String.class, String.class,
+						List.class, List.class, List.class, List.class, boolean.class, List.class, boolean.class)
+						.newInstance(name, imageName, imageTag, imageRegistry, files, environments, volumes,
+								capabilities, privileged, devices, syslog);
 			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
 					| InvocationTargetException | NoSuchMethodException | SecurityException e) {
 				throw new DeploymentException("cannot register module " + name, e);

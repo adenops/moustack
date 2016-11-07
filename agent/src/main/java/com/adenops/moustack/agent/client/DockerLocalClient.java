@@ -215,23 +215,22 @@ public class DockerLocalClient {
 	}
 
 	private boolean containerImageChanged(ContainerModule container) throws DeploymentException {
-		String imageFullName = String.format("%s:%s", container.getImage(), container.getImageTag());
+		String imageFullName = container.getImageFullName();
 
 		boolean needPull = false;
-		if (container.getImageTag().equals("latest")) {
-			log.info("image {} tag is latest, pulling...", container.getImage());
+		if ("latest".equals(container.getImageTag())) {
+			log.info("{} image tag is latest, pulling...", imageFullName);
 			needPull = true;
 		} else {
 			try {
 				client.inspectImage(imageFullName);
-				log.debug("image {} with tag {} found, no need for pulling", container.getImage(),
-						container.getImageTag());
+				log.debug("{} image found, no need for pulling", imageFullName);
 				return false;
 			} catch (ImageNotFoundException e) {
-				log.info("image {} is not present, pulling...", container.getImage());
+				log.info("{} image is not present, pulling...", imageFullName);
 				needPull = true;
 			} catch (DockerException e) {
-				wrapDockerException("error while inspecting image " + container.getImage(), e);
+				wrapDockerException("error while inspecting image " + imageFullName, e);
 			} catch (InterruptedException e) {
 				interrupt(e);
 			}
@@ -247,13 +246,13 @@ public class DockerLocalClient {
 			}
 		}
 
-		if (container.getImageTag().equals("latest")) {
+		if ("latest".equals(container.getImageTag())) {
 			try {
 				ContainerInfo containerInfo = client.inspectContainer(container.getName());
 				ImageInfo imageInfo = client.inspectImage(imageFullName);
 
 				if (containerInfo.image().equals(imageInfo.id())) {
-					log.debug("image {} did not change", imageFullName);
+					log.debug("{} container image did not change", container.getName());
 					return false;
 				}
 			} catch (ContainerNotFoundException e) {
@@ -345,7 +344,7 @@ public class DockerLocalClient {
 		hostConfigBuilder.networkMode("host");
 		hostConfigBuilder.privileged(container.isPrivileged());
 
-		containerConfigBuilder.image(container.getImage());
+		containerConfigBuilder.image(container.getImageFullName());
 
 		// auto restart container if it is not ephemeral
 		if (!ephemeral)
@@ -418,7 +417,7 @@ public class DockerLocalClient {
 		}
 
 		try {
-			imageInfo = client.inspectImage(container.getImage());
+			imageInfo = client.inspectImage(container.getImageFullName());
 		} catch (DockerException e) {
 			// ignore
 		} catch (InterruptedException e) {
@@ -428,7 +427,7 @@ public class DockerLocalClient {
 		StringBuffer sb = new StringBuffer();
 		appendLine(sb, "container ", container.getName(), ":");
 		appendLine(sb, "  id: ", containerInfo.id());
-		appendLine(sb, "  image: ", String.format("%s:%s", container.getImage(), container.getImageTag()));
+		appendLine(sb, "  image: ", container.getImageFullName());
 		appendLine(sb, "  image id: ", containerInfo.image());
 		if (imageInfo != null)
 			appendLine(sb, "  image size: ", imageInfo.size().toString());

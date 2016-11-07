@@ -28,6 +28,8 @@ public class StackConfig {
 	private String gitRepo;
 	private String gitBranch = "master";
 	private String gitHead;
+	private String dockerRegistry;
+	private String dockerMoustackTag;
 
 	public StackConfig() {
 	}
@@ -80,5 +82,21 @@ public class StackConfig {
 
 	public void setGitHead(String gitHead) {
 		this.gitHead = gitHead;
+	}
+
+	public String getDockerRegistry() {
+		return dockerRegistry;
+	}
+
+	public void setDockerRegistry(String dockerRegistry) {
+		this.dockerRegistry = dockerRegistry;
+	}
+
+	public String getDockerMoustackTag() {
+		return dockerMoustackTag;
+	}
+
+	public void setDockerMoustackTag(String dockerMoustackTag) {
+		this.dockerMoustackTag = dockerMoustackTag;
 	}
 }

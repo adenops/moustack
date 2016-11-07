@@ -36,9 +36,11 @@ import com.adenops.moustack.agent.module.ContainerModule;
 public class Heat extends ContainerModule {
 	private static final Logger log = LoggerFactory.getLogger(Heat.class);
 
-	public Heat(String name, String image, String imageTag, List<DeploymentFile> files, List<String> environments,
-			List<Volume> volumes, List<String> capabilities, boolean privileged, List<String> devices, boolean syslog) {
-		super(name, image, imageTag, files, environments, volumes, capabilities, privileged, devices, syslog);
+	public Heat(String name, String image, String imageTag, String imageRegistry, List<DeploymentFile> files,
+			List<String> environments, List<Volume> volumes, List<String> capabilities, boolean privileged,
+			List<String> devices, boolean syslog) {
+		super(name, image, imageTag, imageRegistry, files, environments, volumes, capabilities, privileged, devices,
+				syslog);
 	}
 
 	@Override

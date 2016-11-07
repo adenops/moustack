@@ -22,6 +22,7 @@ package com.adenops.moustack.agent.module;
 import java.util.Collections;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,8 +35,9 @@ import com.adenops.moustack.agent.util.DeploymentUtil;
 public class ContainerModule extends BaseModule {
 	private static final Logger log = LoggerFactory.getLogger(ContainerModule.class);
 
-	private final String image;
+	private final String imageName;
 	private final String imageTag;
+	private final String imageRegistry;
 	private final List<DeploymentFile> files;
 	private final List<String> environments;
 	private final List<Volume> volumes;
@@ -44,12 +46,13 @@ public class ContainerModule extends BaseModule {
 	private final List<String> devices;
 	private final boolean syslog;
 
-	public ContainerModule(String name, String image, String imageTag, List<DeploymentFile> files,
-			List<String> environments, List<Volume> volumes, List<String> capabilities, boolean privileged,
-			List<String> devices, boolean syslog) {
+	public ContainerModule(String name, String imageName, String imageTag, String imageRegistry,
+			List<DeploymentFile> files, List<String> environments, List<Volume> volumes, List<String> capabilities,
+			boolean privileged, List<String> devices, boolean syslog) {
 		super(name);
-		this.image = image;
+		this.imageName = imageName;
 		this.imageTag = imageTag;
+		this.imageRegistry = imageRegistry;
 		this.files = files;
 		this.environments = environments;
 		this.volumes = volumes;
@@ -61,8 +64,9 @@ public class ContainerModule extends BaseModule {
 
 	public ContainerModule(String name, ContainerModule container) {
 		super(name);
-		this.image = container.image;
+		this.imageName = container.imageName;
 		this.imageTag = container.imageTag;
+		this.imageRegistry = container.imageRegistry;
 		this.environments = Collections.unmodifiableList(container.environments);
 		this.files = Collections.unmodifiableList(container.files);
 		this.volumes = Collections.unmodifiableList(container.volumes);
@@ -91,12 +95,30 @@ public class ContainerModule extends BaseModule {
 			throw new DeploymentException("container " + name + " is not running");
 	}
 
-	public String getImage() {
-		return image;
+	public String getImageName() {
+		return imageName;
 	}
 
 	public String getImageTag() {
 		return imageTag;
+	}
+
+	public String getImageRegistry() {
+		return imageRegistry;
+	}
+
+	public String getImageFullName() {
+		StringBuilder sb = new StringBuilder();
+		if (!StringUtils.isBlank(imageRegistry)) {
+			sb.append(imageRegistry);
+			sb.append("/");
+		}
+		sb.append(imageName);
+		if (!StringUtils.isBlank(imageTag)) {
+			sb.append(":");
+			sb.append(imageTag);
+		}
+		return sb.toString();
 	}
 
 	public List<Volume> getVolumes() {
