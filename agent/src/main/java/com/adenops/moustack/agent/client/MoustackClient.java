@@ -24,6 +24,7 @@ import java.util.Map;
 
 import javax.ws.rs.core.Response;
 
+import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,10 +52,13 @@ public class MoustackClient extends AbstractRestClient {
 	private MoustackClient() {
 		super("moustack", AgentConfig.getInstance().getServer(), 3, 1);
 
-		// add the basic authentication support
-		HttpAuthenticationFeature feature = HttpAuthenticationFeature.basic(AgentConfig.getInstance().getUser(),
-				AgentConfig.getInstance().getPassword());
-		webTarget.register(feature);
+		// setup basic authentication
+		if (!StringUtils.isBlank(AgentConfig.getInstance().getUser())
+				&& !StringUtils.isBlank(AgentConfig.getInstance().getPassword())) {
+			HttpAuthenticationFeature feature = HttpAuthenticationFeature.basic(AgentConfig.getInstance().getUser(),
+					AgentConfig.getInstance().getPassword());
+			webTarget.register(feature);
+		}
 	}
 
 	@SuppressWarnings("unchecked")
