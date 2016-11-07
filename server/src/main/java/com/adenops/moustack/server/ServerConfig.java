@@ -28,14 +28,14 @@ public class ServerConfig {
 	private int port;
 	private String user;
 	private String password;
-	private String repoUri;
+	private String gitRepoUri;
 	private String dbType;
 	private String dbHost;
 	private String dbName;
 	private String dbUser;
 	private String dbPassword;
 	private boolean devMode;
-	private String dockerRegistryURL;
+	private String dockerRegistry;
 	private String dockerMoustackTag;
 
 	private ServerConfig() {
@@ -61,8 +61,8 @@ public class ServerConfig {
 	}
 
 	@Argument(property = "git.repo.uri", placeholder = "GIT_REPO_URI", shortarg = "-r", longarg = "--repo", mandatory = true, description = "Repo URI. Can be local (file:///) and will be served or remote (http://)")
-	public void setRepoUri(String repoUri) {
-		this.repoUri = repoUri;
+	public void setGitRepoUri(String gitRepoUri) {
+		this.gitRepoUri = gitRepoUri;
 	}
 
 	@Argument(property = "database.type", defaultvalue = "hsql", description = "Database type, mysql or hsql")
@@ -90,9 +90,9 @@ public class ServerConfig {
 		this.dbPassword = dbPassword;
 	}
 
-	@Argument(property = "docker.registry.url", longarg = "--docker-registry", description = "Custom Docker registry url, example: myregistry.local:5000")
-	public void setDockerRegistryURL(String dockerRegistryURL) {
-		this.dockerRegistryURL = dockerRegistryURL;
+	@Argument(property = "docker.registry.url", longarg = "--docker-registry", description = "Override Docker registry url, example: myregistry.local:5000 (for development only)")
+	public void setDockerRegistryURL(String dockerRegistry) {
+		this.dockerRegistry = dockerRegistry;
 	}
 
 	@Argument(property = "docker.moustack.tag", longarg = "--moustack-tag", description = "Override Docker tag for Moustack images (for development only)")
@@ -133,8 +133,8 @@ public class ServerConfig {
 		return password;
 	}
 
-	public String getRepoUri() {
-		return repoUri;
+	public String getGitRepoUri() {
+		return gitRepoUri;
 	}
 
 	public String getDbType() {
@@ -161,8 +161,8 @@ public class ServerConfig {
 		return devMode;
 	}
 
-	public String getDockerRegistryURL() {
-		return dockerRegistryURL;
+	public String getDockerRegistry() {
+		return dockerRegistry;
 	}
 
 	public String getDockerMoustackTag() {

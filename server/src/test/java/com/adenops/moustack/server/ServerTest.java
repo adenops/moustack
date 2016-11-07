@@ -60,7 +60,7 @@ public class ServerTest {
 
 		serverConfig.setUser(USER);
 		serverConfig.setPassword(PASSWORD);
-		serverConfig.setRepoUri("file:///home/jb/dev/moustack/profiles");
+		serverConfig.setGitRepoUri("file:///home/jb/dev/moustack/profiles");
 		serverConfig.setPort(PORT);
 		serverConfig.setDevMode(true);
 		serverConfig.setDbUser("sa");

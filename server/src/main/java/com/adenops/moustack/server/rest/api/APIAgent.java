@@ -66,8 +66,8 @@ public class APIAgent extends APIBase {
 	private static final Map<String, AsyncResponse> pollingClients = Collections.synchronizedMap(new HashMap<>());
 
 	public String getRepositoryURL() {
-		if (!ServerConfig.getInstance().getRepoUri().startsWith("file:///"))
-			return ServerConfig.getInstance().getRepoUri();
+		if (!ServerConfig.getInstance().getGitRepoUri().startsWith("file:///"))
+			return ServerConfig.getInstance().getGitRepoUri();
 
 		URI baseUri = uriInfo.getBaseUri();
 
@@ -101,7 +101,7 @@ public class APIAgent extends APIBase {
 			return;
 		}
 
-		log.info("client " + hostname + " connected for long polling");
+		log.debug("client " + hostname + " connected for long polling");
 
 		asyncResponse.setTimeoutHandler(new TimeoutHandler() {
 			@Override
@@ -167,8 +167,8 @@ public class APIAgent extends APIBase {
 		Map<String, String> map = new HashMap<>();
 		map.put("gitUrl", getRepositoryURL());
 		map.put("gitBranch", getRepositoryBranch());
-		if (!StringUtils.isBlank(ServerConfig.getInstance().getDockerRegistryURL()))
-			map.put("dockerRegistry", ServerConfig.getInstance().getDockerRegistryURL());
+		if (!StringUtils.isBlank(ServerConfig.getInstance().getDockerRegistry()))
+			map.put("dockerRegistry", ServerConfig.getInstance().getDockerRegistry());
 		if (!StringUtils.isBlank(ServerConfig.getInstance().getDockerMoustackTag()))
 			map.put("dockerMoustackTag", ServerConfig.getInstance().getDockerMoustackTag());
 		return map;

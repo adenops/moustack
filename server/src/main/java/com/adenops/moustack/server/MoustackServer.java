@@ -109,7 +109,7 @@ public class MoustackServer {
 
 	private static ServletHolder setupGitServlet(ServerConfig config) throws Exception {
 		// remove leading file://
-		String path = config.getRepoUri().substring(7);
+		String path = config.getGitRepoUri().substring(7);
 
 		// prepare init command
 		InitCommand init = Git.init().setDirectory(new File(path)).setBare(false);
@@ -203,11 +203,11 @@ public class MoustackServer {
 		// setup swagger configuration
 		final BeanConfig swaggerConfig = new BeanConfig();
 		swaggerConfig.setResourcePackage("com.adenops.moustack.server.rest");
-		swaggerConfig.setVersion("1.0.0");
+		swaggerConfig.setVersion(applicationInfo.getVersion());
 		swaggerConfig.setBasePath(REST_CONTEXT);
-		swaggerConfig.setTitle("Moustack");
-		swaggerConfig.setDescription("Moustack API");
-		swaggerConfig.setContact("julien.bonjean@adenops.com");
+		swaggerConfig.setTitle(applicationInfo.getDisplayName());
+		swaggerConfig.setDescription(applicationInfo.getDisplayName());
+		swaggerConfig.setContact("contact@adenops.com");
 		swaggerConfig.setScan(true);
 
 		return swaggerContext;
@@ -276,7 +276,7 @@ public class MoustackServer {
 		servletsContext.addServlet(setupRESTServlet(), REST_CONTEXT + "/*");
 
 		// Git Servlet
-		if (config.getRepoUri().startsWith("file:///"))
+		if (config.getGitRepoUri().startsWith("file:///"))
 			servletsContext.addServlet(setupGitServlet(config), GIT_CONTEXT + "/*");
 
 		// add default servlet to be spec compliant
@@ -327,6 +327,12 @@ public class MoustackServer {
 			log.error("another instance is already running");
 			return;
 		}
+
+		log.info("git repo: {}", config.getGitRepoUri());
+		if (!StringUtils.isBlank(config.getDockerRegistry()))
+			log.info("docker registry override: {}", config.getDockerRegistry());
+		if (!StringUtils.isBlank(config.getDockerMoustackTag()))
+			log.info("docker moustack tag override: {}", config.getDockerMoustackTag());
 
 		// add a shutdown hook to ensure the lock is released
 		Runtime.getRuntime().addShutdownHook(new Thread() {
