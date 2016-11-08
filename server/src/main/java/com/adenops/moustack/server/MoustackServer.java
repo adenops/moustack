@@ -317,6 +317,9 @@ public class MoustackServer {
 		if (config == null)
 			return;
 
+		// setup logging
+		MiscUtil.configureLogging(config.getLogLevel());
+
 		try {
 			lock = LockUtil.acquireLock(lockFile);
 		} catch (IOException e) {

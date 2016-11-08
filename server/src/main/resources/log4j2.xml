@@ -1,14 +1,13 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <Configuration>
-	<Properties>
-		<Property name="log.level">debug</Property>
-	</Properties>
-
 	<Appenders>
 		<Console name='Console' target='SYSTEM_OUT'>
+			<PatternLayout pattern='%-5level - %msg%n' />
+		</Console>
+		<Console name='ConsoleDebug' target='SYSTEM_OUT'>
 			<PatternLayout pattern='%-5level - %-20logger{1} - %msg%n' />
 		</Console>
-		<File name="LogFile" fileName="/tmp/moustack-server.log" append="false">
+		<File name="LogFile" fileName="/tmp/moustack-server.log">
 			<PatternLayout pattern='%d{yyyy-MM-dd HH:mm:ss} %-5level - %-20logger{0} - %msg%n' />
 		</File>
 		<Async name="AsyncLogFile">
@@ -17,15 +16,12 @@
 	</Appenders>
 
 	<Loggers>
-		<Logger name="com.adenops.moustack" level="${sys:log.level}">
-			<AppenderRef ref='Console' />
+		<Logger name="com.adenops.moustack">
+			<!-- A console appender-ref will be added at runtime, depending on the log level -->
 		</Logger>
 
-		<logger name="com.zaxxer.hikari.HikariConfig" level="debug" />
-
 		<Root level="info">
-			<AppenderRef level="info" ref='AsyncLogFile' />
-			<AppenderRef level="warn" ref='Console' />
+			<AppenderRef ref='AsyncLogFile' />
 		</Root>
 	</Loggers>
 </Configuration>

@@ -21,6 +21,7 @@ package com.adenops.moustack.server;
 
 import com.adenops.moustack.lib.argsparser.annotation.Argument;
 import com.adenops.moustack.lib.argsparser.annotation.Argument.Type;
+import com.adenops.moustack.lib.log.LogLevel;
 
 public class ServerConfig {
 	private static final ServerConfig instance = new ServerConfig();
@@ -37,6 +38,7 @@ public class ServerConfig {
 	private boolean devMode;
 	private String dockerRegistry;
 	private String dockerMoustackTag;
+	private LogLevel logLevel;
 
 	private ServerConfig() {
 	}
@@ -105,6 +107,11 @@ public class ServerConfig {
 		this.devMode = devMode;
 	}
 
+	@Argument(clazz = LogLevel.class, property = "log.level", placeholder = "LEVEL", shortarg = "-L", longarg = "--log-level", defaultvalue = "INFO", description = "Log level")
+	public void setLogLevel(LogLevel logLevel) {
+		this.logLevel = logLevel;
+	}
+
 	@Argument(type = Type.CONFIGURATION, shortarg = "-c", longarg = "--config", defaultvalue = "/etc/moustack-server", description = "Configuration file")
 	public void _config() {
 	}
@@ -168,4 +175,9 @@ public class ServerConfig {
 	public String getDockerMoustackTag() {
 		return dockerMoustackTag;
 	}
+
+	public LogLevel getLogLevel() {
+		return logLevel;
+	}
+
 }
