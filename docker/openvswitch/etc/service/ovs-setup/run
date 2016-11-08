@@ -49,7 +49,7 @@ ovs-vsctl br-exists br-int || ovs-vsctl add-br br-int
 # wait for the bridges to be up
 for bridge in $bridges; do
 	while ! ovs-vsctl br-exists $bridge; do
-		notify "wait for OVS bridges to be up"
+		notify "wait for OVS bridge $bridge to be up"
 		sleep 1
 	done
 done
