@@ -24,6 +24,7 @@ wait_for syslog
 wait_for openvswitch
 wait_for rabbitmq
 wait_for neutron-server
+wait_for neutron-openvswitch
 wait_for libvirt
 
 # ensure instances folder is created (nova may fail otherwise)
