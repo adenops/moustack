@@ -21,6 +21,7 @@
 . /usr/lib/runit/load
 
 wait_for syslog
+wait_for neutron-server
 wait_for mysql
 wait_for rabbitmq
 wait_for keystone
