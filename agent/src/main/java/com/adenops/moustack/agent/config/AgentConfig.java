@@ -21,6 +21,7 @@ package com.adenops.moustack.agent.config;
 
 import com.adenops.moustack.lib.argsparser.annotation.Argument;
 import com.adenops.moustack.lib.argsparser.annotation.Argument.Type;
+import com.adenops.moustack.lib.log.LogLevel;
 
 public class AgentConfig {
 	private static final AgentConfig instance = new AgentConfig();

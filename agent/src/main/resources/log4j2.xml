@@ -1,32 +1,31 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <Configuration packages="com.adenops.moustack.agent.log4j2">
-	<Properties>
-		<Property name="log.level">info</Property>
-	</Properties>
-
 	<Appenders>
 		<Console name='Console' target='SYSTEM_OUT'>
+			<PatternLayout pattern='%-5level - %msg%n' />
+		</Console>
+		<Console name='ConsoleDebug' target='SYSTEM_OUT'>
 			<PatternLayout pattern='%-5level - %-20logger{1} - %msg%n' />
 		</Console>
-		<File name="LogFile" fileName="/tmp/moustack-agent.log" append="false">
+		<File name="LogFile" fileName="/tmp/moustack-agent.log">
 			<PatternLayout pattern='%d{yyyy-MM-dd HH:mm:ss} %-5level - %-20logger{0} - %msg%n' />
 		</File>
 		<Async name="AsyncLogFile">
 			<AppenderRef ref="LogFile" />
 		</Async>
-		 <MemoryAppender name="MemoryAppender">
+		<MemoryAppender name="MemoryAppender">
 			<PatternLayout pattern='%-5level %-20logger{1} - %msg%n' />
-		 </MemoryAppender>
+		</MemoryAppender>
 	</Appenders>
 
 	<Loggers>
-		<Logger name="com.adenops.moustack" level="${sys:log.level}">
-			<AppenderRef ref='Console'/>
-			<AppenderRef ref='MemoryAppender' level="info"/>
+		<Logger name="com.adenops.moustack">
+			<AppenderRef ref='MemoryAppender' level="info" />
+			<!-- A console appender-ref will be added at runtime, depending on the log level -->
 		</Logger>
 
 		<Root level="info">
-			<AppenderRef ref='AsyncLogFile'/>
+			<AppenderRef ref='AsyncLogFile' />
 		</Root>
 	</Loggers>
 </Configuration>

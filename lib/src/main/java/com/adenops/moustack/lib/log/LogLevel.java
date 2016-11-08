@@ -17,7 +17,7 @@
  * limitations under the License.
  */
 
-package com.adenops.moustack.agent.config;
+package com.adenops.moustack.lib.log;
 
 import org.apache.logging.log4j.Level;
 

@@ -31,9 +31,9 @@ import org.junit.Test;
 
 import com.adenops.moustack.agent.client.DockerLocalClient;
 import com.adenops.moustack.agent.config.AgentConfig;
-import com.adenops.moustack.agent.config.LogLevel;
 import com.adenops.moustack.agent.config.StackConfig;
 import com.adenops.moustack.agent.module.ContainerModule;
+import com.adenops.moustack.lib.log.LogLevel;
 
 public class DeploymentTest {
 	private static final File TMP_DIR = new File("/tmp/moustack-test");

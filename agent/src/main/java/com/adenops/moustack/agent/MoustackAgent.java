@@ -27,10 +27,6 @@ import java.util.Map;
 import javax.ws.rs.core.Response;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.core.LoggerContext;
-import org.apache.logging.log4j.core.config.Configuration;
-import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,6 +74,9 @@ public class MoustackAgent {
 		if (agentConfig == null)
 			return;
 
+		// setup logging
+		MiscUtil.configureLogging(agentConfig.getLogLevel());
+
 		int exitCode = 5;
 		try {
 			exitCode = new MoustackAgent().start(agentConfig);
@@ -115,13 +114,6 @@ public class MoustackAgent {
 				LockUtil.releaseLock(lock, lockFile);
 			}
 		});
-
-		// setup logging
-		LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
-		Configuration config = ctx.getConfiguration();
-		LoggerConfig loggerConfig = config.getLoggerConfig("com.adenops.moustack");
-		loggerConfig.setLevel(AgentConfig.getInstance().getLogLevel().getLog4jLevel());
-		ctx.updateLoggers();
 
 		// TODO: convert to regex in argparser
 		if (!validString(AgentConfig.getInstance().getServer())

@@ -25,7 +25,13 @@ import java.util.Date;
 import java.util.Properties;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.config.Configuration;
+import org.apache.logging.log4j.core.config.LoggerConfig;
 
+import com.adenops.moustack.lib.log.LogLevel;
 import com.adenops.moustack.lib.model.ApplicationInfo;
 
 public class MiscUtil {
@@ -50,5 +56,26 @@ public class MiscUtil {
 		info.setBuild(buildProperties.getProperty("build", String.valueOf(new Date().getTime())));
 
 		return info;
+	}
+
+	public static void configureLogging(LogLevel logLevel) {
+		final LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
+		final Configuration config = ctx.getConfiguration();
+
+		// we assume the logger name
+		LoggerConfig loggerConfig = config.getLoggerConfig("com.adenops.moustack");
+
+		Level level = logLevel.getLog4jLevel();
+
+		// override log level
+		loggerConfig.setLevel(level);
+
+		// if the log level is info or more, we use a simplified format
+		// we just assume the appender names
+		String appender = level.isMoreSpecificThan(Level.INFO) ? "Console" : "ConsoleDebug";
+		// add the proper appender
+		loggerConfig.addAppender(config.getAppender(appender), null, null);
+
+		ctx.updateLoggers();
 	}
 }
