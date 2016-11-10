@@ -298,8 +298,8 @@ public class MoustackServer {
 			server.setHandler(contexts);
 
 		server.start();
-		System.out.println("server listening on port " + config.getPort());
-		System.out.println("server started in " + (System.currentTimeMillis() - startTime) + " ms");
+		log.info("server listening on port {}", config.getPort());
+		log.info("server started in {} ms", System.currentTimeMillis() - startTime);
 
 		return server;
 	}
