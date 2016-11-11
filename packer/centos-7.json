@@ -81,7 +81,7 @@
         "systemctl enable cloud-init",
         "package-cleanup -y --oldkernels --count=1",
         "dracut -f",
-        "sed -ri 's/^GRUB_TIMEOUT=.*/GRUB_TIMEOUT=0/; s/^GRUB_CMDLINE_LINUX=.*/GRUB_CMDLINE_LINUX=\"crashkernel=auto rhgb net.ifnames=0 biosdevname=0\"/' /etc/default/grub",
+        "sed -ri 's/^GRUB_TIMEOUT=.*/GRUB_TIMEOUT=0/; s/^GRUB_CMDLINE_LINUX=.*/GRUB_CMDLINE_LINUX=\"crashkernel=auto rhgb net.ifnames=0 biosdevname=0 console=ttyS0\"/' /etc/default/grub",
         "grub2-mkconfig -o /boot/grub2/grub.cfg",
         "yum clean all",
         "sed -ri '/^proxy=/d' /etc/yum.conf",

@@ -105,7 +105,7 @@
         "apt-get install -y default-jre-headless vim cloud-init cloud-initramfs-growroot",
         "apt-get autoremove -y",
         "apt-get clean -y",
-        "sed -ri 's/^(GRUB_CMDLINE_LINUX_DEFAULT=.*)\"/\\1 net.ifnames=0 biosdevname=0\"/' /etc/default/grub",
+        "sed -ri 's/^(GRUB_CMDLINE_LINUX_DEFAULT=.*)\"/\\1 net.ifnames=0 biosdevname=0 console=ttyS0\"/' /etc/default/grub",
         "update-grub",
         "rm -f /etc/apt/apt.conf.d/99proxy",
         "dd if=/dev/zero of=/FILL_WITH_ZEROS bs=10M || true",
