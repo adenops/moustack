@@ -76,6 +76,7 @@
         "set -ex",
         "echo '# disable predictable network interfaces names' >/etc/udev/rules.d/80-net-setup-link.rules",
         "chmod a+x /etc/udev/rules.d/80-net-setup-link.rules",
+        "/bin/echo -e 'NAME=eth0\\nDEVICE=eth0\\nONBOOT=yes\\nNETBOOT=yes\\nIPV6INIT=no\\nBOOTPROTO=dhcp\\nTYPE=Ethernet\\nDEFROUTE=yes\\nPEERDNS=yes\\nPEERROUTES=yes' >/etc/sysconfig/network-scripts/ifcfg-eth0",
         "yum install -y yum-utils java-1.8.0-openjdk-headless cloud-init cloud-utils-growpart",
         "systemctl enable cloud-init",
         "package-cleanup -y --oldkernels --count=1",

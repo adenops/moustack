@@ -36,4 +36,7 @@ reboot
 %post
 # disable TTY requirement with sudo
 sed -i "s/^.*requiretty/#Defaults requiretty/" /etc/sudoers
+
+# remove NetworkManager
+yum remove -y NetworkManager
 %end
