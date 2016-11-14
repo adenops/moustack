@@ -19,13 +19,9 @@
 
 SYSLOG_HOST="${SYSLOG_HOST:-127.0.0.1}"
 SYSLOG_PORT="${SYSLOG_PORT:-50014}"
+SYSLOG_PORT_TCP="${SYSLOG_PORT_TCP:-50015}"
 
 echo "$1: waiting for Syslog..."
 
-for i in $(seq 1 10); do
-        if nc -vuw 1 $SYSLOG_HOST $SYSLOG_PORT >/dev/null 2>&1; then
-                exit 0
-        fi
-        sleep 1
-done
-echo "$1: Syslog not reachable"
+while ! nc -w 1 $SYSLOG_HOST $SYSLOG_PORT_TCP >/dev/null 2>&1; do sleep 1; done
+
