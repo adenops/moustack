@@ -1,4 +1,4 @@
-FROM local-registry:5000/openstack/ubuntu-base:latest
+FROM moustack/ubuntu-base:liberty
 
 # install and configure packages
 COPY build-image *.patch /tmp/

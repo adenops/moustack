@@ -1,6 +1,7 @@
 TRIGGER_DIR      = .cache
 TRIGGER_BUILD    = $(TRIGGER_DIR)/build
 TRIGGER_RELEASE  = $(TRIGGER_DIR)/release
+DOCKERFILE_TEMP  = .dockerfile.generated
 
 
 all: usage
@@ -13,6 +14,7 @@ usage:
 clean:
 	rm -rvf $(TRIGGER_BUILD)
 	rm -rvf $(TRIGGER_RELEASE)
+	rm -rvf $(DOCKERFILE_TEMP)
 
 
 distclean: clean
@@ -27,8 +29,17 @@ $(TRIGGER_BUILD):
 	@$(call check_defined,DOCKER_IMAGE)
 	@$(call check_defined,DOCKER_TAG)
 
-	@$(call logme,"Build image $(DOCKER_IMAGE)")
-	docker build --file Dockerfile --tag $(DOCKER_IMAGE):$(DOCKER_TAG) $(DOCKER_BUILD_ARGS) --no-cache=$(DOCKER_NO_CACHE) --force-rm .
+	@$(call logme,"Generate dockerfile")
+	sed -r "s#^FROM moustack/([^:]+).*#FROM $(DOCKER_IMAGE_PREFIX)\1:$(DOCKER_TAG)#" Dockerfile >$(DOCKERFILE_TEMP)
+
+	@$(call logme,"Build image $(DOCKER_IMAGE):$(DOCKER_TAG)")
+	docker build \
+		--file $(DOCKERFILE_TEMP) \
+		--tag $(DOCKER_IMAGE):$(DOCKER_TAG) \
+		$(DOCKER_BUILD_ARGS) \
+		--no-cache=$(DOCKER_NO_CACHE) \
+		--force-rm \
+		.
 
 	@mkdir -p $(TRIGGER_DIR)
 	@touch $(TRIGGER_BUILD)

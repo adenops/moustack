@@ -24,3 +24,6 @@ rebel.xml
 # packer
 /packer/output
 /packer/packer_cache
+
+# generated docker files
+.dockerfile.generated

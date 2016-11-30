@@ -1,4 +1,4 @@
-FROM local-registry:5000/openstack/openstack-base:latest
+FROM moustack/openstack-base:liberty
 
 # install and configure packages
 COPY build-image /tmp/
