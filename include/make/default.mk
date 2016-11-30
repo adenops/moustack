@@ -3,7 +3,7 @@
 # line
 
 # 'release' target will push images to this docker registry
-DOCKER_REGISTRY ?= local-registry:5000
+DOCKER_REGISTRY ?=
 
 # this string will be appended at the beginning of each docker image name
 DOCKER_IMAGE_PREFIX ?= $(shell test -n "${DOCKER_REGISTRY}" && echo "${DOCKER_REGISTRY}/")moustack/
