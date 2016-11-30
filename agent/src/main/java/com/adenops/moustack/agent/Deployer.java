@@ -281,7 +281,7 @@ public class Deployer {
 			log.trace("overriding image {} registry with {}", imageName, env.getStack().getDockerRegistry());
 			imageRegistry = env.getStack().getDockerRegistry();
 		}
-		if (!StringUtils.isBlank(env.getStack().getDockerMoustackTag()) && imageName.startsWith("openstack/")) {
+		if (!StringUtils.isBlank(env.getStack().getDockerMoustackTag()) && imageName.startsWith("moustack/")) {
 			log.trace("overriding image {} tag with {}", imageName, env.getStack().getDockerMoustackTag());
 			imageTag = env.getStack().getDockerMoustackTag();
 		}
