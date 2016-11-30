@@ -19,10 +19,7 @@ distclean: clean
 	@$(call check_defined,DOCKER_IMAGE)
 	@$(call check_defined,DOCKER_TAG)
 
-	@$(call logme,"Untag release image $(DOCKER_IMAGE)")
-	docker rmi -f $(DOCKER_REGISTRY)/$(DOCKER_IMAGE):$(DOCKER_TAG) || true
-
-	@$(call logme,"Remove image $(DOCKER_IMAGE)")
+	@$(call logme,"Remove image $(DOCKER_IMAGE):$(DOCKER_TAG)")
 	docker rmi -f $(DOCKER_IMAGE):$(DOCKER_TAG) || true
 
 
@@ -44,11 +41,8 @@ $(TRIGGER_RELEASE):
 	@$(call check_defined,DOCKER_IMAGE)
 	@$(call check_defined,DOCKER_TAG)
 
-	@$(call logme,"Tag image $(DOCKER_IMAGE):$(DOCKER_TAG)")
-	docker tag $(DOCKER_IMAGE):$(DOCKER_TAG) $(DOCKER_REGISTRY)/$(DOCKER_IMAGE):$(DOCKER_TAG)
-
 	@$(call logme,"Push image $(DOCKER_IMAGE):$(DOCKER_TAG)")
-	docker push $(DOCKER_REGISTRY)/$(DOCKER_IMAGE):$(DOCKER_TAG)
+	docker push $(DOCKER_IMAGE):$(DOCKER_TAG)
 
 	@mkdir -p $(TRIGGER_DIR)
 	@touch $(TRIGGER_RELEASE)

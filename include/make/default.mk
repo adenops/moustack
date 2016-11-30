@@ -6,7 +6,7 @@
 DOCKER_REGISTRY ?= local-registry:5000
 
 # this string will be appended at the beginning of each docker image name
-DOCKER_IMAGE_PREFIX ?= openstack/
+DOCKER_IMAGE_PREFIX ?= $(shell test -n "${DOCKER_REGISTRY}" && echo "${DOCKER_REGISTRY}/")moustack/
 
 # can be used to define an HTTP proxy for APT, for example
 # DOCKER_BUILD_ARGS="--build-arg http_proxy=http://my.proxy:1080"
