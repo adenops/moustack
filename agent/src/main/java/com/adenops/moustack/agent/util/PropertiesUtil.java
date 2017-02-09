@@ -60,6 +60,8 @@ public class PropertiesUtil {
 		} catch (DeploymentException e) {
 			throw new DeploymentException("unknown host: " + agentConfig.getId(), e);
 		}
+		// allow system properties to override configuration
+		hostConfig.putAll(System.getProperties());
 
 		// load profile properties
 		loadPropertiesFile(variables, PathUtil.getProfilePropertiesPath(agentConfig));
@@ -71,9 +73,6 @@ public class PropertiesUtil {
 
 		// finally we can merge host properties
 		variables.putAll(hostConfig);
-
-		// allow system properties to override configuration
-		variables.putAll(System.getProperties());
 
 		return variables;
 	}
