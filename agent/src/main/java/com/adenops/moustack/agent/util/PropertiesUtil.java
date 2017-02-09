@@ -72,6 +72,9 @@ public class PropertiesUtil {
 		// finally we can merge host properties
 		variables.putAll(hostConfig);
 
+		// allow system properties to override configuration
+		variables.putAll(System.getProperties());
+
 		return variables;
 	}
 }
