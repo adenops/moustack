@@ -31,7 +31,7 @@ Moustack is a collection of tools and Docker images providing a simple way of de
 
 The server is a lightweight Java web server that runs on a separate node. It provides stack global configuration for the agents, stores reports and can trigger agents deployment. Everything is exposed as REST endpoints so that you can drive it with simple `curl` calls, but a web interface is also available.
 
-++Note++: if you don't have enough machines, the Moustack Server can be run on the controller (you will have to add a firewall rule to access the REST API though).
+*Note*: if you don't have enough machines, the Moustack Server can be run on the controller (you will have to add a firewall rule to access the REST API though).
 
 #### Agent
 
@@ -46,6 +46,7 @@ The profiles are the only part of Moustack that you will have to really work wit
 Moustack is able to deploy any Openstack project (even out of the Openstack's scope), as soon as you have a valid configuration in your Moustack's profiles, and an associated docker images.
 
 However, Moustack only provides configuration templates and Docker images for the following projects :
+
  - [Ceilometer](http://docs.openstack.org/developer/ceilometer/)
  - [Cinder](http://docs.openstack.org/developer/cinder/)
  - [Designate](http://docs.openstack.org/developer/designate/)
@@ -59,6 +60,7 @@ However, Moustack only provides configuration templates and Docker images for th
 ### Other components
 
 Moustack also provides configuration templates and Docker images for the following projects, as they are Openstack's dependencies, or nice-to-have services :
+
  - [ISC Bind](https://www.isc.org/downloads/bind/)
  - [Logstash](https://www.elastic.co/products/logstash)
  - [MariaDB](https://mariadb.org/)
@@ -98,37 +100,46 @@ Moustack started as an Openstack deployment tool for RedHat distributions. In an
 
 ### Profiles/Modules/Roles
 
-==Let's start with profiles.==
+*Let's start with profiles.*
+
 Because we don't use templating, the configuration files are not generated dynamically. Profiles are used to define different deployment topologies that have major differences. For example we have a profile name "standard" that can deploys a simple Openstack all-in-one or multi-node topology. But if we want to deploy a stack with Ceph and Swift for example, this would probably involve modifying multiple service configurations, making everything interdependant. The concept of profiles has been introduced for this pupose. You shouldn't worry to much about this concept anyway, we only have one profile right now!
+
 Example of profile: standard.
 
-==Modules, the building bricks.==
+*Modules, the building bricks.*
+
 The modules are the smallest unit in Moustack, they usually define a single service and its configuration. Two types of modules are currently supported: container (Docker) and system (OS packages and services). System module name are prefixed by `host-` by convention to make them easily identifiable.
+
 Examples of modules: glance, neutron-controller. host-firewall, host-packages-ubuntu-16.04
 
-==And finally the roles.==
+*And finally the roles.*
+
 Roles are the most natural concept, they define a global set of feature by including modules. Right now, a node has exactly one role, for example controller or compute and that's pretty much everything it need to define it (along with a bit of network configuration).
+
 Examples of roles: allinone-ubuntu-16.04, controller-centos-7
 
 So basically, modules define services (host or container), roles include modules, and profiles include modules and services.
 
 ### Deployment workflow overview
-  - The agent connects to the server and waits.
-  - The user triggers the agent via the web interface or a REST call.
-  - The agent retrieves the stack configuration from the server (role, Git URL for configuration, ...).
-  - The agent starts the deployment and posts its status to the server.
-  - The agent goes back in waiting mode.
+
+ - The agent connects to the server and waits.
+ - The user triggers the agent via the web interface or a REST call.
+ - The agent retrieves the stack configuration from the server (role, Git URL for configuration, ...).
+ - The agent starts the deployment and posts its status to the server.
+ - The agent goes back in waiting mode.
 
 ## Usage
 
 ### Prerequisites
 
 The following components are required:
+
  - A place to run the Moustack deployment server.
  - A git repository to host Moustack's deployment profiles.
  - At least one GNU/Linux server to host Openstack services.
 
-++Note++: the following distributions are supported (other may work, as soon as package managers are **apt** or **yum**)
+*Note*: the following distributions are supported (other may work, as soon as package managers are **apt** or **yum**)
+
  - Ubuntu 16.04 64bits
  - RHEL7/Centos7
 
@@ -143,6 +154,7 @@ TODO: do more detailed instructions than QuickStart
 We are using [make](https://www.gnu.org/software/make/) to orchestrate moustack's build system. On build, `make` is "touching" files (triggers) to avoid `make` to attempt a new build when running it twice (this may be useless now, as `docker build` better handles layers since 1.9.
 
 Some parameters can be passed to `make` to customize it:
+
 | parameter | description | default value |
 | --------- | ----------- | ------------- |
 | `DOCKER_TAG` | docker image tag | mandatory |
@@ -150,6 +162,7 @@ Some parameters can be passed to `make` to customize it:
 | `DOCKER_BUILD_ARGS` | parameters to append to `docker build` command, like `--build-arg http_proxy=http://172.17.0.1:18080` | |
 
 Here is a description of main `make` targets:
+
 | target | description |
 | ------ | ----------- |
 | `distclean` | delete local images (`docker rmi`) and remove `make` triggers |
@@ -158,6 +171,7 @@ Here is a description of main `make` targets:
 | `release`   | push images to `DOCKER_REGISTRY` repository (`local-registry:5000` by default) |
 
 Using that, all docker images can be built (and/or pushed) using a single command line from the root of this repository:
+
 ```sh
 # build all images (re-using already used docker layers)
 make clean build DOCKER_TAG=liberty
@@ -174,33 +188,37 @@ make clean build release DOCKER_TAG=liberty DOCKER_REGISTRY=registry.foo.bar
 #### Packer images
 
 To try Moustack without affecting your system, you can use a virtual machine (don't forget to enable `nested` parameter in KVM). You can use QCOW images which are built using [packer](https://www.packer.io/). The following distributions are supported:
- * Ubuntu 16.04
- * Centos 7
+
+ - Ubuntu 16.04
+ - Centos 7
 
 Some packer parameters can be overriden at runtime from the command line:
+
 | parameter | default value |
 | --------- | ------------- |
 | `disk_size` | `"2520"` |
-| `iso_url` | `"http://releases.ubuntu.com/16.04/ubuntu-16.04-server-amd64.iso"`
-| `iso_checksum` | `"23e97cd5d4145d4105fbf29878534049"`
-| `iso_checksum_type` | `"md5"`
-| `hostname` | `"moustack-ubuntu-1604"`
-| `domain` | `"cloud.local"`
-| `retry_timeout` | `"1m"`
-| `ssh_username` | `"ubuntu"`
-| `ssh_password` | `"ubuntu"`
-| `output_directory` | `"packer/output"`
-| `http_proxy` | `""`
-| `headless` | `"true"`
+| `iso_url` | `"http://releases.ubuntu.com/16.04/ubuntu-16.04-server-amd64.iso"` |
+| `iso_checksum` | `"23e97cd5d4145d4105fbf29878534049"` |
+| `iso_checksum_type` | `"md5"` |
+| `hostname` | `"moustack-ubuntu-1604"` |
+| `domain` | `"cloud.local"` |
+| `retry_timeout` | `"1m"` |
+| `ssh_username` | `"ubuntu"` |
+| `ssh_password` | `"ubuntu"` |
+| `output_directory` | `"packer/output"` |
+| `http_proxy` | `""` |
+| `headless` | `"true"` |
 
 To build the Ubuntu 16.04 image, you can run this command from the root of this repository:
+
 ```sh
 make -C packer build-ubuntu-1604
 ```
 
-If successfull, the resulting QCOW image will be located at `packer/output/moustack-ubuntu-1604`
+If successfull, the resulting QCOW image will be located at `packer/output/moustack-ubuntu-1604`.
 
 You can customize parameters, for example:
+
 ```sh
 make -C packer build-ubuntu-1604 PACKER_PARAMS="-var http_proxy=http://192.168.1.1:18080 -var output_directory=/dev/shm/packer"
 ```
