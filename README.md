@@ -207,6 +207,7 @@ Some packer parameters can be overriden at runtime from the command line:
 | `ssh_password` | `"ubuntu"` |
 | `output_directory` | `"packer/output"` |
 | `http_proxy` | `""` |
+| `enable_cloudinit` | `false` |
 | `headless` | `"true"` |
 
 To build the Ubuntu 16.04 image, you can run this command from the root of this repository:

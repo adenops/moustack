@@ -11,6 +11,7 @@
     "ssh_password": "ubuntu",
     "output_directory": "{{ template_dir }}/output",
     "http_proxy": "",
+    "enable_cloudinit": "false",
     "headless": "true"
   },
   "builders": [
@@ -102,7 +103,8 @@
         "find /etc/network/interfaces.d -type f -delete",
         "update-initramfs -k all -u",
         "dpkg --get-selections | awk '/^linux-(image|headers)-.*-[0-9]/ { print $1; }' | grep -v `uname -r` | xargs apt-get purge -y",
-        "apt-get install -y default-jre-headless vim cloud-init cloud-initramfs-growroot",
+        "apt-get install -y default-jre-headless vim",
+        "test \"{{ user `enable_cloudinit` }}\" = \"true\" && apt-get install -y cloud-init cloud-initramfs-growroot",
         "apt-get autoremove -y",
         "apt-get clean -y",
         "sed -ri 's/^(GRUB_CMDLINE_LINUX_DEFAULT=.*)\"/\\1 net.ifnames=0 biosdevname=0 console=ttyS0\"/' /etc/default/grub",
