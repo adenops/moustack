@@ -1,10 +1,10 @@
 {
   "variables": {
     "disk_size": "2520",
-    "iso_url": "http://releases.ubuntu.com/16.04/ubuntu-16.04-server-amd64.iso",
-    "iso_checksum": "23e97cd5d4145d4105fbf29878534049",
-    "iso_checksum_type": "md5",
-    "hostname": "moustack-ci-ubuntu-1604",
+    "iso_url": "http://releases.ubuntu.com/16.04/ubuntu-16.04.2-server-amd64.iso",
+    "iso_checksum": "737ae7041212c628de5751d15c3016058b0e833fdc32e7420209b76ca3d0a535",
+    "iso_checksum_type": "sha256",
+    "hostname": "moustack-ubuntu-1604",
     "domain": "cloud.local",
     "retry_timeout": "1m",
     "ssh_username": "ubuntu",
