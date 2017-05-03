@@ -72,7 +72,194 @@ Moustack also provides configuration templates and Docker images for the followi
 
 ### Quick start
 
-TODO: list of commands for all-in-one deployment.
+#### Assumptions
+
+As networking is the most important part in Openstack deployment, we will make the following assumptions :
+
+| network | variable | value |
+| ------- | -------- | ----- |
+| management | interface | `eth0` |
+|  | address | `192.168.29.204` |
+|  | netmask | `255.255.255.0` |
+|  | gateway | `192.168.29.1` |
+|  | DNS | `192.168.29.1` |
+| public | interface | `eth1` |
+|  | address | `172.18.0.10` |
+|  | netmask | `255.255.252.0` |
+|  | gateway | `172.18.0.1` |
+| tenant | interface | `eth2` |
+
+In this example, a fresh `Ubuntu 16.04` is used.
+
+If you want to try Moustack in a virtual machine, you may look at our [Packer images](#packer-images). An all-in-one installation on a fresh system requires at least 7GB of disk space, so be carefull with the allocated size when building packer images (see `disk_size` packer parameter). To be able to run virtual machines within the Moustack VM, you'll need to enable the `nested` parameter to your `KVM` kernel module.
+
+#### Configure networking
+
+If not already done, you'll need to configure management network interface:
+
+```bash
+# configure network management interface
+cat >/etc/network/interfaces.d/management.conf <<EOF
+auto eth0
+iface eth0 inet static
+    address         192.168.29.204
+    broadcast       192.168.29.255
+    netmask         255.255.255.0
+    gateway         192.168.29.1
+    dns-nameservers 192.168.29.1
+EOF
+
+# reboot
+reboot
+```
+
+#### Configure apt ####
+
+If you have an HTTP proxy, you can configure it using:
+
+```bash
+echo 'Acquire::http::Proxy "http://${YOUR_HTTP_PROXY_HOST}:${YOUR_HTTP_PROXY_PORT}";' >/etc/apt/apt.conf.d/99proxy
+```
+
+#### Install dependencies ####
+
+Install Java JRE:
+
+```bash
+apt-get update
+apt-get install -y --no-install-recommends default-jre-headless
+```
+
+Optional: to speedup docker layers handling, you may want to install AUFS filesystem kernel module:
+
+```bash
+apt-get install -y --no-install-recommends linux-image-extra-$(uname -r)
+```
+
+#### Install moustack's server ####
+
+Download the latest server package from https://github.com/adenops/moustack/releases, then install it:
+
+```bash
+wget --output-document /tmp/moustack-server.deb https://github.com/adenops/moustack/releases/download/RELEASE_SERVER_DEB
+dpkg -i /tmp/moustack-server.deb
+```
+
+#### Configure moustack's server ####
+
+Create the `/etc/moustack-server` configuration file with the following content:
+
+```
+# Server authentication
+server.user=moustack
+server.password=mypassword
+
+# Server port
+server.port=8080
+
+# Profiles repository URL
+git.repo.uri=https://github.com/adenops/moustack-profiles.git
+
+# Database type, mysql or hsql
+database.type=hsql
+
+# Override Docker registry url, example: myregistry.local:5000
+docker.registry.url=
+
+# Override Docker tag for Moustack images
+docker.moustack.tag=liberty
+
+# Log level
+log.level=DEBUG
+```
+
+#### Start moustack's server ####
+
+```bash
+systemctl enable moustack-server
+systemctl start moustack-server
+```
+
+#### Install moustack's agent ####
+
+Download the latest agent package from https://github.com/adenops/moustack/releases, then install it:
+
+```bash
+wget --output-document /tmp/moustack-server.deb https://github.com/adenops/moustack/releases/download/RELEASE_AGENT_DEB
+dpkg -i /tmp/moustack-agent.deb
+```
+
+#### Configure moustack's agent ####
+
+Create the `/etc/moustack-agent` configuration file with the following content:
+
+```
+# Server authentication
+server.user=moustack
+server.password=mypassword
+
+# Server address
+server.url=http://127.0.0.1:8080
+
+# Stack directory (where GIT will maintain stack configuration)
+stack.dir=/var/lib/moustack/stack
+
+# Stack profile to apply
+stack.profile=liberty-standard
+
+# Node ID (correspond to "node" in selected stack profile)
+hostname=allinone
+
+# Log level
+log.level=DEBUG
+```
+
+#### Start moustack installation ####
+
+As this is "Quick Start" instructions we will start moustack's agent interactively, because we need to override some properties in the `liberty-standard` profile from the github repository.
+
+*Note*: be carefull with the network addresses (mentioned in the assumptions):
+
+```bash
+moustack-agent \
+    -Dkeystone_admin_password=myadminpassword \
+    -Dcontroller_management_ip=192.168.29.204 \
+    -Dcontroller_public_ip=172.18.0.10 \
+    -Dsyslog_host=192.168.29.204 \
+    -Dmanagement_ip=192.168.29.204 \
+    -Dmanagement_netmask=255.255.255.0 \
+    -Dmanagement_iface=eth0 \
+    -Dpublic_ip=172.18.0.10 \
+    -Dpublic_netmask=255.255.252.0 \
+    -Dpublic_iface=eth1 \
+    -Drole=allinone-ubuntu-16.04 \
+    -Dtenant_iface=eth2 \
+    --run-once
+```
+
+#### Login ####
+
+Once installed, you can login into the Horizon dashboard:
+ - URL: http://192.168.29.204/horizon/
+ - User: `admin`
+ - Password: `myadminpassword`
+
+You can also use CLI tools by sourcing the generated environment file:
+
+```
+root@moustack-allinone:~# source ~/keystonerc
+[root@moustack-allinone ~(keystone_admin)]# nova list
++----+------+--------+------------+-------------+----------+
+| ID | Name | Status | Task State | Power State | Networks |
++----+------+--------+------------+-------------+----------+
++----+------+--------+------------+-------------+----------+
+[root@moustack-allinone ~(keystone_admin)]# openstack hypervisor list
++----+----------------------------------+
+| ID | Hypervisor Hostname              |
++----+----------------------------------+
+|  1 | moustack-allinone.moustack.local |
++----+----------------------------------+
+```
 
 ### Configure your profile
 
