@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>com.adenops.moustack</groupId>
 		<artifactId>moustack</artifactId>
-		<version>1.0-SNAPSHOT</version>
+		<version>1.0.0</version>
 	</parent>
 
 	<artifactId>moustack-lib</artifactId>
