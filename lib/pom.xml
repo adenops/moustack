@@ -8,9 +8,10 @@
 		<version>1.0-SNAPSHOT</version>
 	</parent>
 
-	<groupId>com.adenops.moustack</groupId>
 	<artifactId>moustack-lib</artifactId>
-	<version>1.0-SNAPSHOT</version>
+	<name>Moustack Library</name>
+	<description>Common library for Moustack Server and Agent</description>
+	<url>https://github.com/adenops/moustack</url>
 
 	<dependencies>
 	</dependencies>
