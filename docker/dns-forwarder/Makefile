@@ -3,4 +3,5 @@ sinclude \
 	$(realpath $(dir $(MAKEFILE_LIST))/../..)/.local.mk \
 	$(realpath $(dir $(MAKEFILE_LIST))/../..)/include/make/*.mk
 
-DOCKER_IMAGE = $(DOCKER_IMAGE_PREFIX)dns-forwarder
+DOCKER_IMAGE      = $(DOCKER_IMAGE_PREFIX)dns-forwarder
+DOCKER_LABEL_NAME = $(DOCKER_LABEL_NAME_PREFIX)DNS forwarder

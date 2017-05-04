@@ -39,6 +39,13 @@ $(TRIGGER_BUILD):
 		$(DOCKER_BUILD_ARGS) \
 		--no-cache=$(DOCKER_NO_CACHE) \
 		--force-rm \
+		--label "org.label-schema.name=$(DOCKER_LABEL_NAME)" \
+		--label "org.label-schema.description=$(DOCKER_LABEL_DESCRIPTION)" \
+		--label "org.label-schema.url=$(DOCKER_LABEL_URL)" \
+		--label "org.label-schema.vendor=$(DOCKER_LABEL_VENDOR)" \
+		--label "org.label-schema.vcs-url=$(DOCKER_LABEL_VCS_URL)" \
+		--label "org.label-schema.vcs-ref=$(DOCKER_LABEL_VCS_REF)" \
+		--label "org.label-schema.schema-version=$(DOCKER_LABEL_SCHEMA_VERSION)" \
 		.
 
 	@mkdir -p $(TRIGGER_DIR)
