@@ -32,7 +32,7 @@ export DEBIAN_FRONTEND=noninteractive
 # Update packages list
 apt-get update
 
-# Install and patch usefull python modules
+# Install required packages
 eatmydata apt-get install -y --no-install-recommends \
 	nova-api \
 	nova-cert \

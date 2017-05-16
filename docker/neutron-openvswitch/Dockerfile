@@ -1,7 +1,7 @@
-FROM moustack/openstack-base:liberty
+FROM moustack/openstack-base:ocata
 
 # install and configure packages
-COPY build-image *.patch /tmp/
+COPY build-image /tmp/
 RUN /tmp/build-image
 
 # add etc overlay

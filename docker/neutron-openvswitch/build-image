@@ -32,17 +32,10 @@ export DEBIAN_FRONTEND=noninteractive
 # Update packages list
 apt-get update
 
-# Install and patch usefull python modules
+# Install useful python modules
 eatmydata apt-get install -y --no-install-recommends \
 	conntrack \
 	neutron-plugin-openvswitch-agent
-
-# seems to not be needed now
-#patch -p1 -d / < /tmp/0001-fix-segmentation_id-bug.patch
-
-# Performance fixes (have to be properly evaluated)
-patch -p1 -d / < /tmp/0002-reduce-close-syscalls.patch
-patch -p1 -d / < /tmp/0003-reduce-proc-lookups.patch
 
 # Clean rootfs
 cd /

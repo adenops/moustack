@@ -1,4 +1,4 @@
-FROM moustack/openstack-base:liberty
+FROM moustack/openstack-base:ocata
 
 # install and configure packages
 COPY build-image /tmp/

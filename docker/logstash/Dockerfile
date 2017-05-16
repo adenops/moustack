@@ -1,4 +1,4 @@
-FROM moustack/ubuntu-base:liberty
+FROM moustack/ubuntu-base:ocata
 
 # install and configure packages
 COPY build-image /tmp/

@@ -1,4 +1,4 @@
-FROM ubuntu:14.04
+FROM ubuntu:16.04
 
 # install and configure packages
 COPY build-image bashrc /tmp/

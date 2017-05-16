@@ -29,28 +29,24 @@ export LC_ALL=C
 # dpkg shouldn't ask questions
 export DEBIAN_FRONTEND=noninteractive
 
-# Configure openstack repository
-http_proxy= apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 5EDB1B62EC4926EA
-cat >/etc/apt/sources.list.d/openstack.list <<EOF
-deb http://ubuntu-cloud.archive.canonical.com/ubuntu trusty-updates/liberty main
-EOF
-
 # Update packages list
 apt-get update
 
-# Upgrade system
-eatmydata apt-get dist-upgrade -y --no-install-recommends
+# Install Ubuntu Cloud repository
+eatmydata apt-get install -y --no-install-recommends \
+	ubuntu-cloud-keyring
+cat >/etc/apt/sources.list.d/openstack.list <<EOF
+deb http://ubuntu-cloud.archive.canonical.com/ubuntu xenial-updates/ocata main
+EOF
+apt-get update
 
-# Install and patch usefull python modules
+# Install useful python modules
 eatmydata apt-get install -y --no-install-recommends \
 	python-oslo.db \
 	python-oslo.messaging \
 	python-eventlet
 
-patch -p1 -d /usr/lib/python2.7/dist-packages/ < /tmp/0001-reduce-eventlet-cpu-usage.patch
-
 # Clean rootfs
 cd /
-#apt-get clean
-#rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-rm -rf /tmp/* /var/tmp/*
+apt-get clean
+rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*

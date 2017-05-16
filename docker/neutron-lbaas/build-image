@@ -34,7 +34,7 @@ apt-get update
 
 # Install packages
 eatmydata apt-get install -y --no-install-recommends \
-	neutron-lbaas-agent \
+	neutron-lbaasv2-agent \
 	openvswitch-switch
 
 # Purge neutron local database

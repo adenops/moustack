@@ -34,16 +34,10 @@ apt-get update
 
 # Install packages
 eatmydata apt-get install -y --no-install-recommends \
-	ceilometer-api \
 	ceilometer-collector \
 	ceilometer-agent-central \
 	ceilometer-agent-notification \
-	ceilometer-alarm-evaluator \
-	ceilometer-alarm-notifier \
-	python-ceilometerclient \
-	python-pymongo \
-	python-bson \
-	python-memcache
+	python-ceilometerclient
 
 # Clean rootfs
 cd /

@@ -34,9 +34,9 @@ echo force-unsafe-io > /etc/dpkg/dpkg.cfg.d/disable-fsync
 
 # Configure main repository
 cat >/etc/apt/sources.list <<EOF
-deb http://archive.ubuntu.com/ubuntu/ trusty main restricted universe multiverse
-deb http://security.ubuntu.com/ubuntu trusty-security main restricted universe multiverse
-deb http://archive.ubuntu.com/ubuntu/ trusty-updates main restricted universe multiverse
+deb http://archive.ubuntu.com/ubuntu/ xenial main restricted universe multiverse
+deb http://security.ubuntu.com/ubuntu xenial-security main restricted universe multiverse
+deb http://archive.ubuntu.com/ubuntu/ xenial-updates main restricted universe multiverse
 EOF
 
 # Update packages list
@@ -51,7 +51,7 @@ eatmydata apt-get dist-upgrade -y --no-install-recommends
 
 # Install usefull packages
 eatmydata apt-get install -y --no-install-recommends \
-	iputils-arping \
+	apt-transport-https \
 	bind9-host \
 	ca-certificates \
 	cron \
@@ -59,6 +59,8 @@ eatmydata apt-get install -y --no-install-recommends \
 	gawk \
 	git \
 	htop \
+	iproute2 \
+	iputils-arping \
 	less \
 	net-tools \
 	openssl \
@@ -107,6 +109,5 @@ touch /etc/inittab
 
 # Clean rootfs
 cd /
-#apt-get clean
-#rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-rm -rf /tmp/* /var/tmp/*
+apt-get clean
+rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
