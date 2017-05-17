@@ -50,7 +50,6 @@ import org.eclipse.jetty.util.security.Constraint;
 import org.eclipse.jetty.util.security.Password;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.InitCommand;
-import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.errors.RepositoryNotFoundException;
 import org.eclipse.jgit.http.server.GitServlet;
 import org.eclipse.jgit.http.server.GitSmartHttpTools;
@@ -144,8 +143,8 @@ public class MoustackServer {
 							RevCommit commit = git.commit().setMessage("moustack dev mode").call();
 							log.debug("dev mode: created new commit {}", commit.name());
 						}
-					} catch (GitAPIException e) {
-						log.debug("dev mode: error while adding/commitinf changes", e);
+					} catch (Exception e) {
+						log.debug("dev mode: error while adding/committing changes", e);
 					}
 				}
 
