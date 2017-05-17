@@ -56,18 +56,27 @@ eatmydata apt-get install -y --no-install-recommends \
 	ca-certificates \
 	cron \
 	curl \
+	dnsutils \
+	file \
 	gawk \
 	git \
 	htop \
 	iproute2 \
 	iputils-arping \
+	iputils-ping \
+	jq \
 	less \
+	libltdl7 \
+	netcat-openbsd \
 	net-tools \
 	openssl \
 	patch \
+	procps \
 	psmisc \
 	strace \
 	tcpdump \
+	telnet \
+	uuid \
 	vim-tiny \
 	wget
 
@@ -90,7 +99,7 @@ rm -f /usr/sbin/gosu.asc
 chmod a+x /usr/sbin/gosu
 
 # Install tini (a tiny but valid init for containers)
-TINI_VERSION=v0.9.0
+TINI_VERSION=v0.14.0
 http_proxy= gpg --keyserver ipv4.pool.sks-keyservers.net --recv-keys 0527A9B7
 wget -O/usr/sbin/tini     https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini
 wget -O/usr/sbin/tini.asc https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini.asc
