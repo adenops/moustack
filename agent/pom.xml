@@ -15,11 +15,11 @@
 
 	<properties>
 		<jersey.version>2.24</jersey.version>
-		<jackson.version>2.8.4</jackson.version>
-		<yamlbeans.version>1.09</yamlbeans.version>
 		<docker-client.version>6.1.0</docker-client.version>
-		<mysql-driver.version>6.0.5</mysql-driver.version>
-		<mongodb-driver.version>3.3.0</mongodb-driver.version>
+		<jackson.version>2.8.8</jackson.version>
+		<yamlbeans.version>1.11</yamlbeans.version>
+		<mysql-driver.version>6.0.6</mysql-driver.version>
+		<mongodb-driver.version>3.4.2</mongodb-driver.version>
 
 		<main.class>com.adenops.moustack.agent.MoustackAgent</main.class>
 	</properties>
