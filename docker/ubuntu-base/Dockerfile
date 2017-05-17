@@ -1,4 +1,4 @@
-FROM ubuntu:16.04
+FROM ubuntu:xenial-20170510
 
 # install and configure packages
 COPY build-image bashrc /tmp/
