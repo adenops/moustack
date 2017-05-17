@@ -21,6 +21,9 @@
 . /usr/lib/runit/load
 
 wait_for rabbitmq
-wait_for libvirt
+
+if [ "${USE_VMWARE:-}" != "true" ]; then
+	wait_for libvirt
+fi
 
 exec gosu ceilometer /usr/bin/ceilometer-polling --config-file=/etc/ceilometer/ceilometer.conf --polling-namespaces compute

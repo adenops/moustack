@@ -37,6 +37,8 @@ eatmydata apt-get install -y --no-install-recommends \
 	cifs-utils \
 	nfs-common \
 	nova-compute \
+	genisoimage \
+	python-oslo.vmware \
 	ceilometer-agent-compute \
 	openvswitch-switch \
 	sysfsutils \

@@ -25,7 +25,10 @@ wait_for openvswitch
 wait_for rabbitmq
 wait_for neutron-server
 wait_for neutron-openvswitch
-wait_for libvirt
+
+if [ "${USE_VMWARE:-}" != "true" ]; then
+	wait_for libvirt
+fi
 
 # ensure instances folder is created (nova may fail otherwise)
 service_mkdir nova /var/lib/nova/instances
