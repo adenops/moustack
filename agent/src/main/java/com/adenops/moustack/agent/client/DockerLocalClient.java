@@ -68,7 +68,8 @@ public class DockerLocalClient {
 		if (e == null)
 			throw new DeploymentException(message);
 		if (e instanceof DockerRequestException)
-			throw new DeploymentException(String.format("%s: %s", message, ((DockerRequestException) e).message()));
+			throw new DeploymentException(
+					String.format("%s: %s", message, ((DockerRequestException) e).getResponseBody()));
 		throw new DeploymentException(message, e);
 	}
 
@@ -191,7 +192,7 @@ public class DockerLocalClient {
 		// compare devices
 		List<Device> devices = new ArrayList<>();
 		for (String device : container.getDevices())
-			devices.add(new Device("rwm", device, device));
+			devices.add(Device.builder().cgroupPermissions("rwm").pathOnHost(device).pathInContainer(device).build());
 		if (!listsEquals(hostConfig.devices(), devices)) {
 			log.info("container {} devices changed", container.getName());
 			return true;
@@ -355,7 +356,7 @@ public class DockerLocalClient {
 			Map<String, String> logOptions = new HashMap<>();
 			logOptions.put("syslog-address", String.format("udp://%s:%s", stack.get(StackProperty.SYSLOG_HOST),
 					stack.get(StackProperty.SYSLOG_PORT)));
-			logOptions.put("syslog-tag", container.getName());
+			logOptions.put("tag", container.getName());
 			logOptions.put("syslog-format", "rfc3164");
 			hostConfigBuilder.logConfig(LogConfig.create("syslog", logOptions));
 		}
@@ -367,7 +368,7 @@ public class DockerLocalClient {
 		// prepare devices list
 		List<Device> devices = new ArrayList<>();
 		for (String device : container.getDevices())
-			devices.add(new Device("rwm", device, device));
+			devices.add(Device.builder().cgroupPermissions("rwm").pathOnHost(device).pathInContainer(device).build());
 		hostConfigBuilder.devices(devices);
 
 		// prepare volumes binds
