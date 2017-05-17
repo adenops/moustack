@@ -29,9 +29,6 @@ export LC_ALL=C
 # dpkg shouldn't ask questions
 export DEBIAN_FRONTEND=noninteractive
 
-# disable fsync from dpkg
-echo force-unsafe-io > /etc/dpkg/dpkg.cfg.d/disable-fsync
-
 # Configure main repository
 cat >/etc/apt/sources.list <<EOF
 deb http://archive.ubuntu.com/ubuntu/ xenial main restricted universe multiverse
