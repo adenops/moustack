@@ -35,6 +35,7 @@ apt-get update
 # Install and patch usefull python modules
 eatmydata apt-get install -y --no-install-recommends \
 	glance \
+	python-oslo.vmware \
 	python-swiftclient
 
 # Purge glance local database
