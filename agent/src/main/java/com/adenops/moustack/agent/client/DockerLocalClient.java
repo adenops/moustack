@@ -302,7 +302,7 @@ public class DockerLocalClient {
 		if (!changed && containerIsRunning(container))
 			return false;
 
-		log.info("updating container " + container.getName());
+		log.info("updating container {}", container.getName());
 		startOrRestartContainer(container, false, new String[] {});
 		return true;
 	}
@@ -313,19 +313,21 @@ public class DockerLocalClient {
 		containerImageChanged(container);
 
 		String name = container.getName() + "-" + RandomStringUtils.random(10, true, true);
-		String[] suCommand = new String[] { "su", "-s", "/bin/sh", "-c", String.join(" ", command), user };
+
+		if (StringUtils.isNotBlank(user) && !user.equalsIgnoreCase("root"))
+			command = new String[] { "su", "-s", "/bin/sh", "-c", String.join(" ", command), user };
 
 		ContainerModule temporaryContainer = new ContainerModule(name, container);
 
-		log.debug("executing command " + String.join(" ", command));
-		startOrRestartContainer(temporaryContainer, true, suCommand);
+		log.debug("executing command {}", String.join(" ", command));
+		startOrRestartContainer(temporaryContainer, true, command);
 
 		try {
 			ContainerExit code = client.waitContainer(name);
 			if (code.statusCode() == 0)
 				return;
 			throw new DeploymentException("ephemeral container " + name + " execution returned " + code
-					+ " for command " + String.join(" ", suCommand));
+					+ " for command " + String.join(" ", command));
 		} catch (DockerException e) {
 			wrapDockerException("error while waiting for container " + name, e);
 		} catch (InterruptedException e) {
