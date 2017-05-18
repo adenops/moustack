@@ -6,3 +6,6 @@ RUN /tmp/build-image
 
 # add etc overlay
 COPY etc /etc/
+
+# add bootstrap script
+COPY bootstrap-image /usr/bin/
