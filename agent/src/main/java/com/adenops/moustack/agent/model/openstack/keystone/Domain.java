@@ -24,7 +24,6 @@ import com.adenops.moustack.agent.model.openstack.OSEntity;
 public class Domain extends OSEntity {
 	private String name;
 	private String description;
-	private String domain_id = "default";
 	private boolean enabled = true;
 
 	public Domain() {
@@ -53,14 +52,6 @@ public class Domain extends OSEntity {
 
 	public void setDescription(String description) {
 		this.description = description;
-	}
-
-	public String getDomain_id() {
-		return domain_id;
-	}
-
-	public void setDomain_id(String domain_id) {
-		this.domain_id = domain_id;
 	}
 
 	public boolean isEnabled() {
