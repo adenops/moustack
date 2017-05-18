@@ -19,8 +19,9 @@
 
 package com.adenops.moustack.agent.model.openstack;
 
-// XXX: keep the annotation here, for when we upgrade to jackson 2.6
-//@JsonIgnoreProperties(value = { "id" }, allowGetters = false, allowSetters = true)
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+@JsonIgnoreProperties(value = { "id" }, allowGetters = false, allowSetters = true)
 public abstract class OSEntity {
 	protected String id;
 
