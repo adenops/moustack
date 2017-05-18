@@ -50,8 +50,8 @@ public class Keystone extends ContainerModule {
 
 		if (changed) {
 			env.getDockerClient().discardContainer(this);
-			log.info("running keystone DB migration");
-			env.getDockerClient().startEphemeralContainer(this, "keystone", "keystone-manage", "db_sync");
+			log.info("running keystone bootstrap");
+			env.getDockerClient().startEphemeralContainer(this, "root", "bootstrap-image");
 		}
 
 		env.getDockerClient().startContainer(changed, this);
