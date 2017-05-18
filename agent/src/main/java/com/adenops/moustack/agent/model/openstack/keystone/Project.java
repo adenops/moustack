@@ -25,6 +25,7 @@ public class Project extends OSEntity {
 	private String name;
 	private String description;
 	private String domain_id = "default";
+	private boolean is_domain = false;
 	private boolean enabled = true;
 
 	public Project() {
@@ -65,5 +66,13 @@ public class Project extends OSEntity {
 
 	public void setEnabled(boolean enabled) {
 		this.enabled = enabled;
+	}
+
+	public boolean isIs_domain() {
+		return is_domain;
+	}
+
+	public void setIs_domain(boolean is_domain) {
+		this.is_domain = is_domain;
 	}
 }
