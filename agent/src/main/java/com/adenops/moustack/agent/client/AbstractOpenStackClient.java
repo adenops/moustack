@@ -52,6 +52,7 @@ public abstract class AbstractOpenStackClient extends AbstractRestClient {
 		invocationBuilder.header("X-Auth-Token", token);
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
 	protected void preprocessResponse(Response response, Status... extraAllowedStatuses) throws DeploymentException {
 		log.trace("received response: {}", response);
@@ -68,12 +69,18 @@ public abstract class AbstractOpenStackClient extends AbstractRestClient {
 		}
 
 		// try to parse the error returned by the API
-		Error error = readEntity(response, Error.class);
-		if (error == null)
+		Map map = readEntity(response, Map.class);
+		if (map == null || !map.containsKey("error"))
 			throw new DeploymentException("API returned error: HTTP status " + response.getStatus());
+		Error error = null;
+		try {
+			error = mapper.convertValue(map.get("error"), Error.class);
+		} catch (IllegalArgumentException e) {
+			throw new DeploymentException("API returned error: HTTP status " + response.getStatus());
+		}
 
 		String message = error.getMessage();
-		String type = error.getType();
+		String title = error.getTitle();
 
 		if (log.isDebugEnabled()) {
 			try {
@@ -83,7 +90,7 @@ public abstract class AbstractOpenStackClient extends AbstractRestClient {
 			}
 		}
 
-		throw new DeploymentException("API returned error: {type: " + type + ", message: " + message + "}");
+		throw new DeploymentException("API returned error: {title: " + title + ", message: " + message + "}");
 	}
 
 	/**

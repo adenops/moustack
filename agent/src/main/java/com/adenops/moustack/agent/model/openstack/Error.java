@@ -19,60 +19,10 @@
 
 package com.adenops.moustack.agent.model.openstack;
 
-import java.util.List;
-
 public class Error {
-	private List<ErrorEmbedded> errors;
 	private String message;
 	private int code;
-	private String type;
-
-	public static class ErrorEmbedded {
-		private String path;
-		private String message;
-		private String validator;
-
-		public ErrorEmbedded() {
-		}
-
-		public ErrorEmbedded(String path, String message, String validator) {
-			this.path = path;
-			this.message = message;
-			this.validator = validator;
-		}
-
-		public String getPath() {
-			return path;
-		}
-
-		public void setPath(String path) {
-			this.path = path;
-		}
-
-		public String getMessage() {
-			return message;
-		}
-
-		public void setMessage(String message) {
-			this.message = message;
-		}
-
-		public String getValidator() {
-			return validator;
-		}
-
-		public void setValidator(String validator) {
-			this.validator = validator;
-		}
-	}
-
-	public List<ErrorEmbedded> getErrors() {
-		return errors;
-	}
-
-	public void setErrors(List<ErrorEmbedded> errors) {
-		this.errors = errors;
-	}
+	private String title;
 
 	public String getMessage() {
 		return message;
@@ -90,11 +40,11 @@ public class Error {
 		this.code = code;
 	}
 
-	public String getType() {
-		return type;
+	public String getTitle() {
+		return title;
 	}
 
-	public void setType(String type) {
-		this.type = type;
+	public void setTitle(String title) {
+		this.title = title;
 	}
 }
