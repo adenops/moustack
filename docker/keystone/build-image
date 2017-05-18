@@ -39,11 +39,10 @@ eatmydata apt-get install -y --no-install-recommends \
 	keystone \
 	python-memcache
 
-# Purge useless apache configuration
-rm -f /etc/apache2/sites-enabled/*
-rm -f /etc/apache2/conf-enabled/serve-cgi-bin.conf
-rm -f /etc/apache2/conf-enabled/openstack-dashboard.conf
-rm -f /etc/apache2/conf-enabled/other-vhosts-access-log.conf
+# Purge useless/unwanted Apache configuration
+rm -f /etc/apache2/sites-enabled/000-default.conf
+rm -f /etc/apache2/ports.conf
+sed -i '/^Include ports.conf$/d' /etc/apache2/apache2.conf
 
 # Purge keystone local database
 rm -f /var/lib/keystone/keystone.db
