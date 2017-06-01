@@ -27,6 +27,9 @@ while ! sv status ovsdb-server >/dev/null 2>&1; do
 	sleep 1
 done
 
+# have OVSDB listening for connections on port 6640
+ovs-appctl -t ovsdb-server ovsdb-server/add-remote ptcp:6640
+
 exec ovs-vswitchd \
 	unix:/var/run/openvswitch/db.sock \
 	-vconsole:info \
