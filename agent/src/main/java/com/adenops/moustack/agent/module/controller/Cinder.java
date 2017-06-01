@@ -77,7 +77,6 @@ public class Cinder extends ContainerModule {
 	@Override
 	public void validate(DeploymentEnvironment env) throws DeploymentException {
 		super.validate(env);
-		env.getValidationClient().validateEndpoint(env.getStack(), "cinder", "http://%s:8776/",
-				Status.OK.getStatusCode());
+		env.getValidationClient().validateEndpoint(env.getStack(), "cinder", "http://%s:8776/", 300);
 	}
 }
