@@ -22,4 +22,4 @@
 
 wait_for syslog
 
-exec rpcbind -d
+exec rpcbind -df

@@ -32,6 +32,7 @@ mount -t nfsd nfsd /proc/fs/nfsd
 
 log "Fix permissions on exported shares"
 for share in `awk '/^\// { print $1; }' /etc/exports`; do
+	mkdir -p ${share}
 	chmod 777 ${share}
 done
 
@@ -44,4 +45,4 @@ rpc.nfsd --debug 0
 log "start nfsd kernel threads"
 rpc.nfsd --debug ${NFSD_COUNT:-8}
 
-exec rpc.mountd --foreground
+exec rpc.mountd --manage-gids --debug all --foreground
