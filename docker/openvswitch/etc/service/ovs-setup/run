@@ -40,7 +40,7 @@ done
 
 # create the bridges
 bridges=$(ifquery --allow ovs --list)
-[ -n "$bridges" ] && ifup --allow ovs $bridges
+[ -n "$bridges" ] && ifup --allow ovs $bridges || true
 
 # we also create the integration bridge, this is not mandatory but prevents
 # a few errors (it is usually created by neutron-server)
