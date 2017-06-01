@@ -58,7 +58,7 @@ public class OSAuth {
 				public User(String name, String password, String domainId) {
 					this.name = name;
 					this.password = password;
-					this.domain = new Domain(domainId);
+					this.domain = new Domain(domainId, null);
 				}
 
 				public String getName() {

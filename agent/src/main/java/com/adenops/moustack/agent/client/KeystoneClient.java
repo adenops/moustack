@@ -104,7 +104,6 @@ public class KeystoneClient extends AbstractOpenStackClient {
 				try {
 					// checking authentication
 					log.debug("checking authentication for user " + name);
-					// lollol
 					post(UserResponse.class, "auth/tokens", "auth", new OSAuth(name, password, domainId));
 
 					// no exception, authentication success
