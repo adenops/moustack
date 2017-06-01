@@ -41,7 +41,8 @@ eatmydata apt-get install -y --no-install-recommends \
 	neutron-lbaasv2-agent \
 	neutron-plugin-ml2 \
 	neutron-server \
-	openvswitch-switch
+	openvswitch-switch \
+	python-memcache
 
 # Purge neutron local database
 rm -f /var/lib/neutron/neutron.sqlite
