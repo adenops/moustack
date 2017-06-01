@@ -35,7 +35,8 @@ apt-get update
 # Install required packages
 eatmydata apt-get install -y --no-install-recommends \
 	glance \
-	python-swiftclient
+	python-swiftclient \
+	python-memcache
 
 # Purge glance local database
 rm -f /var/lib/glance/glance.sqlite
