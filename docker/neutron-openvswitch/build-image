@@ -35,7 +35,8 @@ apt-get update
 # Install useful python modules
 eatmydata apt-get install -y --no-install-recommends \
 	conntrack \
-	neutron-plugin-openvswitch-agent
+	neutron-plugin-openvswitch-agent \
+	python-memcache
 
 # Clean rootfs
 cd /
