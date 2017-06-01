@@ -74,7 +74,7 @@ eatmydata apt-get install -y --no-install-recommends \
 	tcpdump \
 	telnet \
 	uuid \
-	vim-tiny \
+	vim \
 	wget
 
 # Install runit init system
