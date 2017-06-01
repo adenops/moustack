@@ -34,11 +34,19 @@ apt-get update
 
 # Install packages
 eatmydata apt-get install -y --no-install-recommends \
+	apache2 \
 	cinder-api \
 	cinder-scheduler \
 	cinder-volume \
 	cifs-utils \
-	nfs-common
+	libapache2-mod-wsgi \
+	nfs-common \
+	python-memcache
+
+# Purge useless/unwanted Apache configuration
+rm -f /etc/apache2/sites-enabled/000-default.conf
+rm -f /etc/apache2/ports.conf
+sed -i '/^Include ports.conf$/d' /etc/apache2/apache2.conf
 
 # Purge cinder local database
 rm -f /var/lib/cinder/cinder.sqlite
