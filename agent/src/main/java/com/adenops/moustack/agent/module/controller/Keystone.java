@@ -65,7 +65,7 @@ public class Keystone extends ContainerModule {
 		env.getKeystoneClient().grantProjectRole(env.getStack(), StackProperty.KEYSTONE_ADMIN_USER,
 				StackProperty.KEYSTONE_ADMIN_PROJECT, StackProperty.KEYSTONE_ADMIN_ROLE);
 		env.getKeystoneClient().createService(env.getStack(), "keystone", "OpenStack Identity", "identity",
-				"http://%s:5000/v2.0", "http://%s:5000/v2.0", "http://%s:35357/v2.0");
+				"http://%s:5000/v3", "http://%s:5000/v3", "http://%s:35357/v3");
 
 		return changed;
 	}
