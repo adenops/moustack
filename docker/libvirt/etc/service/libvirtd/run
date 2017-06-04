@@ -29,29 +29,6 @@ wait_for syslog
 mkdir -p /var/run/libvirt/
 rm -f /var/run/libvirtd.pid
 
-# ensure nova user matches with nova-compute
-# TODO: this is not very safe, there should be better solution
-# create custom user for nova at build time in docker?
-if ! grep -q '^nova:' /etc/group; then
-	groupadd --gid 109 nova
-fi
-if ! grep -q '^nova:' /etc/passwd; then
-	# NOTE: uid should be 105 but it may already been taken by libvirt so
-	# we don't enfore it (it seems to work)
-	useradd --home-dir /var/lib/nova --no-create-home --shell /bin/false \
-		--gid 109 nova
-fi
-
-# same thing as nova
-# XXX: this is very ugly, need to be fixed
-if ! grep -q '^ceilometer:' /etc/group; then
-	groupadd --gid 108 ceilometer
-fi
-if ! grep -q '^ceilometer:' /etc/passwd; then
-	useradd --home-dir /bin --no-create-home --shell /bin/false \
-		--gid 108 ceilometer
-fi
-
 if [ -c /dev/kvm ]; then
 	# fix /dev/kvm permissions
 	kvm_host_group=kvm-host

@@ -42,6 +42,11 @@ eatmydata apt-get install -y --no-install-recommends \
 # Remove libvirtd default network
 rm -f /etc/libvirt/qemu/networks/autostart/default.xml
 
+# Add nova user that matches with nova-compute
+groupadd --gid 1200 nova
+useradd --home-dir /var/lib/nova --no-create-home --shell /bin/false \
+		--uid 1200 --gid 1200 nova
+
 # Clean rootfs
 cd /
 apt-get clean
