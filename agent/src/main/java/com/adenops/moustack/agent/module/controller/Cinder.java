@@ -21,8 +21,6 @@ package com.adenops.moustack.agent.module.controller;
 
 import java.util.List;
 
-import javax.ws.rs.core.Response.Status;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

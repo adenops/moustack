@@ -47,22 +47,34 @@ public class Nova extends ContainerModule {
 	public boolean deploy(DeploymentEnvironment env) throws DeploymentException {
 		boolean changed = false;
 		changed |= env.getKeystoneClient().createService(env.getStack(), "nova", "OpenStack Compute service", "compute",
-				"http://%s:8774/v2/%%(tenant_id)s", "http://%s:8774/v2/%%(tenant_id)s",
-				"http://%s:8774/v2/%%(tenant_id)s");
+				"http://%s:8774/v2.1/%%(tenant_id)s", "http://%s:8774/v2.1/%%(tenant_id)s",
+				"http://%s:8774/v2.1/%%(tenant_id)s");
 		changed |= env.getKeystoneClient().createProjectUser(env.getStack(), StackProperty.KS_NOVA_USER, "Nova user",
 				"nova@localhost", StackProperty.KS_NOVA_PASSWORD, StackProperty.KEYSTONE_SERVICES_PROJECT);
 		changed |= env.getKeystoneClient().grantProjectRole(env.getStack(), StackProperty.KS_NOVA_USER,
 				StackProperty.KEYSTONE_SERVICES_PROJECT, StackProperty.KEYSTONE_ADMIN_ROLE);
 
+		changed |= env.getKeystoneClient().createService(env.getStack(), "placement", "OpenStack Placement API",
+				"placement", "http://%s:8778/", "http://%s:8778", "http://%s:8778");
+		changed |= env.getKeystoneClient().createProjectUser(env.getStack(), StackProperty.KS_NOVA_PLACEMENT_USER,
+				"Nova placement user", "nova-placement@localhost", StackProperty.KS_NOVA_PLACEMENT_PASSWORD,
+				StackProperty.KEYSTONE_SERVICES_PROJECT);
+		changed |= env.getKeystoneClient().grantProjectRole(env.getStack(), StackProperty.KS_NOVA_PLACEMENT_USER,
+				StackProperty.KEYSTONE_SERVICES_PROJECT, StackProperty.KEYSTONE_ADMIN_ROLE);
+
 		changed |= env.getMySQLClient().createDatabaseUser("nova", "nova",
+				env.getStack().get(StackProperty.DB_NOVA_PASSWORD));
+		changed |= env.getMySQLClient().createDatabaseUser("nova_api", "nova",
+				env.getStack().get(StackProperty.DB_NOVA_PASSWORD));
+		changed |= env.getMySQLClient().createDatabaseUser("nova_cell0", "nova",
 				env.getStack().get(StackProperty.DB_NOVA_PASSWORD));
 
 		changed |= deployConfig(env);
 
 		if (changed) {
 			env.getDockerClient().discardContainer(this);
-			log.info("running nova DB migration");
-			env.getDockerClient().startEphemeralContainer(this, "nova", "nova-manage", "db sync");
+			log.info("running nova bootstrap");
+			env.getDockerClient().startEphemeralContainer(this, "root", "bootstrap-image");
 		}
 
 		env.getDockerClient().startContainer(changed, this);
