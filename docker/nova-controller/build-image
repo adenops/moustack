@@ -35,10 +35,10 @@ apt-get update
 # Install required packages
 eatmydata apt-get install -y --no-install-recommends \
 	nova-api \
-	nova-cert \
 	nova-conductor \
 	nova-consoleauth \
 	nova-novncproxy \
+	nova-placement-api \
 	nova-scheduler
 
 # Purge nova local database
