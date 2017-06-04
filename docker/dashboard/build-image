@@ -40,12 +40,6 @@ eatmydata apt-get install -y --no-install-recommends \
 	python-designate-dashboard \
 	python-designateclient
 
-# Purge useless apache configuration
-rm -f /etc/apache2/sites-enabled/*
-rm -f /etc/apache2/conf-enabled/serve-cgi-bin.conf
-rm -f /etc/apache2/conf-enabled/openstack-dashboard.conf
-rm -f /etc/apache2/conf-enabled/other-vhosts-access-log.conf
-
 # Clean rootfs
 cd /
 apt-get clean

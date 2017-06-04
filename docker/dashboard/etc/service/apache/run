@@ -40,4 +40,7 @@ export APACHE_LOG_DIR=/var/log/apache2$SUFFIX
 # the locale used by some modules like mod_dav
 export LANG=C
 
+mkdir -p /var/lib/openstack-dashboard/
+chown -R ${APACHE_RUN_USER}:${APACHE_RUN_GROUP} /var/lib/openstack-dashboard/
+
 exec /usr/sbin/apache2 -f /etc/apache2/apache2.conf -DNO_DETACH
