@@ -48,6 +48,11 @@ rm -f /var/lib/nova/nova.sqlite
 # Remove libvirtd default network
 rm -f /etc/libvirt/qemu/networks/autostart/default.xml
 
+# Force uid and gid for nova, so we can more easily sync it with libvirt image
+usermod -u 1200 nova
+groupmod -g 1200 nova
+chown -R nova:nova /etc/nova/ /var/lib/nova/
+
 # Clean rootfs
 cd /
 apt-get clean
