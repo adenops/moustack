@@ -34,12 +34,19 @@ apt-get update
 
 # Install required packages
 eatmydata apt-get install -y --no-install-recommends \
+	apache2 \
+	libapache2-mod-wsgi \
 	nova-api \
 	nova-conductor \
 	nova-consoleauth \
 	nova-novncproxy \
 	nova-placement-api \
 	nova-scheduler
+
+# Purge useless/unwanted Apache configuration
+rm -f /etc/apache2/sites-enabled/000-default.conf
+rm -f /etc/apache2/ports.conf
+sed -i '/^Include ports.conf$/d' /etc/apache2/apache2.conf
 
 # Purge nova local database
 rm -f /var/lib/nova/nova.sqlite
