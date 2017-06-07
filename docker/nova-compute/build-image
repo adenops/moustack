@@ -53,6 +53,10 @@ usermod -u 1200 nova
 groupmod -g 1200 nova
 chown -R nova:nova /etc/nova/ /var/lib/nova/
 
+# Delete machine id (which is empty)
+# Patch in review to fix this, cf https://bugs.launchpad.net/nova/+bug/1584236
+rm -f /etc/machine-id
+
 # Clean rootfs
 cd /
 apt-get clean
