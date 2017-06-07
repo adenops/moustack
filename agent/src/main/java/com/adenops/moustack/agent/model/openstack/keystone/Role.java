@@ -23,7 +23,7 @@ import com.adenops.moustack.agent.model.openstack.OSEntity;
 
 public class Role extends OSEntity {
 	private String name;
-	private String domain_id = "default";
+	private String domain_id;
 
 	public Role() {
 	}
